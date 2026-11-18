@@ -53,8 +53,10 @@ void MainInit_JitPoolsNew(struct GameTracker *gGT)
 #ifndef CTR_NATIVE
         gGT->ptrRenderBucketInstance = MEMPACK_AllocMem(renderBucketSize);
 #else
-        // NOTE(aalhendi): Native reuses static RDATA scratch for existing PC memory headroom.
-        gGT->ptrRenderBucketInstance = (void *)((uintptr_t)&rdata.s_STATIC_GNORMALZ[0] + 148);
+        // NOTE(aalhendi): Dedicated static pool for native 64-bit entries to avoid corrupting rdata.
+        static struct RenderBucketEntry s_nativeRenderBucketPool[2048];
+        memset(s_nativeRenderBucketPool, 0, sizeof(s_nativeRenderBucketPool));
+        gGT->ptrRenderBucketInstance = s_nativeRenderBucketPool;
 #endif
 
         for (int i = 0; i < 3; i++)

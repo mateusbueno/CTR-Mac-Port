@@ -602,3 +602,9 @@ struct Instance
 };
 
 #define INST_GETIDPP(x) (struct InstDrawPerPlayer *)((uintptr_t)x + sizeof(struct Instance))
+
+struct RenderBucketEntry
+{
+	struct Instance *inst;
+	struct Instance *instPlayerBase;
+};

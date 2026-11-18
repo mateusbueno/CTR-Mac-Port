@@ -648,7 +648,7 @@ void RenderAllBoxSceneSplitLines(struct GameTracker *gGT)
 void RenderBucket_QueueAllInstances(struct GameTracker *gGT)
 {
         int lod;
-        int *RBI;
+        struct RenderBucketEntry *RBI;
         int numPlyrCurrGame = NUM_LOCAL_PLAYERS(gGT);
 
         if ((gGT->renderFlags & 0x20) == 0)
@@ -658,11 +658,11 @@ void RenderBucket_QueueAllInstances(struct GameTracker *gGT)
         if ((gGT->gameMode1 & RELIC_RACE) != 0)
                 lod |= 4;
 
-        RBI = RenderBucket_QueueLevInstances(&gGT->cameraDC[0], (u_long *)&gGT->backBuffer->otMem, gGT->ptrRenderBucketInstance,
+        RBI = (struct RenderBucketEntry *)RenderBucket_QueueLevInstances(&gGT->cameraDC[0], (u_long *)&gGT->backBuffer->otMem, gGT->ptrRenderBucketInstance,
                                              (char *)(u32)(u8)sdata->LOD[lod], // this weird cast is what ghidra does
                                              (char)numPlyrCurrGame, gGT->gameMode1 & PAUSE_ALL);
 
-        RBI = RenderBucket_QueueNonLevInstances(gGT->JitPools.instance.taken.first, (u_long *)&gGT->backBuffer->otMem, (void *)RBI,
+        RBI = (struct RenderBucketEntry *)RenderBucket_QueueNonLevInstances(gGT->JitPools.instance.taken.first, (u_long *)&gGT->backBuffer->otMem, (void *)RBI,
                                                 (char *)(u32)(u8)sdata->LOD[lod], // this weird cast is what ghidra does
                                                 (char)numPlyrCurrGame, gGT->gameMode1 & PAUSE_ALL);
 
@@ -676,7 +676,11 @@ void RenderBucket_QueueAllInstances(struct GameTracker *gGT)
 #endif
 
         // null terminator at end of list
-        *RBI = 0;
+        if (RBI != 0)
+        {
+                RBI->inst = 0;
+                RBI->instPlayerBase = 0;
+        }
 }
 
 void RenderAllNormalParticles(struct GameTracker *gGT)

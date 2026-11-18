@@ -39,11 +39,7 @@ static int CtrTireDebug_ShouldLog(int mask)
 }
 #endif
 
-struct RenderBucketEntry
-{
-	struct Instance *inst;
-	struct Instance *instPlayerBase;
-};
+/* struct RenderBucketEntry is defined in include/namespace_Instance.h */
 
 struct RenderBucketQueueState
 {
@@ -1720,13 +1716,13 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 #ifdef CTR_NATIVE
 	// NOTE(aalhendi): Retail callers provide a valid visible-list instance and
 	// model; native keeps malformed host-side lists from trapping.
-	if (inst == 0)
+	if (inst == 0 || (uintptr_t)inst <= 0x100010000ULL)
 		return rbi;
 
-	if (inst->model == 0)
+	if (inst->model == 0 || (uintptr_t)inst->model <= 0x100010000ULL)
 		return rbi;
 
-	if (inst->model->headers == 0)
+	if (inst->model->headers == 0 || (uintptr_t)inst->model->headers <= 0x100010000ULL)
 		return rbi;
 #endif
 
@@ -1894,7 +1890,7 @@ void *RenderBucket_QueueNonLevInstances(struct Item *item, u_long *otMem, void *
 
 	for (int player = count - 1; player >= 0; player--)
 	{
-		for (struct Item *curr = item; curr != 0; curr = curr->next)
+		for (struct Item *curr = item; curr != 0 && (uintptr_t)curr > 0x100010000ULL; curr = curr->next)
 		{
 			entry = RenderBucket_QueueDraw((struct Instance *)curr, entry, player, lodMask, gameMode1, &queueState);
 		}
@@ -4621,10 +4617,13 @@ static int RenderBucket_PrepareDrawContext(struct RenderBucketDrawContext *ctx, 
 	struct ModelFrame *nextFrame;
 	struct ModelAnim *anim;
 
-	if (inst == 0)
+	if (inst == 0 || (uintptr_t)inst <= 0x100010000ULL)
 		return 0;
 
-	if (inst->model == 0)
+	if (inst->model == 0 || (uintptr_t)inst->model <= 0x100010000ULL)
+		return 0;
+
+	if (instPlayerBase == 0 || (uintptr_t)instPlayerBase <= 0x100010000ULL)
 		return 0;
 
 	idpp = INST_GETIDPP(instPlayerBase);
@@ -4719,7 +4718,7 @@ void RenderBucket_Execute(void *param_1, struct PrimMem *param_2)
 	// native uses the accepted explicit RenderBucketDrawContext scratch/register ABI.
 	*CTR_SCRATCHPAD_PTR(u32, 0xc) = (u32)(uintptr_t)param_2;
 	*CTR_SCRATCHPAD_PTR(u32, 0x8) = 0;
-	for (; entry->inst != 0; entry++)
+	for (; entry != 0 && entry->inst != 0 && (uintptr_t)entry->inst > 0x100010000ULL; entry++)
 	{
 		struct RenderBucketDrawContext ctx = {0};
 
