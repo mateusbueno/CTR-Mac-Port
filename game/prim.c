@@ -1,4 +1,5 @@
 #include <common.h>
+#include <psx/libgpu.h>
 
 void GetPrimitiveMem(void **ppPrim, size_t primSize)
 {
@@ -19,6 +20,6 @@ void GetPrimitiveMem(void **ppPrim, size_t primSize)
 
 void AddPrimitive(void *pPrim, void *pOt)
 {
-	((Tag *)pPrim)->addr = ((Tag *)pOt)->addr;
-	((Tag *)pOt)->addr = (u32)pPrim;
+	addPrim(pOt, pPrim);
 }
+
