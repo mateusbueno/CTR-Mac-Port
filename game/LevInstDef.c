@@ -11,9 +11,10 @@ void LevInstDef_UnPack(struct mesh_info *ptr_mesh_info)
 	struct InstDef **visInstSrc;
 	struct Level *level1;
 
-	numQuadBlock = ptr_mesh_info->numQuadBlock;
-	ptrQuadBlockArray = ptr_mesh_info->ptrQuadBlockArray;
+	numQuadBlock = ptr_mesh_info ? ptr_mesh_info->numQuadBlock : 0;
+	ptrQuadBlockArray = ptr_mesh_info ? ptr_mesh_info->ptrQuadBlockArray : NULL;
 
+#if !defined(__LP64__)
 	// loop through all quadblocks
 	for (i = 0; i < numQuadBlock; i++)
 	{
@@ -28,15 +29,17 @@ void LevInstDef_UnPack(struct mesh_info *ptr_mesh_info)
 			}
 		}
 	}
+#endif
 
 	level1 = sdata->gGT->level1;
 
-	if (level1->ptrInstDefPtrArray != 0)
+	if (level1 != NULL && level1->ptrInstDefPtrArray != NULL)
 	{
 		// loop through all instDef pointers in the LEV
-		for (visInstSrc = level1->ptrInstDefPtrArray; visInstSrc[0] != 0; visInstSrc++)
+		for (visInstSrc = level1->ptrInstDefPtrArray; visInstSrc[0] != NULL; visInstSrc++)
 		{
-			visInstSrc[0] = (struct InstDef *)visInstSrc[0]->ptrInstance;
+			if (visInstSrc[0] != NULL)
+				visInstSrc[0] = (struct InstDef *)visInstSrc[0]->ptrInstance;
 		}
 	}
 }
@@ -53,9 +56,10 @@ void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub)
 	struct Level *level1;
 	struct Thread *th;
 
-	numQuadBlock = ptr_mesh_info->numQuadBlock;
-	ptrQuadBlockArray = ptr_mesh_info->ptrQuadBlockArray;
+	numQuadBlock = ptr_mesh_info ? ptr_mesh_info->numQuadBlock : 0;
+	ptrQuadBlockArray = ptr_mesh_info ? ptr_mesh_info->ptrQuadBlockArray : NULL;
 
+#if !defined(__LP64__)
 	// loop through all quadblocks
 	for (i = 0; i < numQuadBlock; i++)
 	{
@@ -70,15 +74,17 @@ void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub)
 			}
 		}
 	}
+#endif
 
 	level1 = sdata->gGT->level1;
 
-	if (level1->ptrInstDefPtrArray != 0)
+	if (level1 != NULL && level1->ptrInstDefPtrArray != NULL)
 	{
 		// loop through all instDef pointers in the LEV
 		for (visInstSrc = (struct Instance **)level1->ptrInstDefPtrArray; visInstSrc[0] != NULL; visInstSrc++)
 		{
 			struct Instance *inst = visInstSrc[0];
+			if (inst == NULL) continue;
 			struct InstDef *instDef = inst->instDef;
 
 			// if on adv hub

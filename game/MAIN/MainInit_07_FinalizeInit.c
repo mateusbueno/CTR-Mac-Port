@@ -220,26 +220,32 @@ void MainInit_FinalizeInit(struct GameTracker *gGT)
         }
 
         if (lev1 != NULL)
+        {
                 if (lev1->ptr_mesh_info != NULL)
                         LevInstDef_UnPack(lev1->ptr_mesh_info);
+        }
 
         MainInit_VisMem(gGT);
 
         MainInit_RainBuffer(gGT);
 
-        // animates water, 1P mode
-        AnimateWater1P(gGT->timer, lev1->numWaterVertices, lev1->ptr_water, lev1->ptr_tex_waterEnvMap, lev1->unk5);
+        if (lev1 != NULL)
+        {
+                // animates water, 1P mode
+                AnimateWater1P(gGT->timer, lev1->numWaterVertices, lev1->ptr_water, lev1->ptr_tex_waterEnvMap, lev1->unk5);
+
+                numPlyr = gGT->numPlyrCurrGame;
+                if (numPlyr == 0) numPlyr = 1;
+
+                // stars
+                gGT->stars.numStars = (s16)(lev1->stars.numStars / numPlyr);
+                gGT->stars.spread = lev1->stars.spread;
+                gGT->stars.seed = lev1->stars.seed;
+                gGT->stars.distance = lev1->stars.distance;
+        }
 
         gGT->pushBuffer_UI.fadeFromBlack_desiredResult = 0x1000;
         gGT->pushBuffer_UI.fade_step = 0x200;
-
-        numPlyr = gGT->numPlyrCurrGame;
-
-        // stars
-        gGT->stars.numStars = (s16)(lev1->stars.numStars / numPlyr);
-        gGT->stars.spread = lev1->stars.spread;
-        gGT->stars.seed = lev1->stars.seed;
-        gGT->stars.distance = lev1->stars.distance;
 
         // confetti
         gGT->confetti.numParticles_curr = 0;
