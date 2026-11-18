@@ -3,7 +3,7 @@
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x800ac638-0x800ac6b4.
 void RB_Potion_OnShatter_TeethSearch(struct Instance *inst)
 {
-#define SPS ((struct ScratchpadStruct *)0x1f800108)
+#define SPS CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108)
 
 	SPS->Input1.pos[0] = (s16)inst->matrix.t[0];
 	SPS->Input1.pos[1] = (s16)inst->matrix.t[1];

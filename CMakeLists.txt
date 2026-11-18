@@ -4,12 +4,13 @@ project(CTR-Native C)
 set(CMAKE_C_STANDARD 99)
 set(CTR_NATIVE_VERSION "0.1.0-beta.3")
 
-if(NOT CMAKE_C_COMPILER_TARGET MATCHES "i.86" AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
-    set(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "-m32 ${CMAKE_EXE_LINKER_FLAGS}")
+if(NOT APPLE)
+    if(NOT CMAKE_C_COMPILER_TARGET MATCHES "i.86" AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
+        set(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "-m32 ${CMAKE_EXE_LINKER_FLAGS}")
+    endif()
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
-
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc ${CMAKE_EXE_LINKER_FLAGS}")
 
 if(CMAKE_CROSSCOMPILING)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
@@ -49,7 +50,10 @@ set(GAME_INCLUDES
     ${CMAKE_SOURCE_DIR}/include
 )
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -Wno-error -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -g")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|amd64")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse")
+endif()
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -g")
 
 # SDL3
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
@@ -91,6 +95,22 @@ if(WIN32)
     set(SDL_UDEV OFF CACHE BOOL "" FORCE)
     set(SDL_RPI OFF CACHE BOOL "" FORCE)
     set(SDL_KMSDRM OFF CACHE BOOL "" FORCE)
+elseif(APPLE)
+    set(SDL_COCOA ON CACHE BOOL "" FORCE)
+    set(SDL_METAL OFF CACHE BOOL "" FORCE)
+    set(SDL_OPENGL ON CACHE BOOL "" FORCE)
+    set(SDL_AUDIO ON CACHE BOOL "" FORCE)
+    set(SDL_JOYSTICK ON CACHE BOOL "" FORCE)
+    set(SDL_HAPTIC ON CACHE BOOL "" FORCE)
+    set(SDL_ALSA OFF CACHE BOOL "" FORCE)
+    set(SDL_PULSEAUDIO OFF CACHE BOOL "" FORCE)
+    set(SDL_PIPEWIRE OFF CACHE BOOL "" FORCE)
+    set(SDL_JACK OFF CACHE BOOL "" FORCE)
+    set(SDL_X11 OFF CACHE BOOL "" FORCE)
+    set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
+    set(SDL_DBUS OFF CACHE BOOL "" FORCE)
+    set(SDL_UDEV OFF CACHE BOOL "" FORCE)
+    set(SDL_FRAMEWORK OFF CACHE BOOL "" FORCE)
 endif()
 add_subdirectory(externals/SDL)
 
@@ -142,6 +162,26 @@ target_include_directories(ctr_native PRIVATE externals/enet/include)
 if(WIN32)
     target_link_options(ctr_native PRIVATE -static -static-libgcc -Wl,--image-base,0x400000 -Wl,--disable-dynamicbase -Wl,--disable-reloc-section)
     target_link_libraries(ctr_native ws2_32 iphlpapi)
+elseif(APPLE)
+    find_library(OPENGL_FRAMEWORK OpenGL REQUIRED)
+    find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
+    find_library(IOKIT_FRAMEWORK IOKit REQUIRED)
+    find_library(COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
+    find_library(COREHAPTICS_FRAMEWORK CoreHaptics)
+    find_library(GAMECONTROLLER_FRAMEWORK GameController)
+    find_library(FORCEFEEDBACK_FRAMEWORK ForceFeedback)
+    find_library(CARBON_FRAMEWORK Carbon)
+    target_link_libraries(ctr_native
+        ${OPENGL_FRAMEWORK}
+        ${COCOA_FRAMEWORK}
+        ${IOKIT_FRAMEWORK}
+        ${COREAUDIO_FRAMEWORK}
+        $<$<BOOL:${COREHAPTICS_FRAMEWORK}>:${COREHAPTICS_FRAMEWORK}>
+        $<$<BOOL:${GAMECONTROLLER_FRAMEWORK}>:${GAMECONTROLLER_FRAMEWORK}>
+        $<$<BOOL:${FORCEFEEDBACK_FRAMEWORK}>:${FORCEFEEDBACK_FRAMEWORK}>
+        $<$<BOOL:${CARBON_FRAMEWORK}>:${CARBON_FRAMEWORK}>
+    )
+    target_link_options(ctr_native PRIVATE -Wl,-flat_namespace)
 else()
     target_link_options(ctr_native PRIVATE -static-libgcc -Wl,--image-base,0x400000 -no-pie -Wl,--allow-multiple-definition)
 endif()
@@ -153,6 +193,8 @@ target_link_libraries(ctr_server enet)
 target_compile_options(ctr_server PRIVATE -O2 -g)
 if(WIN32)
     target_link_options(ctr_server PRIVATE -static -static-libgcc)
+elseif(APPLE)
+    # Default Mach-O dynamic linking
 else()
     target_link_options(ctr_server PRIVATE -static-libgcc)
 endif()

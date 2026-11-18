@@ -41,7 +41,7 @@ void UI_VsQuipDrawAll(void)
 		else
 		{
 			// Add two strings together
-			sprintf(0x1f800000,
+			sprintf(CTR_SCRATCHPAD_PTR(char, 0),
 
 			        // Contains '%s' format:
 			        // Original end-of-race comment
@@ -53,7 +53,7 @@ void UI_VsQuipDrawAll(void)
 			        sdata->lngStrings[data.MetaDataCharacters[d->EndOfRaceComment_characterID].name_LNG_long]);
 
 			// Overwrite the stack pointer to print
-			print = 0x1f800000;
+			print = CTR_SCRATCHPAD_PTR(char, 0);
 		}
 
 		// get current player's pushBuffer

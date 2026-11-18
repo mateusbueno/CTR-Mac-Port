@@ -12,5 +12,5 @@ void MainDB_OTMem(struct OTMem *otMem, u32 size)
 	otMem->start = pvVar1;
 
 	alignedSize = (size >> 2) << 2;
-	otMem->end = (void *)((int)pvVar1 + alignedSize);
+	otMem->end = (void *)((uintptr_t)pvVar1 + alignedSize);
 }

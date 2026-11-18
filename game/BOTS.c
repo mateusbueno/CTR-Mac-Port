@@ -460,7 +460,7 @@ void BOTS_LevInstColl(struct Thread *param_1)
 	s16 currPos[6];
 	s16 prevPos[3];
 	struct Driver *d = (struct Driver *)param_1->object;
-	struct ScratchpadStruct *sps = (struct ScratchpadStruct *)0x1f800108;
+	struct ScratchpadStruct *sps = CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108);
 
 	// scratchpad stuff
 	sps->ptr_mesh_info = sdata->gGT->level1->ptr_mesh_info;

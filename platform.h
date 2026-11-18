@@ -1,6 +1,10 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include <stdint.h>
+
+extern uintptr_t g_gpuArenaBase;
+
 struct PlatformMempackArena
 {
 	void *base;

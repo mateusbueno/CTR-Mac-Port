@@ -134,6 +134,38 @@ int NativeAssets_Init(const char *executableBasePath)
                 }
         }
 
+#if defined(__APPLE__)
+        /* Check macOS App Bundle Contents/Resources */
+        {
+                char resourcesDir[NATIVE_ASSETS_PATH_MAX];
+                if (NativePath_Join(resourcesDir, sizeof(resourcesDir), exeDir, NATIVE_STR8_LIT("../Resources")))
+                {
+                        NativeStr8 resStr = NativeStr8_FromCString(resourcesDir);
+                        if (NativeAssets_BaseHasRequiredFile(resStr))
+                        {
+                                BFDBG_PRINTF("Assets: Init — found assets in bundle Resources: %s", resourcesDir);
+                                return NativeAssets_SetBaseDir(resStr);
+                        }
+                }
+        }
+
+        /* Check macOS Application Support: ~/Library/Application Support/CTR-Native */
+        {
+                const char *home = getenv("HOME");
+                if (home && home[0])
+                {
+                        char appSupportBase[NATIVE_ASSETS_PATH_MAX];
+                        snprintf(appSupportBase, sizeof(appSupportBase), "%s/Library/Application Support/CTR-Native", home);
+                        NativeStr8 appSupStr = NativeStr8_FromCString(appSupportBase);
+                        if (NativeAssets_BaseHasRequiredFile(appSupStr))
+                        {
+                                BFDBG_PRINTF("Assets: Init — found assets in Application Support: %s", appSupportBase);
+                                return NativeAssets_SetBaseDir(appSupStr);
+                        }
+                }
+        }
+#endif
+
         BFDBG_PRINTF_ERR("Assets: Init — no assets found, falling back to exe dir");
         return NativeAssets_SetBaseDir(exeDir);
 }

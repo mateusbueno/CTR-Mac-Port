@@ -852,13 +852,13 @@ void RenderAllLevelGeometry(struct GameTracker *gGT, struct Level *level1, struc
                 {
                         // relationship between near-clip and far-clip,
                         // for each RenderList LOD set in the level
-                        *(int *)0x1f800014 = 0x1e00;
-                        *(int *)0x1f800018 = 0x640;
-                        *(int *)0x1f80001c = 0x640;
-                        *(int *)0x1f800020 = 0x500;
-                        *(int *)0x1f800024 = 0x280;
-                        *(int *)0x1f800028 = 0x140;
-                        *(int *)0x1f80002c = 0x640 + 0x140;
+                        *CTR_SCRATCHPAD_PTR(int, 0x14) = 0x1e00;
+                        *CTR_SCRATCHPAD_PTR(int, 0x18) = 0x640;
+                        *CTR_SCRATCHPAD_PTR(int, 0x1c) = 0x640;
+                        *CTR_SCRATCHPAD_PTR(int, 0x20) = 0x500;
+                        *CTR_SCRATCHPAD_PTR(int, 0x24) = 0x280;
+                        *CTR_SCRATCHPAD_PTR(int, 0x28) = 0x140;
+                        *CTR_SCRATCHPAD_PTR(int, 0x2c) = 0x640 + 0x140;
                 }
 
                 // every non-cutscene,
@@ -869,22 +869,22 @@ void RenderAllLevelGeometry(struct GameTracker *gGT, struct Level *level1, struc
                         distToScreen = pushBuffer->distanceToScreen_PREV;
 
                         // int and u32 have specific purposes
-                        *(u32 *)0x1f800014 = distToScreen * 0x2080;
-                        if (*(int *)0x1f800014 < 0)
-                                *(int *)0x1f800014 = *(int *)0x1f800014 + 0xff;
-                        *(int *)0x1f800014 = *(int *)0x1f800014 >> 8; // 0x3921
+                        *CTR_SCRATCHPAD_PTR(u32, 0x14) = distToScreen * 0x2080;
+                        if (*CTR_SCRATCHPAD_PTR(int, 0x14) < 0)
+                                *CTR_SCRATCHPAD_PTR(int, 0x14) = *CTR_SCRATCHPAD_PTR(int, 0x14) + 0xff;
+                        *CTR_SCRATCHPAD_PTR(int, 0x14) = *CTR_SCRATCHPAD_PTR(int, 0x14) >> 8; // 0x3921
 
-                        *(int *)0x1f800018 = distToScreen * 0x1a;        // 0x2DB4
-                        *(int *)0x1f80001c = distToScreen * 0x18;        // 0x2A30
-                        *(int *)0x1f800020 = distToScreen * 0xc;         // 0x1518
-                        *(int *)0x1f800024 = distToScreen * 7;           // 0xC4E
-                        *(int *)0x1f80002c = *(int *)0x1f800018 + 0x140; // 0x2EF4
+                        *CTR_SCRATCHPAD_PTR(int, 0x18) = distToScreen * 0x1a;        // 0x2DB4
+                        *CTR_SCRATCHPAD_PTR(int, 0x1c) = distToScreen * 0x18;        // 0x2A30
+                        *CTR_SCRATCHPAD_PTR(int, 0x20) = distToScreen * 0xc;         // 0x1518
+                        *CTR_SCRATCHPAD_PTR(int, 0x24) = distToScreen * 7;           // 0xC4E
+                        *CTR_SCRATCHPAD_PTR(int, 0x2c) = *CTR_SCRATCHPAD_PTR(int, 0x18) + 0x140; // 0x2EF4
 
                         // int and u32 have specific purposes
-                        *(u32 *)0x1f800028 = distToScreen * 0x380;
-                        if (*(int *)0x1f800028 < 0)
-                                *(int *)0x1f800028 = *(int *)0x1f800028 + 0xff;
-                        *(int *)0x1f800028 = *(int *)0x1f800028 >> 8; // 0x627
+                        *CTR_SCRATCHPAD_PTR(u32, 0x28) = distToScreen * 0x380;
+                        if (*CTR_SCRATCHPAD_PTR(int, 0x28) < 0)
+                                *CTR_SCRATCHPAD_PTR(int, 0x28) = *CTR_SCRATCHPAD_PTR(int, 0x28) + 0xff;
+                        *CTR_SCRATCHPAD_PTR(int, 0x28) = *CTR_SCRATCHPAD_PTR(int, 0x28) >> 8; // 0x627
                 }
 
                 RenderLists_PreInit();

@@ -1617,7 +1617,7 @@ struct Data
 	// 80082788 -- JpnTrial
 	// 80083b74 -- EurRetail
 	// 80086b1c -- JpnRetail
-	int voiceSetPtr[0x10];
+	uintptr_t voiceSetPtr[0x10];
 
 	// 800838dc -- UsaRetail
 	u8 voiceID[0x18];
@@ -3265,7 +3265,7 @@ struct sData
 	// 8008c3d0 JpnTrial
 	// 8008d814 EurRetail
 	// 80090884 JpnRetail
-	int ptrToMemcardBuffer1;
+	uintptr_t ptrToMemcardBuffer1;
 
 	// 8008b8d0 Sep3
 	// 8008d474 UsaRetail

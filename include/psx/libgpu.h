@@ -127,11 +127,23 @@ extern int (*GPU_printf)(const char *fmt, ...);
  * Primitive Handling Macros
  */
 
+#if defined(__LP64__)
+extern uintptr_t g_gpuArenaBase;
+
+static inline void CtrGpu_SetAddr(void *p, uintptr_t addr);
+static inline void *CtrGpu_NextPrim(const void *p);
+
+#define isendprim(p)            ((((P_TAG *)(p))->addr) == 0xffffff)
+#define nextPrim(p)             CtrGpu_NextPrim(p)
+#define setaddr(p, _addr)       CtrGpu_SetAddr((p), (uintptr_t)(_addr))
+#define getaddr(p)              (u_int)(((P_TAG *)(p))->addr)
+#else
 #define isendprim(p)            ((((P_TAG *)(p))->addr) == 0xffffff)
 #define nextPrim(p)             (void *)(uintptr_t)(((P_TAG *)(p))->addr)
 
 #define setaddr(p, _addr)       (((P_TAG *)(p))->addr = (u_int)((uintptr_t)(_addr) & 0xffffffu))
 #define getaddr(p)              (u_int)(((P_TAG *)(p))->addr)
+#endif
 
 #define setlen(p, _len)         (((P_TAG *)(p))->len = (u_char)(_len))
 #define setcode(p, _code)       (((P_TAG *)(p))->code = (u_char)(_code))
@@ -244,6 +256,34 @@ typedef struct
 	DECLARE_P_ADDR_PTAG
 	u_char pad0, pad1, pad2, code;
 } P_TAG;
+
+#if defined(__LP64__)
+static inline void CtrGpu_SetAddr(void *p, uintptr_t addr)
+{
+	if (addr == 0 || addr == (uintptr_t)0xffffffu)
+	{
+		((P_TAG *)(p))->addr = 0xffffffu;
+	}
+	else if (addr <= (uintptr_t)0xffffffu)
+	{
+		((P_TAG *)(p))->addr = (u_int)addr;
+	}
+	else
+	{
+		((P_TAG *)(p))->addr = (u_int)(addr - g_gpuArenaBase);
+	}
+}
+
+static inline void *CtrGpu_NextPrim(const void *p)
+{
+	if (!p)
+		return NULL;
+	u_int addr = ((const P_TAG *)(p))->addr;
+	if (addr == 0xffffffu)
+		return NULL;
+	return (void *)(g_gpuArenaBase + addr);
+}
+#endif
 
 typedef struct
 {

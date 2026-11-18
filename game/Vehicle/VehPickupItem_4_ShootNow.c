@@ -306,7 +306,7 @@ void VehPickupItem_ShootNow(struct Driver *d, int weaponID, int flags)
 		pos2[1] = weaponInst->matrix.t[1] + 64;
 		pos2[2] = weaponInst->matrix.t[2];
 
-		struct ScratchpadStruct *sps = (struct ScratchpadStruct *)0x1f800108;
+		struct ScratchpadStruct *sps = CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108);
 
 		sps->Union.QuadBlockColl.qbFlagsWanted = 0x1000;
 		sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
@@ -346,7 +346,7 @@ void VehPickupItem_ShootNow(struct Driver *d, int weaponID, int flags)
 
 		RB_MakeInstanceReflective(sps, weaponInst);
 
-		s16 *rotPtr = (s16 *)0x1f800178;
+		s16 *rotPtr = CTR_SCRATCHPAD_PTR(s16, 0x178);
 
 		if (sps->boolDidTouchQuadblock == 0)
 		{

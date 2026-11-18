@@ -16,7 +16,7 @@ void RB_Potion_ThTick_InAir(struct Thread *t)
 	struct BSP *bspHitbox;
 	struct InstDef *instDef;
 
-#define SPS ((struct ScratchpadStruct *)0x1f800108)
+#define SPS CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108)
 
 	gGT = sdata->gGT;
 	inst = t->inst;

@@ -212,7 +212,7 @@ LAB_800aede0:
 
 LAB_800aede8:
 
-#define SPS ((struct ScratchpadStruct *)0x1f800108)
+#define SPS CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108)
 
 	SPS->Input1.pos[0] = inst->instDef->pos[0];
 	SPS->Input1.pos[1] = inst->instDef->pos[1];

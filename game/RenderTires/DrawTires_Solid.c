@@ -614,8 +614,10 @@ static void DrawTiresSolid_LinkPrimitive(struct DrawTiresSolidScratch *scratch, 
 		selectedOTSlot = otRangeEnd;
 
 	otSlot = (u_long *)(uintptr_t)selectedOTSlot;
-	p->tag = *otSlot | 0x09000000;
-#ifdef CTR_NATIVE
+	p->tag = (*otSlot & 0x00ffffffu) | 0x09000000;
+#if defined(__LP64__)
+	CtrGpu_LinkPrimToOT(otSlot, p);
+#elif defined(CTR_NATIVE)
 	// NOTE(aalhendi): PSX-backfeed blocker: retail stores a 24-bit primitive
 	// address in the OT tag. ctr-native's PC renderer uses full 32-bit host
 	// pointers like addPolyFT4/AddPrim, so only the native write is widened.

@@ -8,12 +8,12 @@ void MainDB_PrimMem(struct PrimMem *primMem, u32 size)
 
 	pvVar1 = MEMPACK_AllocMem(size);
 	primMem->size = size;
-	primMem->unk2 = (int)pvVar1;
+	primMem->unk2 = (int)(uintptr_t)pvVar1;
 	primMem->curr = pvVar1;
 	primMem->start = pvVar1;
 
 	alignedSize = (size >> 2) << 2;
-	pvVar1 = (void *)((int)pvVar1 + alignedSize);
+	pvVar1 = (void *)((uintptr_t)pvVar1 + alignedSize);
 	primMem->end = pvVar1;
-	primMem->endMin100 = (void *)((int)pvVar1 - 0x100);
+	primMem->endMin100 = (void *)((uintptr_t)pvVar1 - 0x100);
 }

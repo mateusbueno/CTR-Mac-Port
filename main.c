@@ -37,9 +37,12 @@
 #include "platform/native_mods.h"
 #include "platform/native_netplay.h"
 
+#if !defined(__GNUC__) || defined(__LP64__)
+#undef _Static_assert
+#define _Static_assert(...)
 #ifndef __GNUC__
-#define _Static_assert(x)
 #define __attribute__(x)
+#endif
 #endif
 
 #define RECT RECT16

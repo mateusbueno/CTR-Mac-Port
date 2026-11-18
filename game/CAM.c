@@ -791,7 +791,7 @@ static void CAM_FollowDriver_AngleAxis_TransformOffset(const s16 *offset, VECTOR
         gte_stlvnl(out);
 }
 
-void CAM_FollowDriver_AngleAxis(struct CameraDC *cDC, struct Driver *d, int scratchpad, s16 *pushBufferPos, s16 *pushBufferRot)
+void CAM_FollowDriver_AngleAxis(struct CameraDC *cDC, struct Driver *d, uintptr_t scratchpad, s16 *pushBufferPos, s16 *pushBufferRot)
 {
         MATRIX *axisMatrix = (MATRIX *)(scratchpad + 0x220);
         VECTOR *eye = (VECTOR *)(scratchpad + 0x240);
@@ -1031,7 +1031,7 @@ u32 CAM_FollowDriver_TrackPath(struct CameraDC *cDC, s16 *pos, int speed, int up
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80019e7c-0x80019f58
-void CAM_LookAtPosition(int scratchpad, int *positions, s16 *desiredPos, s16 *desiredRot)
+void CAM_LookAtPosition(uintptr_t scratchpad, int *positions, s16 *desiredPos, s16 *desiredRot)
 {
         int dirX = desiredPos[0] - (positions[0] >> 8);
         int dirY = desiredPos[1] - ((positions[1] >> 8) + data.Spin360_heightOffset_driverPos[sdata->gGT->numPlyrCurrGame]);
@@ -1053,7 +1053,7 @@ void CAM_LookAtPosition(int scratchpad, int *positions, s16 *desiredPos, s16 *de
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80019f58-0x8001a054
-void CAM_FollowDriver_Spin360(struct CameraDC *cDC, int param_2, struct Driver *d, s16 *desiredPos, s16 *desiredRot)
+void CAM_FollowDriver_Spin360(struct CameraDC *cDC, uintptr_t param_2, struct Driver *d, s16 *desiredPos, s16 *desiredRot)
 {
         int ratio;
 
@@ -1108,7 +1108,7 @@ void CAM_SetDesiredPosRot(struct CameraDC *cDC, s16 *pos, s16 *rot)
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8001a0bc-0x8001b254.
-void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBuffer, int scratchpad, struct ZoomData *zoom)
+void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBuffer, uintptr_t scratchpad, struct ZoomData *zoom)
 {
         struct PushBuffer *pb = (struct PushBuffer *)pushBuffer;
         struct GameTracker *gGT = sdata->gGT;
@@ -1857,7 +1857,7 @@ void CAM_ThTick(struct Thread *t)
         int iVar25;
 
         struct GameTracker *gGT = sdata->gGT;
-        scratchpad = (s16 *)0x1f800108;
+        scratchpad = CTR_SCRATCHPAD_PTR(s16, 0x108);
         cDC = (struct CameraDC *)t->inst;
         d = cDC->driverToFollow;
         pb = cDC->pushBuffer;
@@ -2092,7 +2092,7 @@ SkipNewCameraEOR:
                         if (sVar6 == 4)
                         {
                         LAB_8001c11c:
-                                CAM_LookAtPosition((int)scratchpad, (int *)&d->posCurr.x, &pb->pos[0], &pb->rot[0]);
+                                CAM_LookAtPosition((uintptr_t)scratchpad, (int *)&d->posCurr.x, &pb->pos[0], &pb->rot[0]);
                                 psVar21 = scratchpad;
                         LAB_8001c128:
                                 scratchpad = psVar21;
@@ -2102,7 +2102,7 @@ SkipNewCameraEOR:
                                 psVar21 = scratchpad;
                                 if (sVar6 == 10)
                                 {
-                                        CAM_FollowDriver_Spin360(cDC, (int)0x1f800108, d, (s16 *)pb->pos, (s16 *)pb->rot);
+                                        CAM_FollowDriver_Spin360(cDC, (uintptr_t)CTR_SCRATCHPAD_PTR(void, 0x108), d, (s16 *)pb->pos, (s16 *)pb->rot);
                                         goto LAB_8001c128;
                                 }
                                 if (sVar6 != 0xb)
@@ -2194,7 +2194,7 @@ SkipNewCameraEOR:
                                                 pb->rot[1] = 0;
                                                 pb->rot[2] = 0;
                                                 pb->rot[0] = sVar6 + 0x400;
-                                                psVar21 = (s16 *)0x1f800108;
+                                                psVar21 = CTR_SCRATCHPAD_PTR(s16, 0x108);
                                                 if ((cDC->flags & 0x40) != 0)
                                                 {
                                                         pb->rot[1] = d->angle + 0x800;
@@ -2223,7 +2223,7 @@ SkipNewCameraEOR:
                                                                 {
                                                                         cDC->flags = cDC->flags | 9;
                                                                 }
-                                                                CAM_FollowDriver_AngleAxis(cDC, d, (int)0x1f800108, pb->pos, pb->rot);
+                                                                CAM_FollowDriver_AngleAxis(cDC, d, (uintptr_t)CTR_SCRATCHPAD_PTR(void, 0x108), pb->pos, pb->rot);
                                                         }
                                                         else
                                                         {
@@ -2231,36 +2231,36 @@ SkipNewCameraEOR:
                                                                 {
                                                                         cDC->flags = cDC->flags | 9;
                                                                 }
-                                                                CAM_FollowDriver_Normal(cDC, d, pb->pos, 0x1f800108, (s16 *)ptrZoomData);
+                                                                CAM_FollowDriver_Normal(cDC, d, pb->pos, (uintptr_t)CTR_SCRATCHPAD_PTR(void, 0x108), (s16 *)ptrZoomData);
                                                         }
                                                         cDC->driver5B0_prevFrame = d->botData.botFlags;
                                                         goto LAB_8001c150;
                                                 }
-                                                if ((cDC->cameraMode == 9) || (psVar21 = (s16 *)0x1f800108, cDC->cameraMode == 0xd))
+                                                if ((cDC->cameraMode == 9) || (psVar21 = CTR_SCRATCHPAD_PTR(s16, 0x108), cDC->cameraMode == 0xd))
                                                 {
                                                         if ((gGT->level1->cnt_restart_points != 0) && ((gGT->gameMode1 & 0xf) == 0))
                                                         {
-                                                                uVar9 = CAM_FollowDriver_TrackPath(cDC, (s16 *)0x1f800390, *(s16 *)&cDC->unk_b0[0], 1);
+                                                                uVar9 = CAM_FollowDriver_TrackPath(cDC, CTR_SCRATCHPAD_PTR(s16, 0x390), *(s16 *)&cDC->unk_b0[0], 1);
 
                                                                 iVar7 = -0xc0;
                                                                 if (-1 < *(s16 *)&cDC->unk_b0[0])
                                                                         iVar7 = 0xc0;
 
-                                                                uVar10 = CAM_FollowDriver_TrackPath(cDC, (s16 *)0x1f800398, iVar7, 0);
+                                                                uVar10 = CAM_FollowDriver_TrackPath(cDC, CTR_SCRATCHPAD_PTR(s16, 0x398), iVar7, 0);
 
                                                                 // interpolate two rotations
 
                                                                 iVar8 = ((int)(((uVar10 - uVar9) + 0x800U & 0xfff) - 0x800) >> 1);
-                                                                *(s16 *)0x1f800314 = 0x800;
-                                                                *(s16 *)0x1f800316 = (s16)uVar9 + (s16)iVar8;
-                                                                *(s16 *)0x1f800318 = 0;
+                                                                *CTR_SCRATCHPAD_PTR(s16, 0x314) = 0x800;
+                                                                *CTR_SCRATCHPAD_PTR(s16, 0x316) = (s16)uVar9 + (s16)iVar8;
+                                                                *CTR_SCRATCHPAD_PTR(s16, 0x318) = 0;
 
                                                                 // interpolate two positions
-                                                                *(s16 *)0x1f800390 = (s16)((int)(*(s16 *)0x1f800390) + (int)(*(s16 *)0x1f800398) >> 1);
-                                                                *(s16 *)0x1f800392 = (s16)((int)(*(s16 *)0x1f800392) + (int)(*(s16 *)0x1f80039a) >> 1);
-                                                                *(s16 *)0x1f800394 = (s16)((int)(*(s16 *)0x1f800394) + (int)(*(s16 *)0x1f80039c) >> 1);
-                                                                ConvertRotToMatrix((MATRIX *)0x1f800328, (s16 *)0x1f800314);
-                                                                gte_SetRotMatrix((MATRIX *)0x1f800328);
+                                                                *CTR_SCRATCHPAD_PTR(s16, 0x390) = (s16)((int)(*CTR_SCRATCHPAD_PTR(s16, 0x390)) + (int)(*CTR_SCRATCHPAD_PTR(s16, 0x398)) >> 1);
+                                                                *CTR_SCRATCHPAD_PTR(s16, 0x392) = (s16)((int)(*CTR_SCRATCHPAD_PTR(s16, 0x392)) + (int)(*CTR_SCRATCHPAD_PTR(s16, 0x39a)) >> 1);
+                                                                *CTR_SCRATCHPAD_PTR(s16, 0x394) = (s16)((int)(*CTR_SCRATCHPAD_PTR(s16, 0x394)) + (int)(*CTR_SCRATCHPAD_PTR(s16, 0x39c)) >> 1);
+                                                                ConvertRotToMatrix(CTR_SCRATCHPAD_PTR(MATRIX, 0x328), CTR_SCRATCHPAD_PTR(s16, 0x314));
+                                                                gte_SetRotMatrix(CTR_SCRATCHPAD_PTR(MATRIX, 0x328));
                                                                 gte_ldv0((SVECTOR *)&cDC->transitionTo);
                                                                 gte_rtv0();
 
@@ -2285,9 +2285,9 @@ SkipNewCameraEOR:
                                         goto LAB_8001c128;
                                 }
 
-                                CAM_LookAtPosition((int)0x1f800108, (int *)&d->posCurr.x, &pb->pos[0], &pb->rot[0]);
+                                CAM_LookAtPosition((uintptr_t)CTR_SCRATCHPAD_PTR(void, 0x108), (int *)&d->posCurr.x, &pb->pos[0], &pb->rot[0]);
 
-                                iVar7 = SquareRoot0_stub((*(int *)0x1f800354) * (*(int *)0x1f800354) + (*(int *)0x1f80035c) * (*(int *)0x1f80035c));
+                                iVar7 = SquareRoot0_stub((*CTR_SCRATCHPAD_PTR(int, 0x354)) * (*CTR_SCRATCHPAD_PTR(int, 0x354)) + (*CTR_SCRATCHPAD_PTR(int, 0x35c)) * (*CTR_SCRATCHPAD_PTR(int, 0x35c)));
                                 iVar17 = (int)(cDC->transitionTo).pos[0];
                                 iVar24 = (iVar7 - (cDC->transitionTo).pos[1]) * iVar17;
                                 iVar8 = (int)(cDC->transitionTo).pos[2];
@@ -2315,16 +2315,16 @@ SkipNewCameraEOR:
                                 pb->distanceToScreen_PREV = pb->distanceToScreen_CURR + iVar7;
                         }
 
-                        *(int *)0x1f800348 = (int)pb->pos[0];
-                        *(int *)0x1f80034c = (int)pb->pos[1];
-                        *(int *)0x1f800350 = (int)pb->pos[2];
+                        *CTR_SCRATCHPAD_PTR(int, 0x348) = (int)pb->pos[0];
+                        *CTR_SCRATCHPAD_PTR(int, 0x34c) = (int)pb->pos[1];
+                        *CTR_SCRATCHPAD_PTR(int, 0x350) = (int)pb->pos[2];
 
-                        CAM_FindClosestQuadblock(scratchpad, cDC, d, (s16 *)((u32)scratchpad | 0x240));
+                        CAM_FindClosestQuadblock(scratchpad, cDC, d, CTR_SCRATCHPAD_PTR(s16, 0x348));
                         goto LAB_8001c150;
                 }
         }
 
-        CAM_FollowDriver_Normal(cDC, d, &pb->pos[0], 0x1f800108, (s16 *)ptrZoomData);
+        CAM_FollowDriver_Normal(cDC, d, &pb->pos[0], (uintptr_t)CTR_SCRATCHPAD_PTR(void, 0x108), (s16 *)ptrZoomData);
 
 LAB_8001c150:
         cDC->cameraModePrev = cDC->cameraMode;

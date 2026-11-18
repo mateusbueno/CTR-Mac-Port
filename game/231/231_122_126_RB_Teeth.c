@@ -91,7 +91,7 @@ void RB_Teeth_ThTick(struct Thread *t)
 	teeth = t->object;
 	inst = t->inst;
 
-#define SPS ((struct ScratchpadStruct *)0x1f800108)
+#define SPS CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108)
 
 	// if door is not moving
 	if (teeth->direction == 0)

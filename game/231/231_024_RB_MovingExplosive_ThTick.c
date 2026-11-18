@@ -275,7 +275,7 @@ tw->framesSeekMine--;
         posB[1] = inst->matrix.t[1] + 0x100;
         posB[2] = inst->matrix.t[2];
 
-        struct ScratchpadStruct *sps = (struct ScratchpadStruct *)0x1f800108;
+        struct ScratchpadStruct *sps = CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108);
 
         sps->Union.QuadBlockColl.searchFlags = 0x41;
         sps->Union.QuadBlockColl.qbFlagsWanted = 0x1040;

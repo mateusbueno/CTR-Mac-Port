@@ -1234,10 +1234,24 @@ int NativeMods_Init(void)
 static void NativeMods_SaveState(void)
 {
     char statePath[NATIVE_MODS_PATH_MAX];
-    if (!NativeAssets_BuildPathFromBase(NATIVE_MODS_STATE_FILE, statePath, sizeof(statePath)))
-        return;
+    FILE *f = NULL;
 
-    FILE *f = fopen(statePath, "w");
+    if (NativeAssets_BuildPathFromBase(NATIVE_MODS_STATE_FILE, statePath, sizeof(statePath)))
+        f = fopen(statePath, "w");
+
+#if defined(__APPLE__)
+    if (!f)
+    {
+        const char *home = getenv("HOME");
+        if (home && home[0])
+        {
+            char userStatePath[NATIVE_MODS_PATH_MAX];
+            snprintf(userStatePath, sizeof(userStatePath), "%s/Library/Application Support/CTR-Native/%s", home, NATIVE_MODS_STATE_FILE);
+            f = fopen(userStatePath, "w");
+        }
+    }
+#endif
+
     if (!f)
         return;
 
@@ -1250,10 +1264,24 @@ static void NativeMods_SaveState(void)
 static void NativeMods_LoadState(void)
 {
     char statePath[NATIVE_MODS_PATH_MAX];
-    if (!NativeAssets_BuildPathFromBase(NATIVE_MODS_STATE_FILE, statePath, sizeof(statePath)))
-        return;
+    FILE *f = NULL;
 
-    FILE *f = fopen(statePath, "r");
+    if (NativeAssets_BuildPathFromBase(NATIVE_MODS_STATE_FILE, statePath, sizeof(statePath)))
+        f = fopen(statePath, "r");
+
+#if defined(__APPLE__)
+    if (!f)
+    {
+        const char *home = getenv("HOME");
+        if (home && home[0])
+        {
+            char userStatePath[NATIVE_MODS_PATH_MAX];
+            snprintf(userStatePath, sizeof(userStatePath), "%s/Library/Application Support/CTR-Native/%s", home, NATIVE_MODS_STATE_FILE);
+            f = fopen(userStatePath, "r");
+        }
+    }
+#endif
+
     if (!f)
         return;
 
@@ -1295,16 +1323,10 @@ void NativeMods_Shutdown(void)
     s_mods.modCount = 0;
 }
 
-int NativeMods_ScanMods(void)
+static void NativeMods_ScanDirectory(const char *modsDir)
 {
-    char modsDir[NATIVE_MODS_PATH_MAX];
     DIR *dir;
     struct dirent *entry;
-
-    s_mods.modCount = 0;
-
-    if (!NativeAssets_BuildPathFromBase(NATIVE_MODS_DIR_NAME, modsDir, sizeof(modsDir)))
-        return 0;
 
     dir = opendir(modsDir);
     if (!dir)
@@ -1314,16 +1336,28 @@ int NativeMods_ScanMods(void)
         #else
         mkdir(modsDir, 0755);
         #endif
-        return 0;
+        return;
     }
 
     while ((entry = readdir(dir)) != NULL && s_mods.modCount < NATIVE_MODS_MAX_MODS)
     {
         char scriptPath[NATIVE_MODS_PATH_MAX];
         struct stat st;
-        int idx = s_mods.modCount;
 
         if (entry->d_name[0] == '.')
+            continue;
+
+        // Skip if mod already registered (earlier scan paths take priority)
+        int alreadyRegistered = 0;
+        for (int i = 0; i < s_mods.modCount; i++)
+        {
+            if (strcmp(s_mods.mods[i].name, entry->d_name) == 0)
+            {
+                alreadyRegistered = 1;
+                break;
+            }
+        }
+        if (alreadyRegistered)
             continue;
 
         int written = snprintf(scriptPath, sizeof(scriptPath), "%s/%s/%s", modsDir, entry->d_name, NATIVE_MODS_SCRIPT_NAME);
@@ -1333,6 +1367,7 @@ int NativeMods_ScanMods(void)
         if (stat(scriptPath, &st) != 0 || !S_ISREG(st.st_mode))
             continue;
 
+        int idx = s_mods.modCount;
         strncpy(s_mods.mods[idx].name, entry->d_name, sizeof(s_mods.mods[idx].name) - 1);
 
         written = snprintf(s_mods.mods[idx].path, sizeof(s_mods.mods[idx].path), "%s/%s", modsDir, entry->d_name);
@@ -1341,10 +1376,40 @@ int NativeMods_ScanMods(void)
 
         s_mods.mods[idx].enabled = 1;
         s_mods.modCount++;
-        fprintf(stdout, "[Mods] Found mod: %s\n", entry->d_name);
+        fprintf(stdout, "[Mods] Found mod: %s (at %s)\n", entry->d_name, modsDir);
     }
 
     closedir(dir);
+}
+
+int NativeMods_ScanMods(void)
+{
+    char modsDir[NATIVE_MODS_PATH_MAX];
+    s_mods.modCount = 0;
+
+    /* 1. Primary relative path: ./mods or exeBasePath/mods */
+    if (NativeAssets_BuildPathFromBase(NATIVE_MODS_DIR_NAME, modsDir, sizeof(modsDir)))
+    {
+        NativeMods_ScanDirectory(modsDir);
+    }
+
+#if defined(__APPLE__)
+    /* 2. macOS Application Support path: ~/Library/Application Support/CTR-Native/mods */
+    {
+        const char *home = getenv("HOME");
+        if (home && home[0])
+        {
+            char appSupportDir[NATIVE_MODS_PATH_MAX];
+            char userModsDir[NATIVE_MODS_PATH_MAX];
+            snprintf(appSupportDir, sizeof(appSupportDir), "%s/Library/Application Support/CTR-Native", home);
+            mkdir(appSupportDir, 0755);
+            snprintf(userModsDir, sizeof(userModsDir), "%s/Library/Application Support/CTR-Native/mods", home);
+            mkdir(userModsDir, 0755);
+
+            NativeMods_ScanDirectory(userModsDir);
+        }
+    }
+#endif
 
     /* Restore previously saved enabled/disabled states */
     NativeMods_LoadState();

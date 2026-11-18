@@ -5,7 +5,7 @@
 void MEMPACK_Init(int ramSize)
 {
 	struct Mempack *ptrMempack;
-	u32 startPtr;
+	uintptr_t startPtr;
 	u32 maxOverlayEnd;
 	int packSize;
 
@@ -13,15 +13,15 @@ void MEMPACK_Init(int ramSize)
 
 	const struct PlatformMempackArena *arena = Platform_InitMempackArena();
 
-	startPtr = (u32)arena->start;
+	startPtr = (uintptr_t)arena->start;
 	packSize = arena->size;
 
-	printf("[CTR] Where does memory starts? (%s) %08x\n", arena->lowAddressValid ? "GOOD" : "BAD", (u32)arena->base);
+	printf("[CTR] Where does memory starts? (%s) %p\n", arena->lowAddressValid ? "GOOD" : "BAD", (void *)arena->base);
 
 	MEMPACK_NewPack((void *)startPtr, packSize);
 	sdata->PtrMempack->endOfMemory = arena->endOfMemory;
 
-	printf("[CTR] MEMPACK native arena: start=%08x size=%08x end=%08x\n", startPtr, packSize, (u32)sdata->PtrMempack->endOfAllocator);
+	printf("[CTR] MEMPACK native arena: start=%p size=%08x end=%p\n", (void *)startPtr, packSize, (void *)sdata->PtrMempack->endOfAllocator);
 
 #else
 
@@ -59,7 +59,7 @@ void MEMPACK_SwapPacks(int index)
 void MEMPACK_NewPack(void *start, int size)
 {
 	struct Mempack *ptrMempack = sdata->PtrMempack;
-	void *end = (void *)((u32)start + size);
+	void *end = (void *)((uintptr_t)start + size);
 
 	ptrMempack->packSize = size;
 	ptrMempack->start = start;
@@ -76,14 +76,14 @@ int MEMPACK_GetFreeBytes()
 {
 	struct Mempack *ptrMempack = sdata->PtrMempack;
 
-	return (u32)ptrMempack->lastFreeByte - (u32)ptrMempack->firstFreeByte;
+	return (int)((uintptr_t)ptrMempack->lastFreeByte - (uintptr_t)ptrMempack->firstFreeByte);
 }
 
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8003e874-0x8003e8e8.
 void *MEMPACK_AllocMem(int allocSize)
 {
-	int firstFreeByte;
+	uintptr_t firstFreeByte;
 	int newAllocSize;
 	struct Mempack *ptrMempack = sdata->PtrMempack;
 
@@ -98,7 +98,7 @@ void *MEMPACK_AllocMem(int allocSize)
 	newAllocSize = (allocSize + 3) & 0xfffffffc;
 	ptrMempack->sizeOfPrevAllocation = newAllocSize;
 
-	firstFreeByte = (int)ptrMempack->firstFreeByte;
+	firstFreeByte = (uintptr_t)ptrMempack->firstFreeByte;
 	ptrMempack->firstFreeByte = (void *)(firstFreeByte + newAllocSize);
 
 	return (void *)firstFreeByte;
@@ -108,7 +108,7 @@ void *MEMPACK_AllocMem(int allocSize)
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8003e8e8-0x8003e938.
 void *MEMPACK_AllocHighMem(int allocSize)
 {
-	int newLastFreeByte;
+	uintptr_t newLastFreeByte;
 
 	while (MEMPACK_GetFreeBytes() < allocSize)
 	{
@@ -117,7 +117,7 @@ void *MEMPACK_AllocHighMem(int allocSize)
 	allocSize = (allocSize + 3) & 0xfffffffc;
 	sdata->PtrMempack->sizeOfPrevAllocation = allocSize;
 
-	newLastFreeByte = (int)sdata->PtrMempack->lastFreeByte - allocSize;
+	newLastFreeByte = (uintptr_t)sdata->PtrMempack->lastFreeByte - allocSize;
 	sdata->PtrMempack->lastFreeByte = (void *)newLastFreeByte;
 
 	return (void *)newLastFreeByte;
@@ -138,7 +138,7 @@ void *MEMPACK_ReallocMem(int allocSize)
 	struct Mempack *ptrMempack = sdata->PtrMempack;
 
 	newAllocSize = (allocSize + 3) & 0xfffffffc;
-	ptrMempack->firstFreeByte = (void *)((int)ptrMempack->firstFreeByte - ptrMempack->sizeOfPrevAllocation + newAllocSize);
+	ptrMempack->firstFreeByte = (void *)((uintptr_t)ptrMempack->firstFreeByte - ptrMempack->sizeOfPrevAllocation + newAllocSize);
 	ptrMempack->sizeOfPrevAllocation = newAllocSize;
 
 	return ptrMempack->firstFreeByte;

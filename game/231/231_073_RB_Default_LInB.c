@@ -4,7 +4,7 @@
 
 void RB_Default_LInB(struct Instance *inst)
 {
-	char *scratch = (char *)0x1f800000;
+	char *scratch = CTR_SCRATCHPAD_PTR(char, 0);
 
 	int var;
 

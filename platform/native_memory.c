@@ -52,44 +52,13 @@
 global_variable char s_mempackMemory[CTR_NATIVE_MEMPACK_BUFFER_SIZE];
 global_variable void *s_mempackFallback = NULL;
 global_variable struct PlatformMempackArena s_mempackArena;
+uint8_t g_scratchpadMemory[CTR_SCRATCHPAD_MAP_SIZE] __attribute__((aligned(64)));
+uintptr_t g_gpuArenaBase = 0;
 
 void Platform_InitScratchpad(void)
 {
 #if defined(CTR_NATIVE)
-        void *scratchpad = (void *)CTR_SCRATCHPAD_ADDR;
-        size_t scratchpadSize = CTR_SCRATCHPAD_MAP_SIZE;
-
-#if defined(_WIN32)
-        void *mapped = VirtualAlloc(scratchpad, scratchpadSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        if (mapped == NULL)
-        {
-                fprintf(stderr, "[CTR Native] Failed to map PS1 scratchpad at %p: GetLastError=%lu\n", scratchpad, GetLastError());
-                abort();
-        }
-#elif defined(__GNUC__)
-#ifdef MAP_FIXED_NOREPLACE
-        int fixedFlag = MAP_FIXED_NOREPLACE;
-#else
-        int fixedFlag = MAP_FIXED;
-#endif
-
-        void *mapped = mmap(scratchpad, scratchpadSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | fixedFlag, -1, 0);
-        if (mapped == MAP_FAILED)
-        {
-                fprintf(stderr, "[CTR Native] Failed to map PS1 scratchpad at %p: %s\n", scratchpad, strerror(errno));
-                abort();
-        }
-#else
-#error "Platform_InitScratchpad needs a fixed-address virtual-memory mapper for this platform"
-#endif
-
-        if (mapped != scratchpad)
-        {
-                fprintf(stderr, "[CTR Native] PS1 scratchpad mapped at %p, expected %p\n", mapped, scratchpad);
-                abort();
-        }
-
-        memset(mapped, 0, scratchpadSize);
+        memset(g_scratchpadMemory, 0, sizeof(g_scratchpadMemory));
 #endif
 }
 
@@ -98,8 +67,9 @@ internal void Platform_ConfigureMempackArena(void)
         char *base = &s_mempackMemory[0];
         size_t bufferSize = CTR_NATIVE_MEMPACK_BUFFER_SIZE;
 
+#if !defined(__LP64__)
         /* The GPU primitive links pack pointers into 24 bits, so all
-         * MEMPACK-allocated memory must live at addresses < 0x01000000.
+         * MEMPACK-allocated memory must live at addresses < 0x01000000 on 32-bit.
          *
          * The static buffer may start low (e.g. 0xb5edc0 in BSS) but
          * extend past 0x01000000 if it's 8MB. That's fine — we just
@@ -151,6 +121,7 @@ internal void Platform_ConfigureMempackArena(void)
                                 baseAddr, (unsigned)bufferSize, (unsigned)CTR_NATIVE_MEMPACK_BUFFER_SIZE);
                 }
         }
+#endif
 
         s_mempackArena.base = base;
         s_mempackArena.start = base + CTR_NATIVE_MEMPACK_START_OFFSET;
@@ -158,11 +129,16 @@ internal void Platform_ConfigureMempackArena(void)
         s_mempackArena.size = bufferSize - CTR_NATIVE_MEMPACK_START_OFFSET;
         s_mempackArena.backingSize = bufferSize;
 
+#if defined(__LP64__)
+        g_gpuArenaBase = (uintptr_t)base;
+        s_mempackArena.lowAddressValid = 1;
+#else
         /* lowAddressValid is true if ALL usable memory is < 0x01000000. */
         s_mempackArena.lowAddressValid =
             ((u32)(uintptr_t)s_mempackArena.base < 0x01000000) &&
             ((u32)(uintptr_t)s_mempackArena.start < 0x01000000) &&
             ((u32)(uintptr_t)s_mempackArena.endOfMemory <= 0x01000000);
+#endif
 }
 
 const struct PlatformMempackArena *Platform_InitMempackArena(void)

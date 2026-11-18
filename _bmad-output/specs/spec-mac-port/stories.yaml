@@ -1,0 +1,49 @@
+- id: "1"
+  title: Configure macOS Apple Silicon Build System and Toolchain
+  description: >-
+    Adapt CMakeLists.txt and create build_mac.sh for native 64-bit arm64 Apple Clang builds.
+    Remove 32-bit and GNU ld flags while linking macOS system frameworks dynamically with SDL3.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Ensure CMake properly targets Darwin arm64 without -m32 or -msse flags, and links Cocoa, IOKit, and OpenGL.
+
+- id: "2"
+  title: Decouple PS1 Scratchpad Memory from Fixed 0x1f800000 Virtual Address
+  description: >-
+    Allocate scratchpad storage as an engine-owned buffer instead of requiring fixed virtual mapping at 0x1f800000.
+    Refactor all raw literal 0x1f800... pointers across game/ to route through CTR_SCRATCHPAD_PTR.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Ensure Platform_InitScratchpad initializes an in-memory buffer and all game scratchpad accesses use CTR_SCRATCHPAD_PTR.
+
+- id: "3"
+  title: Implement 64-bit Compatible 24-bit GPU Primitive and Ordering Table Link Bridge
+  description: >-
+    Implement arena-relative offset encoding for 24-bit Ordering Table tags in CtrGpu_PrimToOTLink24.
+    Update nextPrim and ordering table traversals so 64-bit pointers resolve without truncation or overflow.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Maintain 24-bit OT tag compatibility while supporting pointers allocated in 64-bit memory space above 4GB.
+
+- id: "4"
+  title: Adapt SDL3 Platform Layer, Cocoa Windowing, Audio, Input, and Dual Mod Paths for macOS
+  description: >-
+    Verify OpenGL 3.3 Core Profile context, CoreAudio audio output, and macOS GameController input.
+    Extend mod scanning to load mods from both ./mods and ~/Library/Application Support/CTR-Native/mods.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Test SDL3 window creation and audio streaming on macOS; implement dual mod path scanning.
+
+- id: "5"
+  title: Package macOS Application Bundle (.app) and Verify Full Gameplay Parity
+  description: >-
+    Assemble a standalone CTR Native.app bundle with Info.plist alongside the build/ctr_native CLI binary.
+    Validate the complete gameplay loop with retail assets at 60 FPS across tracks.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Ensure both CLI and .app bundle are produced by the build, and verify title boot and race completion.

@@ -5,11 +5,11 @@ void RotateVector(SVec3 *out, const SVec3 *in)
 #ifndef CTR_NATIVE
 	gte_ldv0(in);
 	gte_rtv0();
-	gte_stlvnl(0x1f800000);
+	gte_stlvnl(CTR_SCRATCHPAD_PTR(void, 0));
 
-	out->x = *(s16 *)0x1f800000;
-	out->y = *(s16 *)0x1f800004;
-	out->z = *(s16 *)0x1f800008;
+	out->x = *CTR_SCRATCHPAD_PTR(s16, 0);
+	out->y = *CTR_SCRATCHPAD_PTR(s16, 4);
+	out->z = *CTR_SCRATCHPAD_PTR(s16, 8);
 #endif
 }
 

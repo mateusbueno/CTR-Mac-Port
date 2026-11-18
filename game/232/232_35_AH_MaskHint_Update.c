@@ -76,7 +76,7 @@ void AH_MaskHint_Update()
 			cdc->flags |= 8;
 
 			// Get pos and rot, then set them as desired
-			CAM_FollowDriver_AngleAxis(cdc, d, 0x1f800108, pos, rot);
+			CAM_FollowDriver_AngleAxis(cdc, d, (uintptr_t)CTR_SCRATCHPAD_PTR(void, 0x108), pos, rot);
 			CAM_SetDesiredPosRot(cdc, pos, rot);
 		}
 
