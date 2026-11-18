@@ -5,9 +5,9 @@ A native PC port of Crash Team Racing (PS1, 1999), built on top of the [CTR-ModS
 ## Philosophy
 
 - **No byte budget.** Game source lives in `game/` as our own copies. Edit freely.
-- **No PSX toolchain.** Targets Windows and Linux with SDL3. No MIPS compiler needed.
+- **No PSX toolchain.** Targets Windows, Linux, and macOS (Apple Silicon arm64) with SDL3. No MIPS compiler needed.
 - **Clean platform layer.** `main.c` owns process startup; host details stay in `platform/native_*`.
-- **No build system nonsense.** Just `build.bat` / `build.sh`.
+- **No build system nonsense.** Just `build.bat` / `build.sh` / `build_mac.sh`.
 - **Fully static build.** Single executable, zero dependencies. SDL3 is compiled from vendored source and linked statically.
 
 ## Directory Layout
@@ -20,14 +20,26 @@ ctr_native/
   game_includes.h     Ordered include chain for all game source files
   build.bat           Windows build (MinGW32)
   build.sh            Linux build
+  build_mac.sh        macOS Apple Silicon build (Clang arm64 + App Bundle)
   README.md           This file
-          game/               Our copies of all decompiled game source (943 files)
-          include/            Project headers (structs, globals, declarations)
-          externals/
-            SDL/              SDL3 source (static build)
+  game/               Our copies of all decompiled game source (943 files)
+  include/            Project headers (structs, globals, declarations)
+  externals/
+    SDL/              SDL3 source (static build)
 ```
 
 ## Prerequisites
+
+### macOS (Apple Silicon M-Series)
+
+1. Install Xcode Command Line Tools (if not already installed):
+   ```bash
+   xcode-select --install
+   ```
+2. Install CMake (via [Homebrew](https://brew.sh)):
+   ```bash
+   brew install cmake
+   ```
 
 ### Windows
 
@@ -49,15 +61,25 @@ sudo apt install libx11-dev libxext-dev libgl1-mesa-dev libasound2-dev libudev-d
 
 ## Building
 
-```
-build.bat            # Windows
+```bash
+# macOS (Apple Silicon M1/M2/M3/M4/M5, 64-bit arm64)
+chmod +x build_mac.sh
+./build_mac.sh
+
+# Windows (MinGW32)
+build.bat
+
+# Linux
 chmod +x build.sh
-./build.sh           # Linux
+./build.sh
 ```
 
 First build compiles SDL3 from source. This is cached as a static library in `build/` -- subsequent builds only recompile touched native sources.
 
-Output: `build/ctr_native.exe` (Windows) or `build/ctr_native` (Linux)
+Outputs:
+- **macOS:** `build/ctr_native` (CLI binary) and `build/CTR Native.app` (macOS Application Bundle)
+- **Windows:** `build/ctr_native.exe`
+- **Linux:** `build/ctr_native`
 
 ### Clean build
 
@@ -78,7 +100,21 @@ build.bat            # Rebuild everything
    - `XA/ENG/EXTRA/S00.XA` through `S05.XA`
    - `XA/ENG/GAME/S00.XA` through `S20.XA`
    - `XA/MUSIC/S00.XA` through `S01.XA`
-3. Run `build/ctr_native.exe`
+3. Run the game:
+   - **macOS:** Double click `build/CTR Native.app` or run `./build/ctr_native` in terminal
+   - **Windows:** Run `build/ctr_native.exe`
+   - **Linux:** Run `./build/ctr_native`
+
+On macOS, assets are automatically detected in any of these locations:
+- `./assets` (repository root or current working directory)
+- `build/CTR Native.app/Contents/Resources/assets` (inside the app bundle)
+- `~/Library/Application Support/CTR-Native/assets`
+
+### Mods on macOS
+
+Lua and file override mods are supported and scanned from both:
+- `./mods` (relative to the executable / repository)
+- `~/Library/Application Support/CTR-Native/mods`
 
 Packaged directory structure:
 ```
@@ -159,12 +195,16 @@ main.c (entrypoint)
 ```
 
 - `CTR_NATIVE` is defined for native host/platform-specific code
-- The build currently uses 32-bit mode because some native paths still pack host pointers into retail-shaped 24-bit GPU primitive links. See `docs/MEMORY_MODEL.md` for the roadmap to replace that with an explicit native GPU link bridge.
+- **64-bit Native Apple Silicon Port:** On macOS (`arm64`), the engine runs natively in 64-bit mode:
+  - **Arena-Relative GPU Link Bridge:** Solves the PS1 24-bit Ordering Table (OT) pointer constraint by encoding links as offsets relative to the 8 MiB MEMPACK arena (`g_gpuArenaBase`), resolving full 64-bit host pointers without memory corruption or truncation.
+  - **Decoupled PS1 Scratchpad:** Avoids Mach-O 4 GiB `__PAGEZERO` collision by routing scratchpad accesses through engine-managed host memory via `CTR_SCRATCHPAD_PTR`.
+  - **Modern macOS Frameworks:** Statically links SDL3 Cocoa windowing, OpenGL 3.3 Core Profile, CoreAudio sound streaming, and Apple GameController / HIDAPI gamepads (MFi, DualSense, DualShock 4, Xbox Series, Switch Pro).
 
 ## Roadmap
 
 - Clean up `game/` copies strip byte budget hacks and route platform-specific code through `CTR_NATIVE`
-- Replace low-address primitive-link assumptions with an explicit native GPU link bridge, remove the 32-bit constraint, and keep pruning inherited compatibility code now owned in `include/` and `platform/`.
+- Expand the 64-bit arena-relative GPU link bridge to Linux and Windows x86_64 builds.
+- Keep pruning inherited compatibility code now owned in `include/` and `platform/`.
 
 ## Credits
 
