@@ -79,7 +79,6 @@ union CsOpcodeArg
 {
 	int i;
 	u32 u;
-	char *ptr;
 };
 
 struct CsOpcodeMeta

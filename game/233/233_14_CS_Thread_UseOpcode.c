@@ -382,7 +382,7 @@ processOpcode:
 
 	case 1:
 		opcodeChanged = 1;
-		CS_ScriptCmd_OpcodeAt(cs, opcodeMeta->arg1.ptr);
+		CS_ScriptCmd_OpcodeAt(cs, (char *)(uintptr_t)opcodeMeta->arg1.u);
 		goto finishOpcodeStep;
 
 	case 2:
@@ -423,7 +423,7 @@ processOpcode:
 		if (opcodeMeta->arg0.i < (int)(iVar10 >> 2 & 0xff))
 			CS_ScriptCmd_OpcodeNext(cs);
 		else
-			CS_ScriptCmd_OpcodeAt(cs, opcodeMeta->arg1.ptr);
+			CS_ScriptCmd_OpcodeAt(cs, (char *)(uintptr_t)opcodeMeta->arg1.u);
 		opcodeChanged = 1;
 		goto finishOpcodeStep;
 
@@ -731,7 +731,7 @@ processOpcode:
 		{
 			if ((opcodeMeta->arg0.i != (int)gGarage.unusedArr_garageChars[sdata->advCharSelectIndex_curr]) || (gGarage.boolSelected == 0))
 			{
-				opcodeAt = opcodeMeta->arg1.ptr;
+				opcodeAt = (char *)(uintptr_t)opcodeMeta->arg1.u;
 			branchToGarageOpcode:
 				opcodeChanged = 1;
 				CS_ScriptCmd_OpcodeAt(cs, opcodeAt);
@@ -741,7 +741,7 @@ processOpcode:
 		{
 			if ((opcodeMeta->arg0.i == (int)gGarage.unusedArr_garageChars[sdata->advCharSelectIndex_curr]) && (gGarage.boolSelected == 1))
 			{
-				opcodeAt = opcodeMeta->arg1.ptr;
+				opcodeAt = (char *)(uintptr_t)opcodeMeta->arg1.u;
 				goto branchToGarageOpcode;
 			}
 		}
