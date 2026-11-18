@@ -23,7 +23,10 @@ void MM_Title_Init(void)
 	    (gGT->modelPtr[STATIC_RINGTOP] != 0) &&
 
 	    // IntroCam ptr exists
-	    (gGT->level1->ptrSpawnType1->count > 2))
+	    (gGT->level1 != NULL) &&
+	    (gGT->level1->ptrSpawnType1 != NULL) &&
+	    (gGT->level1->ptrSpawnType1->count > 3) &&
+	    (ST1_GETPOINTERS(gGT->level1->ptrSpawnType1)[ST1_CAMERA_PATH] != NULL))
 	{
 		// freecam mode
 		gGT->cameraDC[0].cameraMode = 3;
@@ -35,7 +38,7 @@ void MM_Title_Init(void)
 		// pointer to Intro Cam, to view Crash holding Trophy in main menu
 		D230.ptrIntroCam = pointers[ST1_CAMERA_PATH];
 
-		t = PROC_BirthWithObject(SIZE_RELATIVE_POOL_BUCKET(sizeof(struct Title), // 0x24
+		t = PROC_BirthWithObject(SIZE_RELATIVE_POOL_BUCKET(sizeof(struct Title),
 		                                                   NONE, MEDIUM, OTHER),
 		                         MM_Title_ThTick, 0, 0);
 
@@ -43,7 +46,7 @@ void MM_Title_Init(void)
 
 		D230.titleObj = title;
 
-		memset(title, 0, 0x24);
+		memset(title, 0, sizeof(struct Title));
 
 		title->t = t;
 

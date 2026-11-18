@@ -31,8 +31,11 @@ void BOTS_SetGlobalNavData(u16 index)
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80012440-0x80012560
 void BOTS_InitNavPath(struct GameTracker *gGT, s16 index)
 {
+	if ((u16)index >= 3)
+		return;
+
 	struct NavHeader *nh = 0;
-	struct NavHeader **LevNavTable = sdata->gGT->level1->LevNavTable;
+	struct NavHeader **LevNavTable = (sdata->gGT && sdata->gGT->level1) ? sdata->gGT->level1->LevNavTable : NULL;
 
 	if (LevNavTable != 0)
 	{

@@ -3,6 +3,9 @@
 // NOTE(aalhendi): ASM-verified against NTSC-U 926 overlay 230 0x800ac1f0-0x800ac350.
 void MM_Title_CameraMove(struct Title *title, int frameIndex)
 {
+	if (title == NULL || D230.ptrIntroCam == NULL)
+		return;
+
 	int result;
 	s16 *posRot;
 	struct GameTracker *gGT;

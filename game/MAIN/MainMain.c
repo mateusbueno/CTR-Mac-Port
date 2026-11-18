@@ -1076,6 +1076,7 @@ void StateZero()
                 // NOTE(aalhendi): Retail hardware interrupts keep XA/audio moving while
                 // this loop spins. Native owns VBlank in VSync(), so pump it here.
                 VSync(0);
+                Platform_PresentVRAMDisplay();
 #endif
                 CDSYS_XAPauseAtEnd();
         }

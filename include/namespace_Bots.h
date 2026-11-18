@@ -69,12 +69,20 @@ struct NavHeader
 	s16 rampPhys1[0x10]; // speedXZ? driver->0x5d4
 	s16 rampPhys2[0x10]; // speedY? driver->0x5d0
 
-	// 0x4C
-	// struct NavFrame frame[0];
+#if defined(__LP64__)
+	struct NavFrame *frame;
+#endif
 };
+
+#if defined(__LP64__)
+#define NAVHEADER_GETFRAME(x) (((x) && (x)->frame) ? (x)->frame : (struct NavFrame *)((uintptr_t)(x) + 0x4c))
+#else
 #define NAVHEADER_GETFRAME(x)    ((struct NavFrame *)((uintptr_t)x + sizeof(struct NavHeader)))
+#endif
 
 #define NAVFRAME_GETNEXTFRAME(x) (((struct NavFrame *)x) + 1)
 
 _Static_assert(sizeof(struct NavFrame) == 0x14);
+#if !defined(__LP64__)
 _Static_assert(sizeof(struct NavHeader) == 0x4c);
+#endif

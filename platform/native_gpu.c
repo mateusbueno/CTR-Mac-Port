@@ -1657,7 +1657,7 @@ int ParsePrimitive(P_TAG *polyTag)
 		{
 			primLength = 2;
 		}
-		else if (polyTag->len == 0 && *(u32 *)polyTag == 0)
+		else if (polyTag->len == 0)
 		{
 			// CTR ghost transparency packets include raw GPU NOP words between
 			// draw-mode changes and triangle commands. They consume exactly one

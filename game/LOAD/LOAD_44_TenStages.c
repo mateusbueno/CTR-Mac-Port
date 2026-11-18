@@ -158,6 +158,8 @@ static struct InstDef *s_nativeInstDefPtrArray[2][256];
 static struct SpawnType1 s_nativeSpawnType1[2];
 static struct SpawnType2 s_nativeSpawnType2[2][32];
 static struct SpawnType2 s_nativeSpawnType2_PosRot[2][32];
+static struct NavHeader s_nativeNavHeader[2][4];
+static struct NavHeader *s_nativeNavTable[2][4];
 
 struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
 {
@@ -440,7 +442,35 @@ struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
         memcpy(s_nativeLevel[s].splitLines, (const char *)rawFile + 0x184, sizeof(s_nativeLevel[s].splitLines));
 
         // 0x188: LevNavTable
-        s_nativeLevel[s].LevNavTable = (struct NavHeader **)LEV_PTR64(raw32[98]);
+        uint32_t pNavTable32 = raw32[98];
+        if (pNavTable32 != 0)
+        {
+                const uint32_t *rawNavTable = (const uint32_t *)LEV_PTR64(pNavTable32);
+                memset(s_nativeNavHeader[s], 0, sizeof(s_nativeNavHeader[s]));
+                memset(s_nativeNavTable[s], 0, sizeof(s_nativeNavTable[s]));
+                for (int i = 0; i < 3; i++)
+                {
+                        if (rawNavTable[i] != 0)
+                        {
+                                const char *rawHdr = (const char *)LEV_PTR64(rawNavTable[i]);
+                                s_nativeNavHeader[s][i].magicNumber = *(const s16 *)(rawHdr + 0);
+                                s_nativeNavHeader[s][i].numPoints = *(const s16 *)(rawHdr + 2);
+                                s_nativeNavHeader[s][i].posY_firstNode = *(const int *)(rawHdr + 4);
+                                s_nativeNavHeader[s][i].last = NULL;
+                                memcpy(s_nativeNavHeader[s][i].rampPhys1, rawHdr + 0x0c, sizeof(s_nativeNavHeader[s][i].rampPhys1));
+                                memcpy(s_nativeNavHeader[s][i].rampPhys2, rawHdr + 0x2c, sizeof(s_nativeNavHeader[s][i].rampPhys2));
+#if defined(__LP64__)
+                                s_nativeNavHeader[s][i].frame = (struct NavFrame *)(rawHdr + 0x4c);
+#endif
+                                s_nativeNavTable[s][i] = &s_nativeNavHeader[s][i];
+                        }
+                }
+                s_nativeLevel[s].LevNavTable = s_nativeNavTable[s];
+        }
+        else
+        {
+                s_nativeLevel[s].LevNavTable = NULL;
+        }
 
         // 0x18C: unk_18C
         s_nativeLevel[s].unk_18C = (int)raw32[99];
