@@ -2820,7 +2820,7 @@ struct sData
 	// 8008bfe0 - JpnTrial
 	// 8008d41c - EurRetail
 	// 80090490 - JpnRetail
-	int ptrMPK; // maybe is `void*` instead of `int`
+	void *ptrMPK;
 
 	// 8008d08c
 	// ptrLEV, stored here during loading,
@@ -3364,10 +3364,10 @@ struct sData
 	// 8008c40c JpnTrial
 	// 8008d858 EurRetail
 	// 800908cc JpnRetail
-	int ptrPushBufferUI;
+	struct PushBuffer *ptrPushBufferUI;
 
 	// 8008d4b8
-	int ptrFruitDisp; // should maybe be `struct Instance*` instead of `int`?
+	struct Instance *ptrFruitDisp;
 
 	// 8008d4bc
 	int menuReadyToPass;
@@ -3846,7 +3846,7 @@ struct sData
 	struct EngineFX *howl_metaEngineFX;
 
 	// 8008d7d4
-	int howl_endOfHowl;
+	uintptr_t howl_endOfHowl;
 
 	// 8008d7d8
 	struct OtherFX *howl_metaOtherFX;

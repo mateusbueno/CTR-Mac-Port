@@ -108,7 +108,7 @@ struct DramPointerMap
 
 #define DRAM_SET_PATCHED(x)   *(int *)x = *(int *)x | 0x10000000;
 
-#define DRAM_IS_PATCHED(x)    ((*(int *)((u32)x - 4) & 0x10000000) != 0)
+#define DRAM_IS_PATCHED(x)    ((*(int *)((uintptr_t)x - 4) & 0x10000000) != 0)
 
 struct VramHeader
 {

@@ -167,7 +167,12 @@ struct IconGroup
 	// 0x14
 	// struct Icon* icons[0];
 };
-#define ICONGROUP_GETICONS(x) (struct Icon **)((u32)x + sizeof(struct IconGroup))
+#if defined(__LP64__)
+struct Icon **DecalGlobal_GetIcons(struct IconGroup *x);
+#define ICONGROUP_GETICONS(x) DecalGlobal_GetIcons(x)
+#else
+#define ICONGROUP_GETICONS(x) (struct Icon **)((uintptr_t)x + sizeof(struct IconGroup))
+#endif
 
 _Static_assert(sizeof(struct TextureLayout) == 0xC);
 _Static_assert(sizeof(struct Icon) == 0x20);

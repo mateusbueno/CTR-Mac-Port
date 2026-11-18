@@ -37,13 +37,13 @@ void MainInit_JitPoolsNew(struct GameTracker *gGT)
          * Rendering loops still only iterate NUM_LOCAL_PLAYERS(gGT) times. */
         JitPool_Init(&gGT->JitPools.instance, renderBucketSize >> 5, sizeof(struct Instance) + (sizeof(struct InstDrawPerPlayer) * gGT->numPlyrCurrGame),
                      rdata.s_InstancePool);
-        JitPool_Init(&gGT->JitPools.smallStack, (poolScale * 0x19) >> 10, 0x48, rdata.s_SmallStackPool);
-        JitPool_Init(&gGT->JitPools.mediumStack, poolScale >> 7, 0x88, rdata.s_MediumStackPool);
+        JitPool_Init(&gGT->JitPools.smallStack, (poolScale * 0x19) >> 10, 0x48 + (sizeof(struct Item) - 8), rdata.s_SmallStackPool);
+        JitPool_Init(&gGT->JitPools.mediumStack, poolScale >> 7, 0x88 + (sizeof(struct Item) - 8), rdata.s_MediumStackPool);
 
         int numDriver = poolScale >> 9;
         if ((gameMode & MAIN_MENU) != 0)
                 numDriver = 4;
-        JitPool_Init(&gGT->JitPools.largeStack, numDriver, 0x680, rdata.s_LargeStackPool);
+        JitPool_Init(&gGT->JitPools.largeStack, numDriver, 0x680 + (sizeof(struct Item) - 8), rdata.s_LargeStackPool);
 
         int numParticle = poolScale >> 5;
         JitPool_Init(&gGT->JitPools.particle, numParticle, sizeof(struct Particle), rdata.s_ParticlePool);
@@ -60,11 +60,12 @@ void MainInit_JitPoolsNew(struct GameTracker *gGT)
         for (int i = 0; i < 3; i++)
         {
                 struct JitPool *pool = (struct JitPool *)((char *)&gGT->JitPools.smallStack + (sizeof(struct JitPool) * i));
-                int *pointer = (int *)pool->free.first;
-                while (pointer != (int *)0x0)
+                struct Item *item = pool->free.first;
+                while (item != NULL)
                 {
-                        *(int **)(pointer + 2) = pointer + 2;
-                        pointer = (int *)*pointer;
+                        void **objPtr = (void **)((char *)item + sizeof(struct Item));
+                        *objPtr = objPtr;
+                        item = item->next;
                 }
         }
 

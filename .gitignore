@@ -1,7 +1,12 @@
 mods/
 build/
+assets
 assets/
 debug/
+.agents/
+.claude/
+.opencode/
+_bmad/
 *.exe
 *.o
 *.gch

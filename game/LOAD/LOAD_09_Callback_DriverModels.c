@@ -8,5 +8,5 @@ void LOAD_Callback_DriverModels(struct LoadQueueSlot *lqs)
         BFDBG_PRINTF("Callback_DriverModels: load_inProgress -> 0, ptrMPK=%p",
                 lqs->ptrDestination);
         sdata->load_inProgress = 0;
-        sdata->ptrMPK = (int)lqs->ptrDestination;
+        sdata->ptrMPK = lqs->ptrDestination;
 }

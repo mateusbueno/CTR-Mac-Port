@@ -200,7 +200,7 @@ void PushBuffer_SetDrawEnv_DecalMP(void *ot, struct DB *backBuffer, RECT *viewpo
 	if (p <= backBuffer->primMem.endMin100)
 	{
 		// advance curr
-		backBuffer->primMem.curr = (void *)((u32)backBuffer->primMem.curr + 0x40);
+		backBuffer->primMem.curr = (void *)((uintptr_t)backBuffer->primMem.curr + 0x40);
 
 		prim = p;
 	}
@@ -259,7 +259,7 @@ void PushBuffer_SetDrawEnv_Normal(void *ot, struct PushBuffer *pb, struct DB *ba
 	void *p = backBuffer->primMem.curr;
 	if (p <= backBuffer->primMem.endMin100)
 	{
-		backBuffer->primMem.curr = (void *)((u32)backBuffer->primMem.curr + 0x40);
+		backBuffer->primMem.curr = (void *)((uintptr_t)backBuffer->primMem.curr + 0x40);
 
 		SetDrawEnv(p, &newDrawEnv);
 
@@ -357,11 +357,12 @@ void PushBuffer_SetMatrixVP(struct PushBuffer *pb)
 	sVar7 = *(s16 *)&matrixDST->m[2][2];
 
 	// CameraMatrix, for shadows, particles, and audio
-	*(int *)((int)&pb->matrix_Camera + 0x0) = uVar3;
-	*(int *)((int)&pb->matrix_Camera + 0x4) = uVar4;
-	*(int *)((int)&pb->matrix_Camera + 0x8) = uVar5;
-	*(int *)((int)&pb->matrix_Camera + 0xC) = uVar6;
-	*(s16 *)((int)&pb->matrix_Camera + 0x10) = sVar7;
+	char *camBase = (char *)&pb->matrix_Camera;
+	*(int *)(camBase + 0x0) = uVar3;
+	*(int *)(camBase + 0x4) = uVar4;
+	*(int *)(camBase + 0x8) = uVar5;
+	*(int *)(camBase + 0xC) = uVar6;
+	*(s16 *)(camBase + 0x10) = sVar7;
 
 	// transpose the camera matrix
 	view0 = uVar3 & 0xffff | uVar4 & 0xffff0000;
@@ -370,11 +371,12 @@ void PushBuffer_SetMatrixVP(struct PushBuffer *pb)
 	viewC = uVar4 & 0xffff | uVar5 & 0xffff0000;
 
 	// CameraTranspose, for lightning during Driver Warping effect
-	*(int *)((int)&pb->matrix_CameraTranspose + 0x0) = view0;
-	*(int *)((int)&pb->matrix_CameraTranspose + 0x4) = view4;
-	*(int *)((int)&pb->matrix_CameraTranspose + 0x8) = view8;
-	*(int *)((int)&pb->matrix_CameraTranspose + 0xC) = viewC;
-	*(s16 *)((int)&pb->matrix_CameraTranspose + 0x10) = sVar7;
+	char *camTransBase = (char *)&pb->matrix_CameraTranspose;
+	*(int *)(camTransBase + 0x0) = view0;
+	*(int *)(camTransBase + 0x4) = view4;
+	*(int *)(camTransBase + 0x8) = view8;
+	*(int *)(camTransBase + 0xC) = viewC;
+	*(s16 *)(camTransBase + 0x10) = sVar7;
 
 	// load transpose camera matrix
 	// similar to gte_SetLightMatrix
@@ -396,11 +398,12 @@ void PushBuffer_SetMatrixVP(struct PushBuffer *pb)
 	gte_stlvnl(&pb->matrix_ViewProj.t[0]);
 
 	// start with transpose camera matrix
-	*(int *)((int)&pb->matrix_ViewProj + 0x0) = view0;
-	*(int *)((int)&pb->matrix_ViewProj + 0x4) = view4;
-	*(int *)((int)&pb->matrix_ViewProj + 0x8) = view8;
-	*(int *)((int)&pb->matrix_ViewProj + 0xC) = viewC;
-	*(s16 *)((int)&pb->matrix_ViewProj + 0x10) = sVar7;
+	char *vpBase = (char *)&pb->matrix_ViewProj;
+	*(int *)(vpBase + 0x0) = view0;
+	*(int *)(vpBase + 0x4) = view4;
+	*(int *)(vpBase + 0x8) = view8;
+	*(int *)(vpBase + 0xC) = viewC;
+	*(s16 *)(vpBase + 0x10) = sVar7;
 
 	// NTSC:
 	// 0x360/0x600 = 9/16 aspect,

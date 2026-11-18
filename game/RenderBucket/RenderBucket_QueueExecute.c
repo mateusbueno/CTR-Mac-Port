@@ -1628,7 +1628,7 @@ static void RenderBucket_AdvanceInstanceAnimWord(struct Instance *inst, int game
 	RenderBucket_StoreInstanceAnimWord(inst, frame);
 }
 
-static struct ModelFrame *RenderBucket_GetFrame(struct Instance *inst, struct ModelHeader *mh, struct ModelFrame **nextFrameOut, int *deltaArrayOut,
+static struct ModelFrame *RenderBucket_GetFrame(struct Instance *inst, struct ModelHeader *mh, struct ModelFrame **nextFrameOut, u32 **deltaArrayOut,
                                                 int *lastFrameAdvanceOut)
 {
 	struct ModelAnim *anim;
@@ -1645,7 +1645,7 @@ static struct ModelFrame *RenderBucket_GetFrame(struct Instance *inst, struct Mo
 
 	if (mh->ptrAnimations == 0)
 	{
-		*deltaArrayOut = mh->unk3;
+		*deltaArrayOut = (u32 *)mh->unk3;
 		return mh->ptrFrameData;
 	}
 
@@ -1663,7 +1663,7 @@ static struct ModelFrame *RenderBucket_GetFrame(struct Instance *inst, struct Mo
 	// NOTE(aalhendi): Retail 0x80070ca0-0x80070dfc checks ptrAnimations first,
 	// then carries current/next frame through s6/s1 plus ptrDeltaArray through
 	// IDPP 0xd4. Native keeps those values as explicit return values.
-	*deltaArrayOut = (int)anim->ptrDeltaArray;
+	*deltaArrayOut = anim->ptrDeltaArray;
 	frameIndex = (u16)inst->animFrame;
 	lastFrame = (anim->numFrames & 0x7fff) - 1;
 	*lastFrameAdvanceOut = lastFrame;
@@ -1702,7 +1702,7 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 	struct RenderBucketSplitState split;
 	MATRIX projectionMvp;
 	u32 queuedFlags;
-	int deltaArray;
+	u32 *deltaArray;
 	int lastFrameAdvance;
 	int lodIndex;
 	int lodExhausted;
@@ -1822,7 +1822,7 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 	RenderBucket_WriteInstanceCallbackLabels(inst, queuedFlags);
 	idpp->ptrCommandList = mh->ptrCommandList;
 	idpp->ptrTexLayout = mh->ptrTexLayout;
-	idpp->ptrColorLayout = (u32)mh->ptrColors;
+	idpp->ptrColorLayout = mh->ptrColors;
 	idpp->instFlags = queuedFlags;
 	return rbi + 1;
 }
@@ -1984,6 +1984,8 @@ static void RenderBucket_CopyScratchColorCache(struct RenderBucketDrawContext *c
 	u32 *scratchColor = CTR_SCRATCHPAD_PTR(u32, 0x140);
 	u32 *commandList = (u32 *)ctx->idpp->ptrCommandList;
 	u32 *colorLayout = (u32 *)ctx->idpp->ptrColorLayout;
+	if (commandList == NULL || colorLayout == NULL)
+		return;
 	u32 count = commandList[0];
 
 	// NOTE(aalhendi): Retail Execute copies ptrColorLayout to scratchpad 0x140
@@ -2240,7 +2242,12 @@ static u_long *RenderBucket_GetNormalOTEntry(int activeRange, int depthMac0)
 	// (MAC0 >> 17) OT lookup at 0x8006ad88-0x8006ad98. Retail trusts QueueDraw's
 	// range producer here; native intentionally does not clamp to depthOffset
 	// because that would mask producer/consumer depth mismatches.
+#if defined(__LP64__)
+	uintptr_t fullRange = 0x100000000ULL | (u32)activeRange;
+	return (u_long *)fullRange + depthBin;
+#else
 	return (u_long *)activeRange + depthBin;
+#endif
 }
 
 static u_long *RenderBucket_GetClampedOTEntry(struct RenderBucketDrawContext *ctx, int activeRange, int depthMac0)
@@ -2255,7 +2262,12 @@ static u_long *RenderBucket_GetClampedOTEntry(struct RenderBucketDrawContext *ct
 	else if (depthBin > ctx->idpp->depthOffset[1])
 		depthBin = ctx->idpp->depthOffset[1];
 
+#if defined(__LP64__)
+	uintptr_t fullRange = 0x100000000ULL | (u32)activeRange;
+	return (u_long *)fullRange + depthBin;
+#else
 	return (u_long *)activeRange + depthBin;
+#endif
 }
 
 static int RenderBucket_TriangleInScreenWindow(struct RenderBucketDrawContext *ctx)
@@ -2448,7 +2460,16 @@ static struct TextureLayout *RenderBucket_GetCommandTexture(struct RenderBucketD
 	// NOTE(aalhendi): Retail only uses texture index zero as the explicit G3
 	// path, but a null texture-table entry also reaches DrawInstPrim_Normal as
 	// `a2 == 0` and emits G3. Do not reject that case here.
+#if defined(__LP64__)
+	const uint32_t *rawTexArr = (const uint32_t *)ctx->idpp->ptrTexLayout;
+	uint32_t texRel = rawTexArr[texIndex - 1];
+	if (texRel == 0)
+		return 0;
+	uintptr_t base_hi = (uintptr_t)rawTexArr & 0xFFFFFFFF00000000ULL;
+	return (struct TextureLayout *)(base_hi | (uintptr_t)texRel);
+#else
 	return ctx->idpp->ptrTexLayout[texIndex - 1];
+#endif
 }
 
 static int RenderBucket_OTEntryPassesDpctGate(const u_long *otEntry)

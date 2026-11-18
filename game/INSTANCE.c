@@ -224,15 +224,25 @@ void INSTANCE_LevInitAll(struct InstDef *levInstDef, int numInst)
 			return;
 		}
 
+#if defined(__LP64__)
+		memcpy(inst->name, levInstDef->name, sizeof(inst->name));
+		inst->model = levInstDef->model;
+		inst->scale[0] = levInstDef->scale[0];
+		inst->scale[1] = levInstDef->scale[1];
+		inst->scale[2] = levInstDef->scale[2];
+		inst->alphaScale = levInstDef->scale[3];
+		inst->colorRGBA = levInstDef->colorRGBA;
+		inst->flags = levInstDef->flags;
+#else
 		// pointer to InstDef in LEV
 		src = (int *)levInstDef;
 
 		// pointer to instance in pool,
 		// add 8 bytes to skip Prev and Next
-		dst = (int *)((int)inst + 8);
+		dst = (int *)((uintptr_t)inst + 8);
 
 		// copy InstDef data from LEV to instance pool
-		while (src != (int *)((int)levInstDef + 0x20))
+		while (src != (int *)((uintptr_t)levInstDef + 0x20))
 		{
 			dst[0] = src[0];
 			dst[1] = src[1];
@@ -245,6 +255,7 @@ void INSTANCE_LevInitAll(struct InstDef *levInstDef, int numInst)
 		dst[0] = src[0];
 		dst[1] = src[1];
 		dst[2] = src[2];
+#endif
 
 		// 0x10 + (5 * 4) = 0x24
 		inst->unk50 = levInstDef->unk24 - 2;

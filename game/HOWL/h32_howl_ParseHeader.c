@@ -3,7 +3,7 @@
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80029a50-0x80029ab4
 void howl_ParseHeader(struct HowlHeader *hh)
 {
-	u32 addr = (u32)hh;
+	uintptr_t addr = (uintptr_t)hh;
 
 	sdata->ptrHowlHeader = (struct HowlHeader *)addr;
 	addr += sizeof(struct HowlHeader);

@@ -307,12 +307,20 @@ struct ModelAnim
 	// or nullptr if animation is uncompressed
 	u32 *ptrDeltaArray;
 
+#if defined(__LP64__)
+	void *firstFrame;
+#endif
+
 	// 0x18
 	// struct ModelFrame firstFrame;
 	// then verts, then next ModelFrame, then verts, etc...
 };
 
-#define MODELANIM_GETFRAME(x) ((u32)x + sizeof(struct ModelAnim))
+#if defined(__LP64__)
+#define MODELANIM_GETFRAME(x) (((struct ModelAnim *)(x))->firstFrame)
+#else
+#define MODELANIM_GETFRAME(x) ((uintptr_t)x + sizeof(struct ModelAnim))
+#endif
 
 struct ModelHeader
 {
@@ -337,7 +345,11 @@ struct ModelHeader
 	s16 scale[4];
 
 	// 0x20
+#if defined(__LP64__)
+	u32 *ptrCommandList;
+#else
 	u32 ptrCommandList;
+#endif
 
 	// 0x24
 	// null if there are animations
@@ -351,7 +363,11 @@ struct ModelHeader
 
 	// 0x30
 	// same as anim->0x14
+#if defined(__LP64__)
+	u32 *unk3;
+#else
 	u32 unk3;
+#endif
 
 	// 0x34
 	u32 numAnimations;
@@ -444,16 +460,28 @@ struct InstDrawPerPlayer
 	struct ModelFrame *ptrNextFrame;
 
 	// 0xc8
+#if defined(__LP64__)
+	u32 *ptrCommandList;
+#else
 	u32 ptrCommandList;
+#endif
 
 	// 0xcc
 	struct TextureLayout **ptrTexLayout;
 
 	// 0xd0
+#if defined(__LP64__)
+	u32 *ptrColorLayout;
+#else
 	u32 ptrColorLayout; // maybe should be `u32*`
+#endif
 
 	// 0xd4
+#if defined(__LP64__)
+	u32 *ptrDeltaArray;
+#else
 	int ptrDeltaArray;
+#endif
 
 	// 0xd8 - LOD index (0,1,2,3)
 	int lodIndex;
@@ -573,4 +601,4 @@ struct Instance
 	// struct InstDrawPerPlayer idpp[0];
 };
 
-#define INST_GETIDPP(x) (struct InstDrawPerPlayer *)((u32)x + sizeof(struct Instance))
+#define INST_GETIDPP(x) (struct InstDrawPerPlayer *)((uintptr_t)x + sizeof(struct Instance))

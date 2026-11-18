@@ -1448,7 +1448,7 @@ int NativeMods_ToggleMod(int index)
      * common.h before this file in the unity build). */
     if (sdata != NULL && sdata->ptrBigfile1 != NULL)
     {
-        LOAD_LangFile((int)sdata->ptrBigfile1, 1);
+        LOAD_LangFile(sdata->ptrBigfile1, 1);
         NativeMods_OnLanguageLoaded(sdata->lngStrings, sdata->numLngStrings);
     }
 

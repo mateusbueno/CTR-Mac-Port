@@ -22,11 +22,11 @@ void UI_INSTANCE_InitAll(void)
         // If you're in Crystal Challenge
         if ((gameMode1 & CRYSTAL_CHALLENGE) != 0)
         {
-                sdata->ptrMenuCrystal = UI_INSTANCE_BirthWithThread(0x60, (int)UI_ThTick_Reward, 0x11, 0, 0, (int)rdata.s_crystal1);
-                sdata->ptrHudCrystal = UI_INSTANCE_BirthWithThread(0x60, (int)UI_ThTick_Reward, 0x11, 0, 0, (int)rdata.s_crystal1);
+                sdata->ptrMenuCrystal = UI_INSTANCE_BirthWithThread(0x60, (void *)UI_ThTick_Reward, 0x11, 0, 0, rdata.s_crystal1);
+                sdata->ptrHudCrystal = UI_INSTANCE_BirthWithThread(0x60, (void *)UI_ThTick_Reward, 0x11, 0, 0, rdata.s_crystal1);
 
                 // Make a token
-                sdata->ptrToken = UI_INSTANCE_BirthWithThread(0x7d, (int)UI_ThTick_Reward, 0x12, 0, 0, (int)sdata->s_token);
+                sdata->ptrToken = UI_INSTANCE_BirthWithThread(0x7d, (void *)UI_ThTick_Reward, 0x12, 0, 0, sdata->s_token);
 
                 // make Crystal invisible
                 sdata->ptrHudCrystal->flags |= 0x80;
@@ -48,9 +48,9 @@ void UI_INSTANCE_InitAll(void)
         if ((gameMode1 & ADVENTURE_ARENA) != 0)
         {
                 // is ignoring the return value of these calls intentional?
-                UI_INSTANCE_BirthWithThread(0x61, (int)UI_ThTick_Reward, 0xe, 1, 0, (int)sdata->s_relic1);
-                UI_INSTANCE_BirthWithThread(99, (int)UI_ThTick_Reward, 0xf, 1, 0, (int)sdata->s_key1);
-                UI_INSTANCE_BirthWithThread(0x62, (int)UI_ThTick_Reward, 0x10, 0, 0, (int)sdata->s_trophy1);
+                UI_INSTANCE_BirthWithThread(0x61, (void *)UI_ThTick_Reward, 0xe, 1, 0, sdata->s_relic1);
+                UI_INSTANCE_BirthWithThread(99, (void *)UI_ThTick_Reward, 0xf, 1, 0, sdata->s_key1);
+                UI_INSTANCE_BirthWithThread(0x62, (void *)UI_ThTick_Reward, 0x10, 0, 0, sdata->s_trophy1);
 
                 GAMEPROG_AdvPercent(&sdata->advProgress);
 
@@ -85,8 +85,8 @@ void UI_INSTANCE_InitAll(void)
                 }
 
                 // The rest of this block only happens in Relic Mode
-                sdata->ptrRelic = UI_INSTANCE_BirthWithThread(0x61, (int)UI_ThTick_Reward, 0xe, 1, 0, (int)sdata->s_relic1);
-                sdata->ptrTimebox1 = UI_INSTANCE_BirthWithThread(0x5c, (int)UI_ThTick_CountPickup, 0x13, 1, 0, (int)rdata.s_timebox1);
+                sdata->ptrRelic = UI_INSTANCE_BirthWithThread(0x61, (void *)UI_ThTick_Reward, 0xe, 1, 0, sdata->s_relic1);
+                sdata->ptrTimebox1 = UI_INSTANCE_BirthWithThread(0x5c, (void *)UI_ThTick_CountPickup, 0x13, 1, 0, rdata.s_timebox1);
 
                 // if instance
                 if (sdata->ptrRelic != 0)
@@ -128,10 +128,10 @@ void UI_INSTANCE_InitAll(void)
         }
 
         // used for multiplayer wumpa
-        sdata->ptrPushBufferUI = (int)NULL;
+        sdata->ptrPushBufferUI = NULL;
         if (NUM_LOCAL_PLAYERS(gGT) >= 2)
         {
-                sdata->ptrPushBufferUI = (int)&sdata->pushBuffer_DecalMP;
+                sdata->ptrPushBufferUI = &sdata->pushBuffer_DecalMP;
         }
 
         sdata->pushBuffer_DecalMP.matrix_ViewProj = gGT->pushBuffer_UI.matrix_ViewProj;
@@ -142,14 +142,14 @@ void UI_INSTANCE_InitAll(void)
         sdata->pushBuffer_DecalMP.ptrOT = gGT->pushBuffer_UI.ptrOT;
         sdata->pushBuffer_DecalMP.distanceToScreen_PREV = gGT->pushBuffer_UI.distanceToScreen_PREV;
 
-        sdata->ptrFruitDisp = (int)UI_INSTANCE_BirthWithThread(0x37, (int)UI_ThTick_CountPickup, 3, 1, sdata->ptrPushBufferUI, (int)rdata.s_fruitdisp);
+        sdata->ptrFruitDisp = UI_INSTANCE_BirthWithThread(0x37, (void *)UI_ThTick_CountPickup, 3, 1, sdata->ptrPushBufferUI, rdata.s_fruitdisp);
 
         if ((NUM_LOCAL_PLAYERS(gGT) < 3) &&
 
             // If you're not in Battle Mode
             ((gameMode1 & BATTLE_MODE) == 0))
         {
-                UI_INSTANCE_BirthWithThread(0x38, (int)UI_ThTick_big1, 2, 0, 0, (int)sdata->s_big1);
+                UI_INSTANCE_BirthWithThread(0x38, (void *)UI_ThTick_big1, 2, 0, 0, sdata->s_big1);
         }
 
         // If you're not in Adventure Mode
@@ -158,12 +158,12 @@ void UI_INSTANCE_InitAll(void)
                 return;
         }
 
-        sdata->ptrHudC = UI_INSTANCE_BirthWithThread(0x93, (int)UI_ThTick_CtrLetters, 0x12, 0, 0, (int)sdata->s_hudc);
-        sdata->ptrHudT = UI_INSTANCE_BirthWithThread(0x94, (int)UI_ThTick_CtrLetters, 0x12, 0, 0, (int)sdata->s_hudt);
-        sdata->ptrHudR = UI_INSTANCE_BirthWithThread(0x95, (int)UI_ThTick_CtrLetters, 0x12, 0, 0, (int)sdata->s_hudr);
+        sdata->ptrHudC = UI_INSTANCE_BirthWithThread(0x93, (void *)UI_ThTick_CtrLetters, 0x12, 0, 0, sdata->s_hudc);
+        sdata->ptrHudT = UI_INSTANCE_BirthWithThread(0x94, (void *)UI_ThTick_CtrLetters, 0x12, 0, 0, sdata->s_hudt);
+        sdata->ptrHudR = UI_INSTANCE_BirthWithThread(0x95, (void *)UI_ThTick_CtrLetters, 0x12, 0, 0, sdata->s_hudr);
 
         // Make a token
-        sdata->ptrToken = UI_INSTANCE_BirthWithThread(0x7d, (int)UI_ThTick_Reward, 0x12, 0, 0, (int)sdata->s_token);
+        sdata->ptrToken = UI_INSTANCE_BirthWithThread(0x7d, (void *)UI_ThTick_Reward, 0x12, 0, 0, sdata->s_token);
 
 #if defined(CTR_NATIVE)
         // NOTE(aalhendi): PSX writes the hidden C/T/R flags through null HUD pointers in Garage; native cannot.

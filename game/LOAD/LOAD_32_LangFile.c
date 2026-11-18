@@ -10,7 +10,7 @@ struct LngFile
 // param_1 - Pointer to "cd position of bigfile"
 // param_2 - language index - 0 ja, 1 en, 2 en2, 3 fr, 4 de, 5 it, 6 es, 7 ne
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80032b50-0x80032c24
-void LOAD_LangFile(int bigfilePtr, int lang)
+void LOAD_LangFile(struct BigHeader *bigfilePtr, int lang)
 {
 	struct LngFile *lngFile;
 	int size;
@@ -32,20 +32,31 @@ void LOAD_LangFile(int bigfilePtr, int lang)
 
 	lngFile = sdata->lngFile;
 
-	lngFile = LOAD_ReadFile_ex((struct BigHeader *)bigfilePtr, LT_SETADDR, BI_LANGUAGEFILE + lang, lngFile, &size, NULL);
+	lngFile = LOAD_ReadFile_ex(bigfilePtr, LT_SETADDR, BI_LANGUAGEFILE + lang, lngFile, &size, NULL);
 	if (lngFile == NULL)
 		return;
 
 	numStrings = lngFile->numStrings;
-	strArray = (char **)((u32)lngFile + lngFile->offsetToPtrArr);
-
 	sdata->numLngStrings = numStrings;
-	sdata->lngStrings = strArray;
 
+	// In 32-bit PS1, the file contained a table of 32-bit offsets in-place.
+	// On 64-bit, char* is 8 bytes, so we must maintain a separate 64-bit pointer table.
+	static char **s_nativeLngStrings = NULL;
+	static int s_nativeLngCapacity = 0;
+
+	if (s_nativeLngCapacity < numStrings)
+	{
+		s_nativeLngStrings = (char **)realloc(s_nativeLngStrings, numStrings * sizeof(char *));
+		s_nativeLngCapacity = numStrings;
+	}
+
+	const unsigned int *offsets = (const unsigned int *)((uintptr_t)lngFile + lngFile->offsetToPtrArr);
 	for (i = 0; i < numStrings; i++)
 	{
-		strArray[i] = (char *)((u32)strArray[i] + (u32)lngFile);
+		s_nativeLngStrings[i] = (char *)((uintptr_t)lngFile + offsets[i]);
 	}
+
+	sdata->lngStrings = s_nativeLngStrings;
 #if BUILD == EurRetail
 	// set voicelines to new lang
 	CDSYS_SetXAToLang(lang);

@@ -33,6 +33,415 @@ static void LOAD_NativeAudio_SetStateAfterBankReload(u32 state)
 }
 #endif
 
+#if defined(__LP64__)
+#define MAX_NATIVE_MODELS 256
+#define MAX_NATIVE_HEADERS 512
+#define MAX_NATIVE_ANIM_ARRAYS 512
+#define MAX_NATIVE_ANIM_OBJS 1024
+#define MAX_ANIMS_PER_HEADER 32
+
+static struct Model s_nativeModelPool[MAX_NATIVE_MODELS];
+static struct ModelHeader s_nativeHeaderPool[MAX_NATIVE_HEADERS];
+static struct ModelAnim *s_nativeAnimPool[MAX_NATIVE_ANIM_ARRAYS][MAX_ANIMS_PER_HEADER];
+static struct ModelAnim s_nativeAnimObjPool[MAX_NATIVE_ANIM_OBJS];
+static int s_nativeModelCount = 0;
+static int s_nativeHeaderCount = 0;
+static int s_nativeAnimCount = 0;
+static int s_nativeAnimObjCount = 0;
+
+static void LOAD_NativeModelPool_Reset(void)
+{
+        s_nativeModelCount = 0;
+        s_nativeHeaderCount = 0;
+        s_nativeAnimCount = 0;
+        s_nativeAnimObjCount = 0;
+}
+
+static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
+{
+        if (rawModelPtr == NULL) return NULL;
+        if (s_nativeModelCount >= MAX_NATIVE_MODELS) return NULL;
+
+        const uint32_t *raw32 = (const uint32_t *)rawModelPtr;
+        uintptr_t base_hi = (uintptr_t)rawModelPtr & 0xFFFFFFFF00000000ULL;
+
+        struct Model *nm = &s_nativeModelPool[s_nativeModelCount++];
+        memset(nm, 0, sizeof(*nm));
+
+        // Name (16 bytes)
+        memcpy(nm->name, &raw32[0], 16);
+
+        // ID (s16) & numHeaders (s16)
+        uint32_t word4 = raw32[4];
+        nm->id = (s16)(word4 & 0xffff);
+        nm->numHeaders = (s16)(word4 >> 16);
+
+        // headers (raw32[5] is 32-bit pointer)
+        uint32_t headersRel = raw32[5];
+        if (headersRel != 0 && nm->numHeaders > 0 && s_nativeHeaderCount + nm->numHeaders <= MAX_NATIVE_HEADERS)
+        {
+                int headerStartIndex = s_nativeHeaderCount;
+                s_nativeHeaderCount += nm->numHeaders;
+                nm->headers = &s_nativeHeaderPool[headerStartIndex];
+
+                const uint32_t *rawHdrArray = (const uint32_t *)(base_hi | (uintptr_t)headersRel);
+
+                for (int h = 0; h < nm->numHeaders; h++)
+                {
+                        const uint32_t *rawHdr = &rawHdrArray[h * 16]; // 16 words = 64 bytes per header
+                        struct ModelHeader *nh = &nm->headers[h];
+                        memset(nh, 0, sizeof(*nh));
+
+                        memcpy(nh->name, &rawHdr[0], 16);
+                        nh->unk1 = (int)rawHdr[4];
+                        nh->maxDistanceLOD = (s16)(rawHdr[5] & 0xffff);
+                        nh->flags = (u16)(rawHdr[5] >> 16);
+                        nh->scale[0] = (s16)(rawHdr[6] & 0xffff);
+                        nh->scale[1] = (s16)(rawHdr[6] >> 16);
+                        nh->scale[2] = (s16)(rawHdr[7] & 0xffff);
+                        nh->scale[3] = (s16)(rawHdr[7] >> 16);
+                        nh->ptrCommandList = rawHdr[8] ? (u32 *)(base_hi | rawHdr[8]) : NULL;
+                        nh->ptrFrameData = rawHdr[9] ? (struct ModelFrame *)(base_hi | rawHdr[9]) : NULL;
+                        nh->ptrTexLayout = rawHdr[10] ? (struct TextureLayout **)(base_hi | rawHdr[10]) : NULL;
+                        nh->ptrColors = rawHdr[11] ? (u32 *)(base_hi | rawHdr[11]) : NULL;
+#if defined(__LP64__)
+                        nh->unk3 = rawHdr[12] ? (u32 *)(base_hi | rawHdr[12]) : NULL;
+#else
+                        nh->unk3 = rawHdr[12];
+#endif
+                        nh->numAnimations = rawHdr[13];
+
+                        uint32_t animsRel = rawHdr[14];
+                        if (animsRel != 0 && nh->numAnimations > 0 && s_nativeAnimCount < MAX_NATIVE_ANIM_ARRAYS)
+                        {
+                                struct ModelAnim **animArr = s_nativeAnimPool[s_nativeAnimCount++];
+                                const uint32_t *rawAnims = (const uint32_t *)(base_hi | animsRel);
+                                uint32_t maxA = (nh->numAnimations < MAX_ANIMS_PER_HEADER) ? nh->numAnimations : MAX_ANIMS_PER_HEADER;
+                                for (uint32_t a = 0; a < maxA; a++)
+                                {
+                                        if (rawAnims[a] != 0 && s_nativeAnimObjCount < MAX_NATIVE_ANIM_OBJS)
+                                        {
+                                                const uint32_t *rawA = (const uint32_t *)(base_hi | rawAnims[a]);
+                                                struct ModelAnim *na = &s_nativeAnimObjPool[s_nativeAnimObjCount++];
+                                                memset(na, 0, sizeof(*na));
+                                                memcpy(na->name, &rawA[0], 16);
+                                                na->numFrames = (u16)(rawA[4] & 0xffff);
+                                                na->frameSize = (s16)(rawA[4] >> 16);
+                                                uint32_t deltaRel = rawA[5];
+                                                na->ptrDeltaArray = deltaRel ? (u32 *)(base_hi | deltaRel) : NULL;
+#if defined(__LP64__)
+                                                na->firstFrame = (void *)&rawA[6];
+#endif
+                                                animArr[a] = na;
+                                        }
+                                        else
+                                        {
+                                                animArr[a] = NULL;
+                                        }
+                                }
+                                nh->ptrAnimations = animArr;
+                        }
+
+                        nh->animtex = rawHdr[15] ? (struct AnimTex *)(base_hi | rawHdr[15]) : NULL;
+                }
+        }
+
+        return nm;
+}
+
+static struct Level s_nativeLevel1;
+static struct mesh_info s_nativeMeshInfo1;
+static struct VisMem s_nativeVisMem1;
+static struct Model *s_nativeLevModels1[128];
+static struct InstDef s_nativeInstDefs1[256];
+static struct InstDef *s_nativeInstDefPtrArray1[256];
+static struct SpawnType1 s_nativeSpawnType1;
+static struct SpawnType2 s_nativeSpawnType2;
+static struct SpawnType2 s_nativeSpawnType2_PosRot;
+
+static struct Level *LOAD_NativeLevel_Build(void *rawFile)
+{
+        if (rawFile == NULL) return NULL;
+
+        const uint32_t *raw32 = (const uint32_t *)rawFile;
+        uintptr_t base_hi = (uintptr_t)rawFile & 0xFFFFFFFF00000000ULL;
+
+        #define LEV_PTR64(x32) ((x32) ? (void *)(base_hi | (uintptr_t)(uint32_t)(x32)) : NULL)
+
+        memset(&s_nativeLevel1, 0, sizeof(s_nativeLevel1));
+
+        // 0x00: ptr_mesh_info
+        uint32_t pMesh32 = raw32[0];
+        if (pMesh32 != 0)
+        {
+                const uint32_t *meshRaw = (const uint32_t *)LEV_PTR64(pMesh32);
+                memset(&s_nativeMeshInfo1, 0, sizeof(s_nativeMeshInfo1));
+                s_nativeMeshInfo1.numQuadBlock = (int)meshRaw[0];
+                s_nativeMeshInfo1.numVertex = (int)meshRaw[1];
+                s_nativeMeshInfo1.unk1 = (int)meshRaw[2];
+                s_nativeMeshInfo1.ptrQuadBlockArray = (struct QuadBlock *)LEV_PTR64(meshRaw[3]);
+                s_nativeMeshInfo1.ptrVertexArray = (struct LevVertex *)LEV_PTR64(meshRaw[4]);
+                s_nativeMeshInfo1.unk2 = (int)meshRaw[5];
+                s_nativeMeshInfo1.bspRoot = (struct BSP *)LEV_PTR64(meshRaw[6]);
+                s_nativeMeshInfo1.numBspNodes = (int)meshRaw[7];
+
+                s_nativeLevel1.ptr_mesh_info = &s_nativeMeshInfo1;
+        }
+
+        // 0x04: ptr_skybox
+        s_nativeLevel1.ptr_skybox = (struct Skybox *)LEV_PTR64(raw32[1]);
+
+        // 0x08: ptr_anim_tex
+        s_nativeLevel1.ptr_anim_tex = (struct AnimTex *)LEV_PTR64(raw32[2]);
+
+        // 0x0C: numInstances
+        uint32_t numInst = raw32[3];
+        s_nativeLevel1.numInstances = numInst;
+
+        // 0x10: ptrInstDefs
+        uint32_t pInstDefs32 = raw32[4];
+        if (pInstDefs32 != 0)
+        {
+                const uint32_t *instRaw = (const uint32_t *)LEV_PTR64(pInstDefs32);
+                uint32_t maxInst = (numInst < 256) ? numInst : 256;
+                for (uint32_t i = 0; i < maxInst; i++)
+                {
+                        const uint32_t *oneRaw = &instRaw[i * 16];
+                        memcpy(s_nativeInstDefs1[i].name, &oneRaw[0], 16);
+                        s_nativeInstDefs1[i].model = LOAD_NativeModel_Convert(LEV_PTR64(oneRaw[4]));
+                        s_nativeInstDefs1[i].scale[0] = (s16)(oneRaw[5] & 0xffff);
+                        s_nativeInstDefs1[i].scale[1] = (s16)(oneRaw[5] >> 16);
+                        s_nativeInstDefs1[i].scale[2] = (s16)(oneRaw[6] & 0xffff);
+                        s_nativeInstDefs1[i].scale[3] = (s16)(oneRaw[6] >> 16);
+                        s_nativeInstDefs1[i].colorRGBA = oneRaw[7];
+                        s_nativeInstDefs1[i].flags = oneRaw[8];
+                        s_nativeInstDefs1[i].unk24 = (int)oneRaw[9];
+                        s_nativeInstDefs1[i].unk28 = (int)oneRaw[10];
+                        s_nativeInstDefs1[i].ptrInstance = NULL;
+                        s_nativeInstDefs1[i].pos[0] = (s16)(oneRaw[12] & 0xffff);
+                        s_nativeInstDefs1[i].pos[1] = (s16)(oneRaw[12] >> 16);
+                        s_nativeInstDefs1[i].pos[2] = (s16)(oneRaw[13] & 0xffff);
+                        s_nativeInstDefs1[i].rot[0] = (s16)(oneRaw[13] >> 16);
+                        s_nativeInstDefs1[i].rot[1] = (s16)(oneRaw[14] & 0xffff);
+                        s_nativeInstDefs1[i].rot[2] = (s16)(oneRaw[14] >> 16);
+                        s_nativeInstDefs1[i].modelID = (int)oneRaw[15];
+                }
+                s_nativeLevel1.ptrInstDefs = s_nativeInstDefs1;
+        }
+
+        // 0x14: numModels
+        uint32_t numModels = raw32[5];
+        s_nativeLevel1.numModels = numModels;
+
+        // 0x18: ptrModelsPtrArray
+        uint32_t pModelArr32 = raw32[6];
+        if (pModelArr32 != 0)
+        {
+                const uint32_t *mPtrs32 = (const uint32_t *)LEV_PTR64(pModelArr32);
+                uint32_t count = (numModels < 127) ? numModels : 127;
+                for (uint32_t i = 0; i < count; i++)
+                {
+                        s_nativeLevModels1[i] = LOAD_NativeModel_Convert(LEV_PTR64(mPtrs32[i]));
+                }
+                s_nativeLevModels1[count] = NULL;
+                s_nativeLevel1.ptrModelsPtrArray = s_nativeLevModels1;
+        }
+
+        // 0x1C: unk3
+        s_nativeLevel1.unk3 = LEV_PTR64(raw32[7]);
+
+        // 0x20: unk4
+        s_nativeLevel1.unk4 = LEV_PTR64(raw32[8]);
+
+        // 0x24: ptrInstDefPtrArray
+        uint32_t pInstDefPtrArr32 = raw32[9];
+        if (pInstDefPtrArr32 != 0 && pInstDefs32 != 0)
+        {
+                const uint32_t *idPtrs32 = (const uint32_t *)LEV_PTR64(pInstDefPtrArr32);
+                uintptr_t rawBase = (uintptr_t)LEV_PTR64(pInstDefs32);
+                uint32_t pIdx = 0;
+                while (idPtrs32[pIdx] != 0 && pIdx < 255)
+                {
+                        uintptr_t targetAddr = (uintptr_t)LEV_PTR64(idPtrs32[pIdx]);
+                        if (targetAddr >= rawBase && targetAddr < rawBase + numInst * 64)
+                        {
+                                uint32_t instIdx = (uint32_t)((targetAddr - rawBase) / 64);
+                                s_nativeInstDefPtrArray1[pIdx] = &s_nativeInstDefs1[instIdx];
+                        }
+                        else
+                        {
+                                s_nativeInstDefPtrArray1[pIdx] = NULL;
+                        }
+                        pIdx++;
+                }
+                s_nativeInstDefPtrArray1[pIdx] = NULL;
+                s_nativeLevel1.ptrInstDefPtrArray = s_nativeInstDefPtrArray1;
+        }
+
+        // 0x28: unk5
+        s_nativeLevel1.unk5 = LEV_PTR64(raw32[10]);
+
+        // 0x2C: null1
+        s_nativeLevel1.null1 = LEV_PTR64(raw32[11]);
+
+        // 0x30: null2
+        s_nativeLevel1.null2 = LEV_PTR64(raw32[12]);
+
+        // 0x34: numWaterVertices
+        s_nativeLevel1.numWaterVertices = (int)raw32[13];
+
+        // 0x38: ptr_water
+        s_nativeLevel1.ptr_water = (struct WaterVert *)LEV_PTR64(raw32[14]);
+
+        // 0x3C: levTexLookup
+        s_nativeLevel1.levTexLookup = (struct LevTexLookup *)LEV_PTR64(raw32[15]);
+
+        // 0x40: ptr_named_tex_array
+        s_nativeLevel1.ptr_named_tex_array = (struct Icon *)LEV_PTR64(raw32[16]);
+
+        // 0x44: ptr_tex_waterEnvMap
+        s_nativeLevel1.ptr_tex_waterEnvMap = LEV_PTR64(raw32[17]);
+
+        // 0x48: glowGradient[3] (24 bytes)
+        memcpy(s_nativeLevel1.glowGradient, &raw32[18], sizeof(s_nativeLevel1.glowGradient));
+
+        // 0x6C: DriverSpawn[8] (96 bytes = 24 words)
+        memcpy(s_nativeLevel1.DriverSpawn, &raw32[27], sizeof(s_nativeLevel1.DriverSpawn));
+
+        // 0xCC: unk_Lev_CC
+        s_nativeLevel1.unk_Lev_CC = LEV_PTR64(raw32[51]);
+
+        // 0xD0: unk_Lev_D0
+        s_nativeLevel1.unk_Lev_D0 = LEV_PTR64(raw32[52]);
+
+        // 0xD4: ptrLowTexArray
+        s_nativeLevel1.ptrLowTexArray = LEV_PTR64(raw32[53]);
+
+        // 0xD8: clearColorRGBA
+        s_nativeLevel1.clearColorRGBA = raw32[54];
+
+        // 0xDC: configFlags
+        s_nativeLevel1.configFlags = raw32[55];
+
+        // 0xE0: build_start
+        s_nativeLevel1.build_start = (char *)LEV_PTR64(raw32[56]);
+
+        // 0xE4: build_end
+        s_nativeLevel1.build_end = (char *)LEV_PTR64(raw32[57]);
+
+        // 0xE8: build_type
+        s_nativeLevel1.build_type = (char *)LEV_PTR64(raw32[58]);
+
+        // 0xEC: unk_EC (24 bytes = 6 words)
+        memcpy(s_nativeLevel1.unk_EC, &raw32[59], sizeof(s_nativeLevel1.unk_EC));
+
+        // 0x104: rainBuffer (48 bytes = 12 words)
+        memcpy(&s_nativeLevel1.rainBuffer, &raw32[65], sizeof(s_nativeLevel1.rainBuffer));
+
+        // 0x134: ptrSpawnType1
+        uint32_t pSpawnType1_32 = raw32[77];
+        if (pSpawnType1_32 != 0)
+        {
+                const uint32_t *st1Raw = (const uint32_t *)LEV_PTR64(pSpawnType1_32);
+                int count = (int)st1Raw[0];
+                memset(&s_nativeSpawnType1, 0, sizeof(s_nativeSpawnType1));
+                s_nativeSpawnType1.count = count;
+                uint32_t maxCount = (count < 16) ? count : 16;
+                for (uint32_t i = 0; i < maxCount; i++)
+                {
+                        s_nativeSpawnType1.pointers[i] = st1Raw[1 + i] ? (void *)(base_hi | st1Raw[1 + i]) : NULL;
+                }
+                s_nativeLevel1.ptrSpawnType1 = &s_nativeSpawnType1;
+        }
+
+        // 0x138: numSpawnType2
+        s_nativeLevel1.numSpawnType2 = (int)raw32[78];
+
+        // 0x13C: ptrSpawnType2
+        uint32_t pST2_32 = raw32[79];
+        if (pST2_32 != 0)
+        {
+                const uint32_t *st2Raw = (const uint32_t *)LEV_PTR64(pST2_32);
+                s_nativeSpawnType2.numCoords = (int)st2Raw[0];
+                s_nativeSpawnType2.posCoords = (s16 *)LEV_PTR64(st2Raw[1]);
+                s_nativeLevel1.ptrSpawnType2 = &s_nativeSpawnType2;
+        }
+
+        // 0x140: numSpawnType2_PosRot
+        s_nativeLevel1.numSpawnType2_PosRot = (int)raw32[80];
+
+        // 0x144: ptrSpawnType2_PosRot
+        uint32_t pST2PR_32 = raw32[81];
+        if (pST2PR_32 != 0)
+        {
+                const uint32_t *st2Raw = (const uint32_t *)LEV_PTR64(pST2PR_32);
+                s_nativeSpawnType2_PosRot.numCoords = (int)st2Raw[0];
+                s_nativeSpawnType2_PosRot.posCoords = (s16 *)LEV_PTR64(st2Raw[1]);
+                s_nativeLevel1.ptrSpawnType2_PosRot = &s_nativeSpawnType2_PosRot;
+        }
+
+        // 0x148: cnt_restart_points
+        s_nativeLevel1.cnt_restart_points = (int)raw32[82];
+
+        // 0x14C: ptr_restart_points
+        s_nativeLevel1.ptr_restart_points = (struct CheckpointNode *)LEV_PTR64(raw32[83]);
+
+        // 0x150: unk_150 (16 bytes = 4 words)
+        memcpy(s_nativeLevel1.unk_150, &raw32[84], sizeof(s_nativeLevel1.unk_150));
+
+        // 0x160: clearColor[3] (12 bytes = 3 words)
+        memcpy(s_nativeLevel1.clearColor, &raw32[88], sizeof(s_nativeLevel1.clearColor));
+
+        // 0x16C: unk_16C
+        s_nativeLevel1.unk_16C = (int)raw32[91];
+
+        // 0x170: unk_170
+        s_nativeLevel1.unk_170 = (int)raw32[92];
+
+        // 0x174: numSCVert
+        s_nativeLevel1.numSCVert = (int)raw32[93];
+
+        // 0x178: ptrSCVert
+        s_nativeLevel1.ptrSCVert = LEV_PTR64(raw32[94]);
+
+        // 0x17C: stars (6 bytes)
+        memcpy(&s_nativeLevel1.stars, (const char *)rawFile + 0x17c, sizeof(s_nativeLevel1.stars));
+
+        // 0x184: splitLines[2] (4 bytes)
+        memcpy(s_nativeLevel1.splitLines, (const char *)rawFile + 0x184, sizeof(s_nativeLevel1.splitLines));
+
+        // 0x188: LevNavTable
+        s_nativeLevel1.LevNavTable = (struct NavHeader **)LEV_PTR64(raw32[98]);
+
+        // 0x18C: unk_18C
+        s_nativeLevel1.unk_18C = (int)raw32[99];
+
+        // 0x190: visMem
+        uint32_t pVisMem32 = raw32[100];
+        if (pVisMem32 != 0)
+        {
+                const uint32_t *vm32 = (const uint32_t *)LEV_PTR64(pVisMem32);
+                memset(&s_nativeVisMem1, 0, sizeof(s_nativeVisMem1));
+                for (int p = 0; p < 4; p++)
+                {
+                        s_nativeVisMem1.visLeafList[p] = (int *)LEV_PTR64(vm32[p]);
+                        s_nativeVisMem1.visFaceList[p] = (int *)LEV_PTR64(vm32[4 + p]);
+                        s_nativeVisMem1.visOVertList[p] = (int *)LEV_PTR64(vm32[8 + p]);
+                        s_nativeVisMem1.visSCVertList[p] = LEV_PTR64(vm32[12 + p]);
+                        s_nativeVisMem1.visLeafSrc[p] = LEV_PTR64(vm32[16 + p]);
+                        s_nativeVisMem1.visFaceSrc[p] = LEV_PTR64(vm32[20 + p]);
+                        s_nativeVisMem1.visOVertSrc[p] = LEV_PTR64(vm32[24 + p]);
+                        s_nativeVisMem1.visSCVertSrc[p] = LEV_PTR64(vm32[28 + p]);
+                        s_nativeVisMem1.bspList[p] = (struct VisMemBspListNode *)LEV_PTR64(vm32[32 + p]);
+                }
+                s_nativeLevel1.visMem = &s_nativeVisMem1;
+        }
+
+        #undef LEV_PTR64
+        return &s_nativeLevel1;
+}
+#endif
+
 int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *bigfile)
 {
         s16 sVar4;
@@ -352,9 +761,33 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                 // clear and reset
                 LibraryOfModels_Clear(gGT);
 
-                sdata->PLYROBJECTLIST = (int **)((u32)sdata->ptrMPK + 4);
-                if (sdata->ptrMPK == 0)
+#if defined(__LP64__)
+                LOAD_NativeModelPool_Reset();
+#endif
+
+                static struct Model *s_nativePlyrModels[128];
+                if (sdata->ptrMPK != 0)
+                {
+                        const uint32_t *raw32 = (const uint32_t *)((uintptr_t)sdata->ptrMPK + 4);
+                        uintptr_t base_hi = (uintptr_t)sdata->ptrMPK & 0xFFFFFFFF00000000ULL;
+                        int count = 0;
+                        while (*raw32 != 0 && count < 127)
+                        {
+                                uintptr_t model_addr = base_hi | (uintptr_t)(*raw32);
+#if defined(__LP64__)
+                                s_nativePlyrModels[count++] = LOAD_NativeModel_Convert((void *)model_addr);
+#else
+                                s_nativePlyrModels[count++] = (struct Model *)model_addr;
+#endif
+                                raw32++;
+                        }
+                        s_nativePlyrModels[count] = NULL;
+                        sdata->PLYROBJECTLIST = (int **)s_nativePlyrModels;
+                }
+                else
+                {
                         sdata->PLYROBJECTLIST = 0;
+                }
 
                 LOAD_GlobalModelPtrs_MPK();
                 DecalGlobal_Clear(gGT);
@@ -362,10 +795,11 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                 gGT->mpkIcons = 0;
                 if (sdata->ptrMPK != 0)
                 {
-                        gGT->mpkIcons = *(int *)sdata->ptrMPK;
+                        uintptr_t base_hi = (uintptr_t)sdata->ptrMPK & 0xFFFFFFFF00000000ULL;
+                        gGT->mpkIcons = *(u32 *)sdata->ptrMPK;
 
                         if (gGT->mpkIcons != 0)
-                                DecalGlobal_Store(gGT, (struct LevTexLookup *)gGT->mpkIcons);
+                                DecalGlobal_Store(gGT, (struct LevTexLookup *)(base_hi | (uintptr_t)gGT->mpkIcons));
                 }
 
                 if (!boolPlayMusicDuringLoading)
@@ -488,10 +922,14 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
         case 7:
         {
                 // get level pointer
+#if defined(__LP64__)
+                struct Level *lev = LOAD_NativeLevel_Build(sdata->ptrLevelFile);
+#else
                 struct Level *lev = sdata->ptrLevelFile;
+#endif
 
                 gGT->level1 = lev;
-                gGT->visMem1 = lev->visMem;
+                gGT->visMem1 = lev ? lev->visMem : NULL;
 
                 if (lev != 0)
                 {
@@ -505,22 +943,32 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                 {
                         LibraryOfModels_Store(gGT, lev->numModels, lev->ptrModelsPtrArray);
 
-                        gGT->ptrCircle = (u32)DecalGlobal_FindInLEV(lev, rdata.s_circle);
-                        gGT->ptrClod = (u32)DecalGlobal_FindInLEV(lev, rdata.s_clod);
-                        gGT->ptrDustpuff = (u32)DecalGlobal_FindInLEV(lev, rdata.s_dustpuff);
-                        gGT->ptrSmoking = (u32)DecalGlobal_FindInLEV(lev, rdata.s_smokering); // "Smoke Ring"
-                        gGT->ptrSparkle = (u32)DecalGlobal_FindInLEV(lev, rdata.s_sparkle);
+                        gGT->ptrCircle = (u32)(uintptr_t)DecalGlobal_FindInLEV(lev, rdata.s_circle);
+                        gGT->ptrClod = (u32)(uintptr_t)DecalGlobal_FindInLEV(lev, rdata.s_clod);
+                        gGT->ptrDustpuff = (u32)(uintptr_t)DecalGlobal_FindInLEV(lev, rdata.s_dustpuff);
+                        gGT->ptrSmoking = (u32)(uintptr_t)DecalGlobal_FindInLEV(lev, rdata.s_smokering); // "Smoke Ring"
+                        gGT->ptrSparkle = (u32)(uintptr_t)DecalGlobal_FindInLEV(lev, rdata.s_sparkle);
                 }
 
                 // if linked list of icons exists
                 if (gGT->mpkIcons != 0)
                 {
+#if defined(__LP64__)
+                        uintptr_t base_hi = (uintptr_t)sdata->ptrMPK ? ((uintptr_t)sdata->ptrMPK & 0xFFFFFFFF00000000ULL) : 0x100000000ULL;
+                        uintptr_t mpkIconsAddr = base_hi | (uintptr_t)gGT->mpkIcons;
+                        uint32_t listRel = *(uint32_t *)(mpkIconsAddr + 4);
+                        u32 *mpkIconList = listRel ? (u32 *)(base_hi | (uintptr_t)listRel) : NULL;
+#else
                         u32 *mpkIconList = (u32 *)*(u32 *)(gGT->mpkIcons + 4);
+#endif
 
-                        gGT->trafficLightIcon[0] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightredoff);
-                        gGT->trafficLightIcon[1] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightredon);
-                        gGT->trafficLightIcon[2] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightgreenoff);
-                        gGT->trafficLightIcon[3] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightgreenon);
+                        if (mpkIconList != NULL)
+                        {
+                                gGT->trafficLightIcon[0] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightredoff);
+                                gGT->trafficLightIcon[1] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightredon);
+                                gGT->trafficLightIcon[2] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightgreenoff);
+                                gGT->trafficLightIcon[3] = (struct Icon *)DecalGlobal_FindInMPK(mpkIconList, rdata.s_lightgreenon);
+                        }
                 }
 
                 gGT->gameMode1_prevFrame = 1;

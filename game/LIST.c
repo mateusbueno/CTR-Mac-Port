@@ -19,6 +19,12 @@ void LIST_AddFront(struct LinkedList *L, struct Item *I)
 	I->prev = 0;
 
 	oldFirst = L->first;
+#if defined(__LP64__)
+	if ((uintptr_t)oldFirst <= 0x100010000ULL)
+	{
+		oldFirst = 0;
+	}
+#endif
 	I->next = oldFirst;
 
 	if (oldFirst != 0)
@@ -45,6 +51,12 @@ void LIST_AddBack(struct LinkedList *L, struct Item *I)
 	I->next = 0;
 
 	oldLast = L->last;
+#if defined(__LP64__)
+	if ((uintptr_t)oldLast <= 0x100010000ULL)
+	{
+		oldLast = 0;
+	}
+#endif
 	I->prev = oldLast;
 
 	if (oldLast != 0)
@@ -82,7 +94,12 @@ struct Item *LIST_RemoveMember(struct LinkedList *L, struct Item *I)
 	{
 		if (I->prev != 0)
 		{
+#if defined(__LP64__)
+			if ((uintptr_t)I->prev > 0x100010000ULL)
+				I->prev->next = I->next;
+#else
 			I->prev->next = I->next;
+#endif
 		}
 		else
 		{
@@ -91,7 +108,17 @@ struct Item *LIST_RemoveMember(struct LinkedList *L, struct Item *I)
 
 		if (I->next != 0)
 		{
-			I->next->prev = I->prev;
+#if defined(__LP64__)
+			if ((uintptr_t)I->next <= 0x100010000ULL)
+			{
+				I->next = 0;
+				L->last = I->prev;
+			}
+			else
+#endif
+			{
+				I->next->prev = I->prev;
+			}
 		}
 		else
 		{
@@ -99,6 +126,12 @@ struct Item *LIST_RemoveMember(struct LinkedList *L, struct Item *I)
 		}
 
 		L->count = L->count - 1;
+#if defined(__LP64__)
+		if ((uintptr_t)L->first <= 0x100010000ULL)
+			L->first = 0;
+		if ((uintptr_t)L->last <= 0x100010000ULL)
+			L->last = 0;
+#endif
 	}
 
 	I->next = 0;
@@ -117,7 +150,12 @@ struct Item *LIST_RemoveFront(struct LinkedList *L)
 
 	if (I->prev != 0)
 	{
+#if defined(__LP64__)
+		if ((uintptr_t)I->prev > 0x100010000ULL)
+			I->prev->next = I->next;
+#else
 		I->prev->next = I->next;
+#endif
 	}
 	else
 	{
@@ -126,7 +164,17 @@ struct Item *LIST_RemoveFront(struct LinkedList *L)
 
 	if (I->next != 0)
 	{
-		I->next->prev = I->prev;
+#if defined(__LP64__)
+		if ((uintptr_t)I->next <= 0x100010000ULL)
+		{
+			I->next = 0;
+			L->last = I->prev;
+		}
+		else
+#endif
+		{
+			I->next->prev = I->prev;
+		}
 	}
 	else
 	{
@@ -134,6 +182,12 @@ struct Item *LIST_RemoveFront(struct LinkedList *L)
 	}
 
 	L->count = L->count - 1;
+#if defined(__LP64__)
+	if ((uintptr_t)L->first <= 0x100010000ULL)
+		L->first = 0;
+	if ((uintptr_t)L->last <= 0x100010000ULL)
+		L->last = 0;
+#endif
 	I->next = 0;
 	I->prev = 0;
 
@@ -185,6 +239,6 @@ void LIST_Init(struct LinkedList *L, struct Item *item, int itemSize, int numIte
 		LIST_AddBack(L, item);
 
 		numItems--;
-		item = (struct Item *)((int)item + itemSize);
+		item = (struct Item *)((uintptr_t)item + itemSize);
 	}
 }

@@ -3,7 +3,7 @@
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80029ab4-0x80029b2c
 void howl_ParseCseqHeader(struct CseqHeader *ch)
 {
-	u32 addr = (u32)ch;
+	uintptr_t addr = (uintptr_t)ch;
 
 	sdata->ptrCseqHeader = (struct CseqHeader *)addr;
 	addr += sizeof(struct CseqHeader);

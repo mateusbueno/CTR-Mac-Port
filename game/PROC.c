@@ -36,9 +36,9 @@ void PROC_DestroyObject(void *object, int threadFlags)
 		myPool = &sdata->gGT->JitPools.smallStack;
 
 	// in allocation, "next" and "prev" are abstracted
-	// with obj+=8, so not all structs need "next" and "prev",
-	// now subtract 8 bytes to access those two pointers
-	object = (void *)((u8 *)object - 8);
+	// with obj+=sizeof(struct Item), so not all structs need "next" and "prev",
+	// now subtract sizeof(struct Item) to access those two pointers
+	object = (void *)((uintptr_t)object - sizeof(struct Item));
 
 	// add object back to free list
 	LIST_AddFront(&myPool->free, (struct Item *)object);
@@ -185,15 +185,15 @@ struct Thread *PROC_BirthWithObject(int flags, void *funcThTick, const char *nam
 	if (bucketID >= NUM_BUCKETS)
 	{
 		if (stackObj != 0)
-			PROC_DestroyObject((void *)((u32)stackObj + 8), flags);
+			PROC_DestroyObject((void *)((uintptr_t)stackObj + sizeof(struct Item)), flags);
 		return 0;
 	}
 
 	// validate size fits in pool
-	if ((u32)(flags >> 0x10) >= (stackPool->itemSize - 8))
+	if ((u32)(flags >> 0x10) >= (stackPool->itemSize - sizeof(struct Item)))
 	{
 		if (stackObj != 0)
-			PROC_DestroyObject((void *)((u32)stackObj + 8), flags);
+			PROC_DestroyObject((void *)((uintptr_t)stackObj + sizeof(struct Item)), flags);
 		return 0;
 	}
 
@@ -207,7 +207,7 @@ struct Thread *PROC_BirthWithObject(int flags, void *funcThTick, const char *nam
 	// check thread allocated
 	if (th == 0)
 	{
-		PROC_DestroyObject((void *)((u32)stackObj + 8), flags);
+		PROC_DestroyObject((void *)((uintptr_t)stackObj + sizeof(struct Item)), flags);
 		return 0;
 	}
 
@@ -253,7 +253,7 @@ struct Thread *PROC_BirthWithObject(int flags, void *funcThTick, const char *nam
 	// set remaining fields AFTER linking (ASM order)
 	th->funcThTick = funcThTick;
 	th->name = name;
-	th->object = (void *)(((u32)stackObj) + 8);
+	th->object = (void *)((uintptr_t)stackObj + sizeof(struct Item));
 
 	return th;
 }
@@ -534,7 +534,9 @@ t->cooldownFrameCount--;
 		}
 
 		if (t->funcThTick != NULL)
+		{
 			t->funcThTick(t);
+		}
 
 		ThTick_PushPending(pending, &count, t->childThread);
 	}

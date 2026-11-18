@@ -4,7 +4,7 @@
 #endif
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8004cae8-0x8004cec4.
-struct Instance *UI_INSTANCE_BirthWithThread(int param_1, int param_2, int param_3, int param_4, int param_5, int param_6)
+struct Instance *UI_INSTANCE_BirthWithThread(int param_1, void *param_2, int param_3, int param_4, struct PushBuffer *param_5, const char *param_6)
 
 {
         s16 modelID;
@@ -186,7 +186,7 @@ struct Instance *UI_INSTANCE_BirthWithThread(int param_1, int param_2, int param
                 else
                 {
                         struct InstDrawPerPlayer *idpp = INST_GETIDPP(inst);
-                        idpp[0].pushBuffer = (struct PushBuffer *)param_5;
+                        idpp[0].pushBuffer = param_5;
 
                         // record that pushBuffer is present
                         inst->flags |= 0x100;

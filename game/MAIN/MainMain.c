@@ -1016,7 +1016,7 @@ void StateZero()
 
         // English=1
         // PAL SCES02105 calls it multiple times
-        LOAD_LangFile((int)sdata->ptrBigfile1, 1);
+        LOAD_LangFile(sdata->ptrBigfile1, 1);
 #ifdef CTR_NATIVE
         NativeMods_OnLanguageLoaded(sdata->lngStrings, sdata->numLngStrings);
 

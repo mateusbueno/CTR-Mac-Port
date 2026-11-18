@@ -1352,16 +1352,16 @@ void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBu
                 *(int *)(scratchpad + 0x248) = (int)pb->pos[2];
 
                 // reset camera interpolation
-                *(s16 *)((int)cDC + 0xc0) = 0;
-                *(s16 *)((int)cDC + 0xc2) = 0;
+                *(s16 *)((uintptr_t)cDC + 0xc0) = 0;
+                *(s16 *)((uintptr_t)cDC + 0xc2) = 0;
                 cDC->framesZoomingOut = 0;
         }
 
         if (state == KS_ENGINE_REVVING)
         {
                 // reset camera interpolation
-                *(s16 *)((int)cDC + 0xc0) = 0;
-                *(s16 *)((int)cDC + 0xc2) = 0;
+                *(s16 *)((uintptr_t)cDC + 0xc0) = 0;
+                *(s16 *)((uintptr_t)cDC + 0xc2) = 0;
                 cDC->framesZoomingOut = 0;
         }
 
@@ -1388,14 +1388,14 @@ void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBu
 
                 if (cDC->BlastedLerp.boolLerpPending == 0)
                 {
-                        *(s16 *)((int)cDC + 0xc8) = cDC->unkTriplet3[1] - cDC->unkTriplet2[1];
-                        *(s16 *)((int)cDC + 0xca) = cDC->unkTriplet2[1] - (d->quadBlockHeight >> 8);
+                        *(s16 *)((uintptr_t)cDC + 0xc8) = cDC->unkTriplet3[1] - cDC->unkTriplet2[1];
+                        *(s16 *)((uintptr_t)cDC + 0xca) = cDC->unkTriplet2[1] - (d->quadBlockHeight >> 8);
                 }
 
                 cDC->BlastedLerp.boolLerpPending = 1;
 
                 if (((int)cDC->unkTriplet2[1] < *(int *)(scratchpad + 0x244)) &&
-                    (x = (int)*(s16 *)((int)cDC + 0xca) + (d->quadBlockHeight >> 8), x < *(int *)(scratchpad + 0x244)))
+                    (x = (int)*(s16 *)((uintptr_t)cDC + 0xca) + (d->quadBlockHeight >> 8), x < *(int *)(scratchpad + 0x244)))
                 {
                         *(int *)(scratchpad + 0x244) = x;
                 }
@@ -1457,15 +1457,15 @@ cDC->BlastedLerp.framesRemaining--;
         {
                 if (*(int *)(scratchpad + 0x244) < (int)cDC->framesZoomingOut + (d->posCurr.y >> 8))
                 {
-                        *(s16 *)((int)cDC + 0xc2) = 8;
-                        *(s16 *)((int)cDC + 0xc0) = cDC->framesZoomingOut;
+                        *(s16 *)((uintptr_t)cDC + 0xc2) = 8;
+                        *(s16 *)((uintptr_t)cDC + 0xc0) = cDC->framesZoomingOut;
                         *(int *)(scratchpad + 0x244) = (int)cDC->framesZoomingOut + (d->posCurr.y >> 8);
 
                         goto LAB_8001ab04;
                 }
 
-                *(s16 *)((int)cDC + 0xc2) = 8;
-                *(s16 *)((int)cDC + 0xc0) = *(s16 *)(scratchpad + 0x244) - (s16)(d->posCurr.y >> 8);
+                *(s16 *)((uintptr_t)cDC + 0xc2) = 8;
+                *(s16 *)((uintptr_t)cDC + 0xc0) = *(s16 *)(scratchpad + 0x244) - (s16)(d->posCurr.y >> 8);
         }
 
         else
@@ -1485,14 +1485,14 @@ cDC->BlastedLerp.framesRemaining--;
                         *(int *)(scratchpad + 0x244) = x;
                 }
 
-                x = (int)*(s16 *)((int)cDC + 0xc2);
+                x = (int)*(s16 *)((uintptr_t)cDC + 0xc2);
                 if (x != 0)
                 {
                         *(int *)(scratchpad + 0x244) =
 
-                            (8 - x) * *(int *)(scratchpad + 0x244) + x * ((int)*(s16 *)((int)cDC + 0xc0) + (d->posCurr.y >> 8)) >> 3;
+                            (8 - x) * *(int *)(scratchpad + 0x244) + x * ((int)*(s16 *)((uintptr_t)cDC + 0xc0) + (d->posCurr.y >> 8)) >> 3;
 
-                        *(s16 *)((int)cDC + 0xc2) += -1;
+                        *(s16 *)((uintptr_t)cDC + 0xc2) += -1;
                 }
         }
         cDC->framesZoomingOut = *(s16 *)(scratchpad + 0x244) - (d->posCurr.y >> 8);
@@ -1506,7 +1506,7 @@ LAB_8001ab04:
 
         if (cDC->BlastedLerp.boolLerpPending != 0)
         {
-                *(int *)(scratchpad + 0x25c) = *(int *)(scratchpad + 0x244) + (int)*(s16 *)((int)cDC + 0xc8);
+                *(int *)(scratchpad + 0x25c) = *(int *)(scratchpad + 0x244) + (int)*(s16 *)((uintptr_t)cDC + 0xc8);
         }
 
         if (d->kartState == KS_MASK_GRABBED)
@@ -1557,9 +1557,9 @@ LAB_8001ab04:
         *(int *)(scratchpad + 0x218) = *(int *)(scratchpad + 0x244) - (int)pb->pos[1];
         *(int *)(scratchpad + 0x21c) = *(int *)(scratchpad + 0x248) - (int)pb->pos[2];
 
-        cDC->unkTriplet1[0] -= (*(int *)(scratchpad + 0x240) - *(int *)((int)cDC + 0x58));
-        cDC->unkTriplet1[1] -= (*(int *)(scratchpad + 0x244) - *(int *)((int)cDC + 0x5c));
-        cDC->unkTriplet1[2] -= (*(int *)(scratchpad + 0x248) - *(int *)((int)cDC + 0x60));
+        cDC->unkTriplet1[0] -= (*(int *)(scratchpad + 0x240) - *(int *)((uintptr_t)cDC + 0x58));
+        cDC->unkTriplet1[1] -= (*(int *)(scratchpad + 0x244) - *(int *)((uintptr_t)cDC + 0x5c));
+        cDC->unkTriplet1[2] -= (*(int *)(scratchpad + 0x248) - *(int *)((uintptr_t)cDC + 0x60));
 
         if (cDC->unkTriplet1[0] > 2)
                 cDC->unkTriplet1[0] = 2;
@@ -1933,7 +1933,7 @@ void CAM_ThTick(struct Thread *t)
                         uVar16 = (u32)*psVar20;
 
                         // +2 to include respawnPoint and modeID
-                        psVar20 = (s16 *)((int)psVar19 + data.EndOfRace_Camera_Size[iVar7] + 2);
+                        psVar20 = (s16 *)((uintptr_t)psVar19 + data.EndOfRace_Camera_Size[iVar7] + 2);
 
                         psVar15 = &gGT->level1->ptr_restart_points[uVar16];
 
@@ -2335,7 +2335,7 @@ LAB_8001c150:
                 if ((psVar11 != 0) && (piVar12 = psVar11->visLeafSrc, piVar12 != 0))
                 {
                         cDC->visLeafSrc = piVar12;
-                        gGT->unk1cac[1] = ((int)cDC->ptrQuadBlock - (int)gGT->level1->ptr_mesh_info->ptrQuadBlockArray) * -0x1642c859 >> 2;
+                        gGT->unk1cac[1] = ((int)((uintptr_t)cDC->ptrQuadBlock - (uintptr_t)gGT->level1->ptr_mesh_info->ptrQuadBlockArray)) * -0x1642c859 >> 2;
                 }
                 if (cDC->ptrQuadBlock != 0)
                 {

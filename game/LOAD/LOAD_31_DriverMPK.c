@@ -13,14 +13,21 @@ static void (*const LOAD_DriverMPK_SetPointer)(struct LoadQueueSlot *) = (void (
 static void LOAD_Callback_DriverModels_Netplay(struct LoadQueueSlot *lqs)
 {
         struct GameTracker *gGT = sdata->gGT;
-        int ptrMPK = (int)lqs->ptrDestination;
+        uintptr_t ptrMPK = (uintptr_t)lqs->ptrDestination;
         if (ptrMPK != 0)
         {
-                int **plyrObjList = (int **)((u32)ptrMPK + 4);
-                if (plyrObjList != NULL && *plyrObjList != NULL)
+                static struct Model *s_netplayModels[16];
+                const uint32_t *raw32 = (const uint32_t *)(ptrMPK + 4);
+                uintptr_t base_hi = ptrMPK & 0xFFFFFFFF00000000ULL;
+                int count = 0;
+                while (*raw32 != 0 && count < 8)
                 {
-                        /* Register up to 8 models (a 1P pack has 8 karts) */
-                        LibraryOfModels_Store(gGT, 8, (struct Model **)plyrObjList);
+                        s_netplayModels[count++] = (struct Model *)(base_hi | (uintptr_t)(*raw32));
+                        raw32++;
+                }
+                if (count > 0)
+                {
+                        LibraryOfModels_Store(gGT, count, s_netplayModels);
                 }
         }
         BFDBG_PRINTF("Callback_DriverModels_Netplay: registered models from pack at %p", lqs->ptrDestination);
@@ -28,7 +35,7 @@ static void LOAD_Callback_DriverModels_Netplay(struct LoadQueueSlot *lqs)
 #endif
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8003282c-0x80032b50.
-int LOAD_DriverMPK(struct BigHeader *bigfile, int levelLOD, void (*callback)(struct LoadQueueSlot *))
+void *LOAD_DriverMPK(struct BigHeader *bigfile, int levelLOD, void (*callback)(struct LoadQueueSlot *))
 {
         int i;
         int gameMode1;

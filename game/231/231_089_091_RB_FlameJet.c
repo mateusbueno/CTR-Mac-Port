@@ -275,7 +275,14 @@ void RB_FlameJet_Particles(struct Instance *inst, struct FlameJet *fjObj)
 	if (particle1 == NULL)
 		return;
 
+#if defined(__LP64__)
+	uintptr_t base_hi = (uintptr_t)gGT & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	struct IconGroup *sparkleGroup = gGT->ptrSparkle != 0 ? (struct IconGroup *)(base_hi | (uintptr_t)gGT->ptrSparkle) : NULL;
+	particle2 = Particle_Init(0, sparkleGroup, &emSet_fjHeat[0]);
+#else
 	particle2 = Particle_Init(0, (struct IconGroup *)gGT->ptrSparkle, &emSet_fjHeat[0]);
+#endif
 
 	// heat particle
 	if (particle2 != 0)

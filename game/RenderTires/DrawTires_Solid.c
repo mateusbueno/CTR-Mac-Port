@@ -509,13 +509,16 @@ static struct DrawTiresSolidProjectedWheel DrawTiresSolid_SelectProjectedWheel(s
 	if (angleValue < 0)
 		selected.jumpIndex += 4;
 
-	selected.wheelSprite = scratch->wheelSprites[spriteIndex];
+	selected.wheelSprite = scratch->wheelSprites != NULL ? scratch->wheelSprites[spriteIndex] : NULL;
 
 	return selected;
 }
 
 static void DrawTiresSolid_CopyIconUV(POLY_FT4 *p, struct Icon *icon)
 {
+	if (icon == NULL)
+		return;
+
 	u32 uv23 = *(u32 *)&icon->texLayout.u2;
 
 	*(u32 *)&p->u0 = *(u32 *)&icon->texLayout.u0;
@@ -613,7 +616,11 @@ static void DrawTiresSolid_LinkPrimitive(struct DrawTiresSolidScratch *scratch, 
 	if ((otRangeEnd - selectedOTSlot) < 0)
 		selectedOTSlot = otRangeEnd;
 
+#if defined(__LP64__)
+	otSlot = (u_long *)(0x100000000ULL | (u32)selectedOTSlot);
+#else
 	otSlot = (u_long *)(uintptr_t)selectedOTSlot;
+#endif
 	p->tag = (*otSlot & 0x00ffffffu) | 0x09000000;
 #if defined(__LP64__)
 	CtrGpu_LinkPrimToOT(otSlot, p);

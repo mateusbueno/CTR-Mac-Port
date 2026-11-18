@@ -34,7 +34,7 @@ int howl_LoadHeader(char *filename)
 			MEMPACK_ReallocMem(numSector << 0xb);
 
 			// if header needs more sectors loaded, like CTR-U which needs 3 sectors
-			if (numSector < 2 || LOAD_HowlHeaderSectors(&sdata->KartHWL_CdFile, (void *)((int)alloc + 0x800), 1, numSector - 1) != 0)
+			if (numSector < 2 || LOAD_HowlHeaderSectors(&sdata->KartHWL_CdFile, (void *)((uintptr_t)alloc + 0x800), 1, numSector - 1) != 0)
 			{
 				// initilaize header and pointer table
 				howl_ParseHeader(alloc);

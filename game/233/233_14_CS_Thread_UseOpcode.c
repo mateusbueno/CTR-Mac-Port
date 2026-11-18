@@ -272,7 +272,15 @@ afterCameraAndSkipChecks:
 		}
 		if (cs->frameOverrideRoot != 0)
 		{
+#if defined(__LP64__)
+			uintptr_t base_hi = (uintptr_t)cs & 0xFFFFFFFF00000000ULL;
+			uintptr_t rootAddr = *(uintptr_t *)cs->frameOverrideRoot;
+			if ((rootAddr & 0xFFFFFFFF00000000ULL) == 0)
+				rootAddr |= base_hi;
+			frameData = (s16 *)(rootAddr + iVar12 * 0x20);
+#else
 			frameData = (s16 *)((uintptr_t)(*cs->frameOverrideRoot) + iVar12 * 0x20);
+#endif
 			*(int *)((u8 *)&instance->matrix + 0x00) = *(int *)(frameData + 4);
 			*(int *)((u8 *)&instance->matrix + 0x04) = *(int *)(frameData + 6);
 			*(int *)((u8 *)&instance->matrix + 0x08) = *(int *)(frameData + 8);

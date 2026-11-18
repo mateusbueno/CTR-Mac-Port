@@ -90,8 +90,18 @@ build.bat            # Rebuild everything
 
 ## Running
 
+### Extração Automática de Assets (.bin/.cue)
+
+Você pode extrair automaticamente todos os 33 arquivos necessários a partir de uma imagem de disco NTSC-U (`.bin`/`.cue`) usando o script incluído:
+
+```bash
+python3 tools/extract_disc.py "caminho/para/CTR.bin" "$HOME/Library/Application Support/CTR-Native/assets"
+```
+
+O script detecta o sistema de arquivos ISO9660, extrai todos os setores de áudio XA (mantendo os cabeçalhos de 2336/2352 bytes), o `BIGFILE.BIG` e arquivos de som `KART.HWL`.
+
 1. Create an `assets/` directory next to the executable for packaged builds, or
-   next to the source files for development builds run from `build/`
+   next to the source files for development builds run from `build/` (ou use a pasta global no macOS: `~/Library/Application Support/CTR-Native/assets`)
 2. Extract the following from a CTR NTSC-U retail disc image:
    - `BIGFILE.BIG`
    - `SOUNDS/KART.HWL`
@@ -197,6 +207,9 @@ main.c (entrypoint)
 - `CTR_NATIVE` is defined for native host/platform-specific code
 - **64-bit Native Apple Silicon Port:** On macOS (`arm64`), the engine runs natively in 64-bit mode:
   - **Arena-Relative GPU Link Bridge:** Solves the PS1 24-bit Ordering Table (OT) pointer constraint by encoding links as offsets relative to the 8 MiB MEMPACK arena (`g_gpuArenaBase`), resolving full 64-bit host pointers without memory corruption or truncation.
+  - **LP64 Relocation & Pointer Extension:** Restores upper 32-bit `base_hi` address bits across all binary assets loaded in DRAM (`ModelAnim` frame arrays, `AnimTex` texture cycling arrays, `IconGroup` icon collections, texture UV layouts, and level geometry lookups).
+  - **Native Icon Table Cache (`DecalGlobal_GetIcons`):** Dynamically caches and expands packed 32-bit icon pointer offsets into native 64-bit arrays, enabling wheel sprite rendering, HUD wumpa/speedometer digits, and font decals.
+  - **Thread & Object Lifecycles:** Eliminates 32-bit truncation of function pointers and thread ticks (`UI_ThTick_*`), ensuring stable 60 FPS execution throughout race physics and UI animation loops.
   - **Decoupled PS1 Scratchpad:** Avoids Mach-O 4 GiB `__PAGEZERO` collision by routing scratchpad accesses through engine-managed host memory via `CTR_SCRATCHPAD_PTR`.
   - **Modern macOS Frameworks:** Statically links SDL3 Cocoa windowing, OpenGL 3.3 Core Profile, CoreAudio sound streaming, and Apple GameController / HIDAPI gamepads (MFi, DualSense, DualShock 4, Xbox Series, Switch Pro).
 
