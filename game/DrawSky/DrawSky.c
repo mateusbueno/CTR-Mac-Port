@@ -73,9 +73,15 @@ static void DrawSky_EmitPrimitive(u32 **primCursor, u_long *ot)
 static u32 *DrawSky_Piece(struct Skybox *skybox, struct DrawSkyContext *ctx, int faceIndex, int countIndex, u32 *prim)
 {
 	u32 numFaces = (u16)skybox->numFaces[countIndex];
+#if defined(__LP64__)
+	uintptr_t base_hi = (uintptr_t)skybox & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	const struct SkyboxFace *face = skybox->ptrFaces[faceIndex] ? (const struct SkyboxFace *)(base_hi | (uintptr_t)skybox->ptrFaces[faceIndex]) : NULL;
+#else
 	const struct SkyboxFace *face = skybox->ptrFaces[faceIndex];
+#endif
 
-	if (numFaces == 0)
+	if (numFaces == 0 || face == NULL)
 		return prim;
 
 	for (u32 i = 0; i < numFaces; i++, face++)
@@ -132,7 +138,17 @@ void DrawSky_Full(void *skybox, struct PushBuffer *pb, struct PrimMem *primMem)
 		*CTR_SCRATCHPAD_PTR(u32, 0x10) = baseFaceOffset;
 		*CTR_SCRATCHPAD_PTR(u32, 0x14) = baseCountOffset;
 
+#if defined(__LP64__)
+		uintptr_t base_hi = (uintptr_t)sky & 0xFFFFFFFF00000000ULL;
+		if (base_hi == 0) base_hi = 0x100000000ULL;
+		ctx.verts = sky->ptrVertex ? (const struct ShortVertex *)(base_hi | (uintptr_t)sky->ptrVertex) : NULL;
+#else
 		ctx.verts = sky->ptrVertex;
+#endif
+
+		if (ctx.verts == NULL)
+			return;
+
 		ctx.ot = &pb->ptrOT[0x3ff];
 		ctx.screenBounds = DrawSky_ReadWord(pb, 0x20);
 

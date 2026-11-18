@@ -1,18 +1,5 @@
 #include <common.h>
 
-struct DrawLevelOvr1PRenderListSlot
-{
-	struct QuadBlock **ptrQuadBlocksRendered;
-	struct VisMemBspListNode *bspListStart;
-};
-
-struct DrawLevelOvr1PRenderList
-{
-	struct DrawLevelOvr1PRenderListSlot list[5];
-	struct VisMemBspListNode *bspListStart_FullDynamic;
-	struct QuadBlock **ptrQuadBlocksRendered_FullDynamic;
-};
-
 enum DrawLevelOvr1PBucketKind
 {
 	DRAW_LEVEL_OVR1P_BUCKET_QUADBLOCKS_RENDERED,
@@ -125,6 +112,27 @@ static u8 *sDrawLevelOvr1P_ClipRecordStart;
 static u32 sDrawLevelOvr1P_PrimReserveBias;
 static u32 sDrawLevelOvr1P_MosaicReloadSpanOverride;
 static int sDrawLevelOvr1P_ListHandlersSeedRenderedCursor;
+#if defined(__LP64__)
+static u8 *sDrawLevelOvr1P_ClipRecordCursor;
+static void *sDrawLevelOvr_WaterEnvMap;
+static const u32 *sOvr226_VisFaceWordPtr;
+#endif
+
+void DrawLevelOvr_SetWaterEnvMap(void *waterEnvMap)
+{
+#if defined(__LP64__)
+	sDrawLevelOvr_WaterEnvMap = waterEnvMap;
+#endif
+}
+
+void *DrawLevelOvr_GetWaterEnvMap(void)
+{
+#if defined(__LP64__)
+	return sDrawLevelOvr_WaterEnvMap;
+#else
+	return NULL;
+#endif
+}
 
 struct DrawLevelOvr1PScratchVertex
 {
@@ -984,11 +992,18 @@ static s32 DrawLevelOvr1P_GetDepthClipThreshold(void)
 
 static u8 *DrawLevelOvr1P_GetClipRecordCursor(void)
 {
+#if defined(__LP64__)
+	return sDrawLevelOvr1P_ClipRecordCursor;
+#else
 	return (u8 *)(uintptr_t)*CTR_SCRATCHPAD_PTR(u32, 0x10);
+#endif
 }
 
 static void DrawLevelOvr1P_SetClipRecordCursor(u8 *cursor)
 {
+#if defined(__LP64__)
+	sDrawLevelOvr1P_ClipRecordCursor = cursor;
+#endif
 	*CTR_SCRATCHPAD_PTR(u32, 0x10) = (u32)(uintptr_t)cursor;
 }
 
@@ -1167,7 +1182,7 @@ static void Ovr226_800a0f78_ProjectFullDynamicLowQuad(struct LevVertex *vertices
 
 static void Ovr226_800a0d20_SeedEntryScratchPointers(struct DrawLevelOvr1PRenderList *renderList, struct PushBuffer *pb)
 {
-	*CTR_SCRATCHPAD_PTR(u32, 0x10) = (u32)(uintptr_t)data.PtrClipBuffer[0];
+	DrawLevelOvr1P_SetClipRecordCursor(data.PtrClipBuffer[0]);
 	*CTR_SCRATCHPAD_PTR(u32, 0xdc) = (u32)(uintptr_t)pb;
 	*CTR_SCRATCHPAD_PTR(u32, 0x60) = (u32)(uintptr_t)renderList;
 }
@@ -8171,6 +8186,9 @@ static void Ovr226_800a0f0c_SeedFullDynamicVisibilityScratch(const int *visFaceL
 	u32 blockID = (u16)block->blockID;
 	const u32 *word = (const u32 *)((const u8 *)visFaceList + ((blockID >> 3) & 0x1fc));
 
+#if defined(__LP64__)
+	sOvr226_VisFaceWordPtr = word;
+#endif
 	*CTR_SCRATCHPAD_PTR(u32, 0xc0) = (u32)(uintptr_t)word;
 	*CTR_SCRATCHPAD_PTR(u32, 0xbc) = blockID & 0x1f;
 	*CTR_SCRATCHPAD_PTR(u32, 0xc4) = *word;
@@ -8184,11 +8202,19 @@ static int Ovr226_800a0f34_ConsumeFullDynamicVisibilityBit(void)
 
 	if (bitIndex < 0)
 	{
-		u32 *wordPtr = (u32 *)(uintptr_t)*CTR_SCRATCHPAD_PTR(u32, 0xc0);
+#if defined(__LP64__)
+		const u32 *wordPtr = sOvr226_VisFaceWordPtr;
+#else
+		const u32 *wordPtr = (const u32 *)(uintptr_t)*CTR_SCRATCHPAD_PTR(u32, 0xc0);
+#endif
 
 		bitIndex = 0x1f;
-		word = wordPtr[1];
-		wordPtr++;
+		word = wordPtr ? wordPtr[1] : 0;
+		if (wordPtr != NULL)
+			wordPtr++;
+#if defined(__LP64__)
+		sOvr226_VisFaceWordPtr = wordPtr;
+#endif
 		*CTR_SCRATCHPAD_PTR(u32, 0xc0) = (u32)(uintptr_t)wordPtr;
 		*CTR_SCRATCHPAD_PTR(u32, 0xc4) = word;
 	}
@@ -9252,7 +9278,18 @@ static int DrawLevelOvr1P_DrawWaterListQuadBlock(struct PushBuffer *pb, struct P
 
 static void Ovr226_800a1e30_SeedWaterListState(void)
 {
+#if defined(__LP64__)
+	u32 *waterEnvMap = (u32 *)DrawLevelOvr_GetWaterEnvMap();
+#else
 	u32 *waterEnvMap = (u32 *)(uintptr_t)*CTR_SCRATCHPAD_PTR(u32, 0x88);
+#endif
+
+	if (waterEnvMap == NULL)
+	{
+		*CTR_SCRATCHPAD_PTR(u32, 0x1a0) = 0;
+		*CTR_SCRATCHPAD_PTR(u32, 0x1a4) = 0;
+		return;
+	}
 
 	// NOTE(aalhendi): Retail 0x800a1e30 uses the global 1P retry list, not the
 	// current render-list field, before walking the water BSP list.
@@ -9743,7 +9780,15 @@ static int DrawLevelOvr1P_DrawRenderedQuadBlocks(struct QuadBlock **renderedList
 
 static void *DrawLevelOvr1P_GetRenderListField(struct DrawLevelOvr1PRenderList *renderList, int offset)
 {
+#if defined(__LP64__)
+	int index = offset / (int)sizeof(u32);
+	if (index < 0 || index >= 12)
+		return NULL;
+	void **fields = (void **)renderList;
+	return fields[index];
+#else
 	return *(void **)((u8 *)renderList + offset);
+#endif
 }
 
 static void Ovr226_800a0d34_SetEntryGteAndCameraScratch(struct PushBuffer *pb)
@@ -9860,6 +9905,7 @@ static int Ovr226_800a0cbc_Entry(void *LevRenderList, struct PushBuffer *pb, str
 	if (VisMem10 == NULL)
 		return 1;
 
+	DrawLevelOvr_SetWaterEnvMap(waterEnvMap);
 	*CTR_SCRATCHPAD_PTR(u32, 0x88) = (u32)(uintptr_t)waterEnvMap;
 
 	if (mesh->ptrQuadBlockArray == NULL)

@@ -136,10 +136,20 @@ static int RenderLists_Select1P2PSlot(const struct BSP *bsp, struct PushBuffer *
 
 static struct VisMemBspListNode **RenderLists_Get1P2PHead(void *LevRenderList, int slotIndex)
 {
+#if defined(__LP64__)
+	struct DrawLevelOvr1PRenderList *rl = (struct DrawLevelOvr1PRenderList *)LevRenderList;
+	if (rl == NULL)
+		return NULL;
+	if (slotIndex == RENDER_LIST_SLOT_FULL_DYNAMIC)
+		return &rl->bspListStart_FullDynamic;
+
+	return &rl->list[slotIndex].bspListStart;
+#else
 	if (slotIndex == RENDER_LIST_SLOT_FULL_DYNAMIC)
 		return (struct VisMemBspListNode **)((char *)LevRenderList + 0x28);
 
 	return (struct VisMemBspListNode **)((char *)LevRenderList + slotIndex * 8 + 4);
+#endif
 }
 
 static int RenderLists_Select3P4PSlot(const struct BSP *bsp)
@@ -158,6 +168,9 @@ static int RenderLists_Select3P4PSlot(const struct BSP *bsp)
 
 static void RenderLists_LinkBsp(struct BSP *bspRoot, struct BSP *bsp, struct VisMemBspListNode **head, struct VisMemBspListNode *bspList)
 {
+	if (head == NULL || bspList == NULL || bsp == NULL || bspRoot == NULL)
+		return;
+
 	struct VisMemBspListNode *node;
 	int bspIndex = bsp - bspRoot;
 
@@ -285,7 +298,12 @@ static int RenderLists_Walk3P4P(struct BSP *bspRoot, const int *visLeafList, str
 				continue;
 
 			int slotIndex = RenderLists_Select3P4PSlot(bsp);
+#if defined(__LP64__)
+			struct DrawLevelOvr1PRenderList *rl = (struct DrawLevelOvr1PRenderList *)LevRenderList;
+			struct VisMemBspListNode **head = (rl && slotIndex >= 0 && slotIndex < 5) ? &rl->list[slotIndex].bspListStart : NULL;
+#else
 			struct VisMemBspListNode **head = (struct VisMemBspListNode **)((char *)LevRenderList + slotIndex * 8 + 4);
+#endif
 
 			RenderLists_LinkBsp(bspRoot, bsp, head, bspList);
 			count++;
@@ -311,16 +329,16 @@ void RenderLists_PreInit()
 		scratchJumpTable[i] = renderListJumpTable[i];
 }
 
-int RenderLists_Init1P2P(struct BSP *bspRoot, int *visLeafList, struct PushBuffer *pb, u32 LevRenderList, void *bspList, char numPlyr)
+int RenderLists_Init1P2P(struct BSP *bspRoot, int *visLeafList, struct PushBuffer *pb, void *LevRenderList, void *bspList, char numPlyr)
 {
 	// NOTE(aalhendi): ASM-verified NTSC-U 926 0x8006fe70-0x800702d4.
 	RenderLists_Load1P2PGteState(pb);
-	return RenderLists_Walk1P2P(bspRoot, visLeafList, pb, (void *)LevRenderList, bspList, numPlyr);
+	return RenderLists_Walk1P2P(bspRoot, visLeafList, pb, LevRenderList, bspList, numPlyr);
 }
 
-int RenderLists_Init3P4P(struct BSP *bspRoot, int *visLeafList, struct PushBuffer *pb, u32 LevRenderList, void *bspList)
+int RenderLists_Init3P4P(struct BSP *bspRoot, int *visLeafList, struct PushBuffer *pb, void *LevRenderList, void *bspList)
 {
 	// NOTE(aalhendi): ASM-verified NTSC-U 926 0x80070388-0x80070720.
 	RenderLists_Load1P2PGteState(pb);
-	return RenderLists_Walk3P4P(bspRoot, visLeafList, pb, (void *)LevRenderList, bspList);
+	return RenderLists_Walk3P4P(bspRoot, visLeafList, pb, LevRenderList, bspList);
 }

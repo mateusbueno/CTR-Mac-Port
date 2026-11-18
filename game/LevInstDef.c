@@ -85,6 +85,10 @@ void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub)
 		{
 			struct Instance *inst = visInstSrc[0];
 			if (inst == NULL) continue;
+#if defined(__LP64__)
+			if ((uintptr_t)inst < 0x10000 || ((uintptr_t)inst & 7) != 0)
+				continue;
+#endif
 			struct InstDef *instDef = inst->instDef;
 
 			// if on adv hub
@@ -92,7 +96,7 @@ void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub)
 			{
 				// kill thread if it exists
 				th = inst->thread;
-				if (th != 0)
+				if (th != 0 && (uintptr_t)th > 0x10000 && (((uintptr_t)th & 7) == 0))
 					th->flags |= 0x800;
 
 				// erase instance in pool

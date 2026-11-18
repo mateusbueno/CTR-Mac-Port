@@ -149,54 +149,63 @@ static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
         return nm;
 }
 
-static struct Level s_nativeLevel1;
-static struct mesh_info s_nativeMeshInfo1;
-static struct VisMem s_nativeVisMem1;
-static struct Model *s_nativeLevModels1[128];
-static struct InstDef s_nativeInstDefs1[256];
-static struct InstDef *s_nativeInstDefPtrArray1[256];
-static struct SpawnType1 s_nativeSpawnType1;
-static struct SpawnType2 s_nativeSpawnType2;
-static struct SpawnType2 s_nativeSpawnType2_PosRot;
+static struct Level s_nativeLevel[2];
+static struct mesh_info s_nativeMeshInfo[2];
+static struct VisMem s_nativeVisMem[2];
+static struct Model *s_nativeLevModels[2][128];
+static struct InstDef s_nativeInstDefs[2][256];
+static struct InstDef *s_nativeInstDefPtrArray[2][256];
+static struct SpawnType1 s_nativeSpawnType1[2];
+static struct SpawnType2 s_nativeSpawnType2[2][32];
+static struct SpawnType2 s_nativeSpawnType2_PosRot[2][32];
 
-static struct Level *LOAD_NativeLevel_Build(void *rawFile)
+struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
 {
         if (rawFile == NULL) return NULL;
+        int s;
+        if (slot < 0)
+        {
+                s = (sdata->gGT && sdata->gGT->level1 == &s_nativeLevel[0]) ? 1 : 0;
+        }
+        else
+        {
+                s = (slot != 0) ? 1 : 0;
+        }
 
         const uint32_t *raw32 = (const uint32_t *)rawFile;
         uintptr_t base_hi = (uintptr_t)rawFile & 0xFFFFFFFF00000000ULL;
 
         #define LEV_PTR64(x32) ((x32) ? (void *)(base_hi | (uintptr_t)(uint32_t)(x32)) : NULL)
 
-        memset(&s_nativeLevel1, 0, sizeof(s_nativeLevel1));
+        memset(&s_nativeLevel[s], 0, sizeof(s_nativeLevel[s]));
 
         // 0x00: ptr_mesh_info
         uint32_t pMesh32 = raw32[0];
         if (pMesh32 != 0)
         {
                 const uint32_t *meshRaw = (const uint32_t *)LEV_PTR64(pMesh32);
-                memset(&s_nativeMeshInfo1, 0, sizeof(s_nativeMeshInfo1));
-                s_nativeMeshInfo1.numQuadBlock = (int)meshRaw[0];
-                s_nativeMeshInfo1.numVertex = (int)meshRaw[1];
-                s_nativeMeshInfo1.unk1 = (int)meshRaw[2];
-                s_nativeMeshInfo1.ptrQuadBlockArray = (struct QuadBlock *)LEV_PTR64(meshRaw[3]);
-                s_nativeMeshInfo1.ptrVertexArray = (struct LevVertex *)LEV_PTR64(meshRaw[4]);
-                s_nativeMeshInfo1.unk2 = (int)meshRaw[5];
-                s_nativeMeshInfo1.bspRoot = (struct BSP *)LEV_PTR64(meshRaw[6]);
-                s_nativeMeshInfo1.numBspNodes = (int)meshRaw[7];
+                memset(&s_nativeMeshInfo[s], 0, sizeof(s_nativeMeshInfo[s]));
+                s_nativeMeshInfo[s].numQuadBlock = (int)meshRaw[0];
+                s_nativeMeshInfo[s].numVertex = (int)meshRaw[1];
+                s_nativeMeshInfo[s].unk1 = (int)meshRaw[2];
+                s_nativeMeshInfo[s].ptrQuadBlockArray = (struct QuadBlock *)LEV_PTR64(meshRaw[3]);
+                s_nativeMeshInfo[s].ptrVertexArray = (struct LevVertex *)LEV_PTR64(meshRaw[4]);
+                s_nativeMeshInfo[s].unk2 = (int)meshRaw[5];
+                s_nativeMeshInfo[s].bspRoot = (struct BSP *)LEV_PTR64(meshRaw[6]);
+                s_nativeMeshInfo[s].numBspNodes = (int)meshRaw[7];
 
-                s_nativeLevel1.ptr_mesh_info = &s_nativeMeshInfo1;
+                s_nativeLevel[s].ptr_mesh_info = &s_nativeMeshInfo[s];
         }
 
         // 0x04: ptr_skybox
-        s_nativeLevel1.ptr_skybox = (struct Skybox *)LEV_PTR64(raw32[1]);
+        s_nativeLevel[s].ptr_skybox = (struct Skybox *)LEV_PTR64(raw32[1]);
 
         // 0x08: ptr_anim_tex
-        s_nativeLevel1.ptr_anim_tex = (struct AnimTex *)LEV_PTR64(raw32[2]);
+        s_nativeLevel[s].ptr_anim_tex = (struct AnimTex *)LEV_PTR64(raw32[2]);
 
         // 0x0C: numInstances
         uint32_t numInst = raw32[3];
-        s_nativeLevel1.numInstances = numInst;
+        s_nativeLevel[s].numInstances = numInst;
 
         // 0x10: ptrInstDefs
         uint32_t pInstDefs32 = raw32[4];
@@ -207,31 +216,31 @@ static struct Level *LOAD_NativeLevel_Build(void *rawFile)
                 for (uint32_t i = 0; i < maxInst; i++)
                 {
                         const uint32_t *oneRaw = &instRaw[i * 16];
-                        memcpy(s_nativeInstDefs1[i].name, &oneRaw[0], 16);
-                        s_nativeInstDefs1[i].model = LOAD_NativeModel_Convert(LEV_PTR64(oneRaw[4]));
-                        s_nativeInstDefs1[i].scale[0] = (s16)(oneRaw[5] & 0xffff);
-                        s_nativeInstDefs1[i].scale[1] = (s16)(oneRaw[5] >> 16);
-                        s_nativeInstDefs1[i].scale[2] = (s16)(oneRaw[6] & 0xffff);
-                        s_nativeInstDefs1[i].scale[3] = (s16)(oneRaw[6] >> 16);
-                        s_nativeInstDefs1[i].colorRGBA = oneRaw[7];
-                        s_nativeInstDefs1[i].flags = oneRaw[8];
-                        s_nativeInstDefs1[i].unk24 = (int)oneRaw[9];
-                        s_nativeInstDefs1[i].unk28 = (int)oneRaw[10];
-                        s_nativeInstDefs1[i].ptrInstance = NULL;
-                        s_nativeInstDefs1[i].pos[0] = (s16)(oneRaw[12] & 0xffff);
-                        s_nativeInstDefs1[i].pos[1] = (s16)(oneRaw[12] >> 16);
-                        s_nativeInstDefs1[i].pos[2] = (s16)(oneRaw[13] & 0xffff);
-                        s_nativeInstDefs1[i].rot[0] = (s16)(oneRaw[13] >> 16);
-                        s_nativeInstDefs1[i].rot[1] = (s16)(oneRaw[14] & 0xffff);
-                        s_nativeInstDefs1[i].rot[2] = (s16)(oneRaw[14] >> 16);
-                        s_nativeInstDefs1[i].modelID = (int)oneRaw[15];
+                        memcpy(s_nativeInstDefs[s][i].name, &oneRaw[0], 16);
+                        s_nativeInstDefs[s][i].model = LOAD_NativeModel_Convert(LEV_PTR64(oneRaw[4]));
+                        s_nativeInstDefs[s][i].scale[0] = (s16)(oneRaw[5] & 0xffff);
+                        s_nativeInstDefs[s][i].scale[1] = (s16)(oneRaw[5] >> 16);
+                        s_nativeInstDefs[s][i].scale[2] = (s16)(oneRaw[6] & 0xffff);
+                        s_nativeInstDefs[s][i].scale[3] = (s16)(oneRaw[6] >> 16);
+                        s_nativeInstDefs[s][i].colorRGBA = oneRaw[7];
+                        s_nativeInstDefs[s][i].flags = oneRaw[8];
+                        s_nativeInstDefs[s][i].unk24 = (int)oneRaw[9];
+                        s_nativeInstDefs[s][i].unk28 = (int)oneRaw[10];
+                        s_nativeInstDefs[s][i].ptrInstance = NULL;
+                        s_nativeInstDefs[s][i].pos[0] = (s16)(oneRaw[12] & 0xffff);
+                        s_nativeInstDefs[s][i].pos[1] = (s16)(oneRaw[12] >> 16);
+                        s_nativeInstDefs[s][i].pos[2] = (s16)(oneRaw[13] & 0xffff);
+                        s_nativeInstDefs[s][i].rot[0] = (s16)(oneRaw[13] >> 16);
+                        s_nativeInstDefs[s][i].rot[1] = (s16)(oneRaw[14] & 0xffff);
+                        s_nativeInstDefs[s][i].rot[2] = (s16)(oneRaw[14] >> 16);
+                        s_nativeInstDefs[s][i].modelID = (int)oneRaw[15];
                 }
-                s_nativeLevel1.ptrInstDefs = s_nativeInstDefs1;
+                s_nativeLevel[s].ptrInstDefs = s_nativeInstDefs[s];
         }
 
         // 0x14: numModels
         uint32_t numModels = raw32[5];
-        s_nativeLevel1.numModels = numModels;
+        s_nativeLevel[s].numModels = numModels;
 
         // 0x18: ptrModelsPtrArray
         uint32_t pModelArr32 = raw32[6];
@@ -241,17 +250,17 @@ static struct Level *LOAD_NativeLevel_Build(void *rawFile)
                 uint32_t count = (numModels < 127) ? numModels : 127;
                 for (uint32_t i = 0; i < count; i++)
                 {
-                        s_nativeLevModels1[i] = LOAD_NativeModel_Convert(LEV_PTR64(mPtrs32[i]));
+                        s_nativeLevModels[s][i] = LOAD_NativeModel_Convert(LEV_PTR64(mPtrs32[i]));
                 }
-                s_nativeLevModels1[count] = NULL;
-                s_nativeLevel1.ptrModelsPtrArray = s_nativeLevModels1;
+                s_nativeLevModels[s][count] = NULL;
+                s_nativeLevel[s].ptrModelsPtrArray = s_nativeLevModels[s];
         }
 
         // 0x1C: unk3
-        s_nativeLevel1.unk3 = LEV_PTR64(raw32[7]);
+        s_nativeLevel[s].unk3 = LEV_PTR64(raw32[7]);
 
         // 0x20: unk4
-        s_nativeLevel1.unk4 = LEV_PTR64(raw32[8]);
+        s_nativeLevel[s].unk4 = LEV_PTR64(raw32[8]);
 
         // 0x24: ptrInstDefPtrArray
         uint32_t pInstDefPtrArr32 = raw32[9];
@@ -266,77 +275,77 @@ static struct Level *LOAD_NativeLevel_Build(void *rawFile)
                         if (targetAddr >= rawBase && targetAddr < rawBase + numInst * 64)
                         {
                                 uint32_t instIdx = (uint32_t)((targetAddr - rawBase) / 64);
-                                s_nativeInstDefPtrArray1[pIdx] = &s_nativeInstDefs1[instIdx];
+                                s_nativeInstDefPtrArray[s][pIdx] = &s_nativeInstDefs[s][instIdx];
                         }
                         else
                         {
-                                s_nativeInstDefPtrArray1[pIdx] = NULL;
+                                s_nativeInstDefPtrArray[s][pIdx] = NULL;
                         }
                         pIdx++;
                 }
-                s_nativeInstDefPtrArray1[pIdx] = NULL;
-                s_nativeLevel1.ptrInstDefPtrArray = s_nativeInstDefPtrArray1;
+                s_nativeInstDefPtrArray[s][pIdx] = NULL;
+                s_nativeLevel[s].ptrInstDefPtrArray = s_nativeInstDefPtrArray[s];
         }
 
         // 0x28: unk5
-        s_nativeLevel1.unk5 = LEV_PTR64(raw32[10]);
+        s_nativeLevel[s].unk5 = LEV_PTR64(raw32[10]);
 
         // 0x2C: null1
-        s_nativeLevel1.null1 = LEV_PTR64(raw32[11]);
+        s_nativeLevel[s].null1 = LEV_PTR64(raw32[11]);
 
         // 0x30: null2
-        s_nativeLevel1.null2 = LEV_PTR64(raw32[12]);
+        s_nativeLevel[s].null2 = LEV_PTR64(raw32[12]);
 
         // 0x34: numWaterVertices
-        s_nativeLevel1.numWaterVertices = (int)raw32[13];
+        s_nativeLevel[s].numWaterVertices = (int)raw32[13];
 
         // 0x38: ptr_water
-        s_nativeLevel1.ptr_water = (struct WaterVert *)LEV_PTR64(raw32[14]);
+        s_nativeLevel[s].ptr_water = (struct WaterVert *)LEV_PTR64(raw32[14]);
 
         // 0x3C: levTexLookup
-        s_nativeLevel1.levTexLookup = (struct LevTexLookup *)LEV_PTR64(raw32[15]);
+        s_nativeLevel[s].levTexLookup = (struct LevTexLookup *)LEV_PTR64(raw32[15]);
 
         // 0x40: ptr_named_tex_array
-        s_nativeLevel1.ptr_named_tex_array = (struct Icon *)LEV_PTR64(raw32[16]);
+        s_nativeLevel[s].ptr_named_tex_array = (struct Icon *)LEV_PTR64(raw32[16]);
 
         // 0x44: ptr_tex_waterEnvMap
-        s_nativeLevel1.ptr_tex_waterEnvMap = LEV_PTR64(raw32[17]);
+        s_nativeLevel[s].ptr_tex_waterEnvMap = LEV_PTR64(raw32[17]);
 
         // 0x48: glowGradient[3] (24 bytes)
-        memcpy(s_nativeLevel1.glowGradient, &raw32[18], sizeof(s_nativeLevel1.glowGradient));
+        memcpy(s_nativeLevel[s].glowGradient, &raw32[18], sizeof(s_nativeLevel[s].glowGradient));
 
         // 0x6C: DriverSpawn[8] (96 bytes = 24 words)
-        memcpy(s_nativeLevel1.DriverSpawn, &raw32[27], sizeof(s_nativeLevel1.DriverSpawn));
+        memcpy(s_nativeLevel[s].DriverSpawn, &raw32[27], sizeof(s_nativeLevel[s].DriverSpawn));
 
         // 0xCC: unk_Lev_CC
-        s_nativeLevel1.unk_Lev_CC = LEV_PTR64(raw32[51]);
+        s_nativeLevel[s].unk_Lev_CC = LEV_PTR64(raw32[51]);
 
         // 0xD0: unk_Lev_D0
-        s_nativeLevel1.unk_Lev_D0 = LEV_PTR64(raw32[52]);
+        s_nativeLevel[s].unk_Lev_D0 = LEV_PTR64(raw32[52]);
 
         // 0xD4: ptrLowTexArray
-        s_nativeLevel1.ptrLowTexArray = LEV_PTR64(raw32[53]);
+        s_nativeLevel[s].ptrLowTexArray = LEV_PTR64(raw32[53]);
 
         // 0xD8: clearColorRGBA
-        s_nativeLevel1.clearColorRGBA = raw32[54];
+        s_nativeLevel[s].clearColorRGBA = raw32[54];
 
         // 0xDC: configFlags
-        s_nativeLevel1.configFlags = raw32[55];
+        s_nativeLevel[s].configFlags = raw32[55];
 
         // 0xE0: build_start
-        s_nativeLevel1.build_start = (char *)LEV_PTR64(raw32[56]);
+        s_nativeLevel[s].build_start = (char *)LEV_PTR64(raw32[56]);
 
         // 0xE4: build_end
-        s_nativeLevel1.build_end = (char *)LEV_PTR64(raw32[57]);
+        s_nativeLevel[s].build_end = (char *)LEV_PTR64(raw32[57]);
 
         // 0xE8: build_type
-        s_nativeLevel1.build_type = (char *)LEV_PTR64(raw32[58]);
+        s_nativeLevel[s].build_type = (char *)LEV_PTR64(raw32[58]);
 
         // 0xEC: unk_EC (24 bytes = 6 words)
-        memcpy(s_nativeLevel1.unk_EC, &raw32[59], sizeof(s_nativeLevel1.unk_EC));
+        memcpy(s_nativeLevel[s].unk_EC, &raw32[59], sizeof(s_nativeLevel[s].unk_EC));
 
         // 0x104: rainBuffer (48 bytes = 12 words)
-        memcpy(&s_nativeLevel1.rainBuffer, &raw32[65], sizeof(s_nativeLevel1.rainBuffer));
+        memcpy(&s_nativeLevel[s].rainBuffer, &raw32[65], sizeof(s_nativeLevel[s].rainBuffer));
 
         // 0x134: ptrSpawnType1
         uint32_t pSpawnType1_32 = raw32[77];
@@ -344,101 +353,121 @@ static struct Level *LOAD_NativeLevel_Build(void *rawFile)
         {
                 const uint32_t *st1Raw = (const uint32_t *)LEV_PTR64(pSpawnType1_32);
                 int count = (int)st1Raw[0];
-                memset(&s_nativeSpawnType1, 0, sizeof(s_nativeSpawnType1));
-                s_nativeSpawnType1.count = count;
+                memset(&s_nativeSpawnType1[s], 0, sizeof(s_nativeSpawnType1[s]));
+                s_nativeSpawnType1[s].count = count;
                 uint32_t maxCount = (count < 16) ? count : 16;
                 for (uint32_t i = 0; i < maxCount; i++)
                 {
-                        s_nativeSpawnType1.pointers[i] = st1Raw[1 + i] ? (void *)(base_hi | st1Raw[1 + i]) : NULL;
+                        s_nativeSpawnType1[s].pointers[i] = st1Raw[1 + i] ? (void *)(base_hi | st1Raw[1 + i]) : NULL;
                 }
-                s_nativeLevel1.ptrSpawnType1 = &s_nativeSpawnType1;
+                s_nativeLevel[s].ptrSpawnType1 = &s_nativeSpawnType1[s];
         }
 
         // 0x138: numSpawnType2
-        s_nativeLevel1.numSpawnType2 = (int)raw32[78];
+        int numST2 = (int)raw32[78];
+        s_nativeLevel[s].numSpawnType2 = numST2;
 
         // 0x13C: ptrSpawnType2
         uint32_t pST2_32 = raw32[79];
-        if (pST2_32 != 0)
+        if (pST2_32 != 0 && numST2 > 0)
         {
                 const uint32_t *st2Raw = (const uint32_t *)LEV_PTR64(pST2_32);
-                s_nativeSpawnType2.numCoords = (int)st2Raw[0];
-                s_nativeSpawnType2.posCoords = (s16 *)LEV_PTR64(st2Raw[1]);
-                s_nativeLevel1.ptrSpawnType2 = &s_nativeSpawnType2;
+                memset(s_nativeSpawnType2[s], 0, sizeof(s_nativeSpawnType2[s]));
+                int count = (numST2 < 32) ? numST2 : 32;
+                for (int i = 0; i < count; i++)
+                {
+                        s_nativeSpawnType2[s][i].numCoords = (int)st2Raw[i * 2 + 0];
+                        s_nativeSpawnType2[s][i].posCoords = (s16 *)LEV_PTR64(st2Raw[i * 2 + 1]);
+                }
+                s_nativeLevel[s].ptrSpawnType2 = s_nativeSpawnType2[s];
+        }
+        else
+        {
+                s_nativeLevel[s].ptrSpawnType2 = NULL;
         }
 
         // 0x140: numSpawnType2_PosRot
-        s_nativeLevel1.numSpawnType2_PosRot = (int)raw32[80];
+        int numST2PR = (int)raw32[80];
+        s_nativeLevel[s].numSpawnType2_PosRot = numST2PR;
 
         // 0x144: ptrSpawnType2_PosRot
         uint32_t pST2PR_32 = raw32[81];
-        if (pST2PR_32 != 0)
+        if (pST2PR_32 != 0 && numST2PR > 0)
         {
                 const uint32_t *st2Raw = (const uint32_t *)LEV_PTR64(pST2PR_32);
-                s_nativeSpawnType2_PosRot.numCoords = (int)st2Raw[0];
-                s_nativeSpawnType2_PosRot.posCoords = (s16 *)LEV_PTR64(st2Raw[1]);
-                s_nativeLevel1.ptrSpawnType2_PosRot = &s_nativeSpawnType2_PosRot;
+                memset(s_nativeSpawnType2_PosRot[s], 0, sizeof(s_nativeSpawnType2_PosRot[s]));
+                int count = (numST2PR < 32) ? numST2PR : 32;
+                for (int i = 0; i < count; i++)
+                {
+                        s_nativeSpawnType2_PosRot[s][i].numCoords = (int)st2Raw[i * 2 + 0];
+                        s_nativeSpawnType2_PosRot[s][i].posCoords = (s16 *)LEV_PTR64(st2Raw[i * 2 + 1]);
+                }
+                s_nativeLevel[s].ptrSpawnType2_PosRot = s_nativeSpawnType2_PosRot[s];
+        }
+        else
+        {
+                s_nativeLevel[s].ptrSpawnType2_PosRot = NULL;
         }
 
         // 0x148: cnt_restart_points
-        s_nativeLevel1.cnt_restart_points = (int)raw32[82];
+        s_nativeLevel[s].cnt_restart_points = (int)raw32[82];
 
         // 0x14C: ptr_restart_points
-        s_nativeLevel1.ptr_restart_points = (struct CheckpointNode *)LEV_PTR64(raw32[83]);
+        s_nativeLevel[s].ptr_restart_points = (struct CheckpointNode *)LEV_PTR64(raw32[83]);
 
         // 0x150: unk_150 (16 bytes = 4 words)
-        memcpy(s_nativeLevel1.unk_150, &raw32[84], sizeof(s_nativeLevel1.unk_150));
+        memcpy(s_nativeLevel[s].unk_150, &raw32[84], sizeof(s_nativeLevel[s].unk_150));
 
         // 0x160: clearColor[3] (12 bytes = 3 words)
-        memcpy(s_nativeLevel1.clearColor, &raw32[88], sizeof(s_nativeLevel1.clearColor));
+        memcpy(s_nativeLevel[s].clearColor, &raw32[88], sizeof(s_nativeLevel[s].clearColor));
 
         // 0x16C: unk_16C
-        s_nativeLevel1.unk_16C = (int)raw32[91];
+        s_nativeLevel[s].unk_16C = (int)raw32[91];
 
         // 0x170: unk_170
-        s_nativeLevel1.unk_170 = (int)raw32[92];
+        s_nativeLevel[s].unk_170 = (int)raw32[92];
 
         // 0x174: numSCVert
-        s_nativeLevel1.numSCVert = (int)raw32[93];
+        s_nativeLevel[s].numSCVert = (int)raw32[93];
 
         // 0x178: ptrSCVert
-        s_nativeLevel1.ptrSCVert = LEV_PTR64(raw32[94]);
+        s_nativeLevel[s].ptrSCVert = LEV_PTR64(raw32[94]);
 
         // 0x17C: stars (6 bytes)
-        memcpy(&s_nativeLevel1.stars, (const char *)rawFile + 0x17c, sizeof(s_nativeLevel1.stars));
+        memcpy(&s_nativeLevel[s].stars, (const char *)rawFile + 0x17c, sizeof(s_nativeLevel[s].stars));
 
         // 0x184: splitLines[2] (4 bytes)
-        memcpy(s_nativeLevel1.splitLines, (const char *)rawFile + 0x184, sizeof(s_nativeLevel1.splitLines));
+        memcpy(s_nativeLevel[s].splitLines, (const char *)rawFile + 0x184, sizeof(s_nativeLevel[s].splitLines));
 
         // 0x188: LevNavTable
-        s_nativeLevel1.LevNavTable = (struct NavHeader **)LEV_PTR64(raw32[98]);
+        s_nativeLevel[s].LevNavTable = (struct NavHeader **)LEV_PTR64(raw32[98]);
 
         // 0x18C: unk_18C
-        s_nativeLevel1.unk_18C = (int)raw32[99];
+        s_nativeLevel[s].unk_18C = (int)raw32[99];
 
         // 0x190: visMem
         uint32_t pVisMem32 = raw32[100];
         if (pVisMem32 != 0)
         {
                 const uint32_t *vm32 = (const uint32_t *)LEV_PTR64(pVisMem32);
-                memset(&s_nativeVisMem1, 0, sizeof(s_nativeVisMem1));
+                memset(&s_nativeVisMem[s], 0, sizeof(s_nativeVisMem[s]));
                 for (int p = 0; p < 4; p++)
                 {
-                        s_nativeVisMem1.visLeafList[p] = (int *)LEV_PTR64(vm32[p]);
-                        s_nativeVisMem1.visFaceList[p] = (int *)LEV_PTR64(vm32[4 + p]);
-                        s_nativeVisMem1.visOVertList[p] = (int *)LEV_PTR64(vm32[8 + p]);
-                        s_nativeVisMem1.visSCVertList[p] = LEV_PTR64(vm32[12 + p]);
-                        s_nativeVisMem1.visLeafSrc[p] = LEV_PTR64(vm32[16 + p]);
-                        s_nativeVisMem1.visFaceSrc[p] = LEV_PTR64(vm32[20 + p]);
-                        s_nativeVisMem1.visOVertSrc[p] = LEV_PTR64(vm32[24 + p]);
-                        s_nativeVisMem1.visSCVertSrc[p] = LEV_PTR64(vm32[28 + p]);
-                        s_nativeVisMem1.bspList[p] = (struct VisMemBspListNode *)LEV_PTR64(vm32[32 + p]);
+                        s_nativeVisMem[s].visLeafList[p] = (int *)LEV_PTR64(vm32[p]);
+                        s_nativeVisMem[s].visFaceList[p] = (int *)LEV_PTR64(vm32[4 + p]);
+                        s_nativeVisMem[s].visOVertList[p] = (int *)LEV_PTR64(vm32[8 + p]);
+                        s_nativeVisMem[s].visSCVertList[p] = LEV_PTR64(vm32[12 + p]);
+                        s_nativeVisMem[s].visLeafSrc[p] = LEV_PTR64(vm32[16 + p]);
+                        s_nativeVisMem[s].visFaceSrc[p] = LEV_PTR64(vm32[20 + p]);
+                        s_nativeVisMem[s].visOVertSrc[p] = LEV_PTR64(vm32[24 + p]);
+                        s_nativeVisMem[s].visSCVertSrc[p] = LEV_PTR64(vm32[28 + p]);
+                        s_nativeVisMem[s].bspList[p] = (struct VisMemBspListNode *)LEV_PTR64(vm32[32 + p]);
                 }
-                s_nativeLevel1.visMem = &s_nativeVisMem1;
+                s_nativeLevel[s].visMem = &s_nativeVisMem[s];
         }
 
         #undef LEV_PTR64
-        return &s_nativeLevel1;
+        return &s_nativeLevel[s];
 }
 #endif
 
@@ -923,7 +952,7 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
         {
                 // get level pointer
 #if defined(__LP64__)
-                struct Level *lev = LOAD_NativeLevel_Build(sdata->ptrLevelFile);
+                struct Level *lev = LOAD_NativeLevel_Build(sdata->ptrLevelFile, 0);
 #else
                 struct Level *lev = sdata->ptrLevelFile;
 #endif

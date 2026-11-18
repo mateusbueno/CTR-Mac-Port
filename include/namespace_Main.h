@@ -203,32 +203,13 @@ struct GameTracker
 	struct CameraDC cameraDC[4];
 
 	// 0x1808
-	struct
-	{
-		// every quadblockrendered pointer in P1
-		// will be 80096404, P2 has their own, etc,
-		// there really only needs to be one pointer per player
-
-		// 1P2P lists (might change in 3P4P)
-		// [0] - 0x00: Force4x4
-		// [1] - 0x08: DynamicSubdiv
-		// [2] - 0x10: Force4x2
-		// [3] - 0x18: Force4x1
-		// [4] - 0x20: Water
-		struct
-		{
-			struct QuadBlock **ptrQuadBlocksRendered;
-			struct VisMemBspListNode *bspListStart;
-		} list[5];
-
-		// 0x28
-		struct VisMemBspListNode *bspListStart_FullDynamic;
-		struct QuadBlock **ptrQuadBlocksRendered_FullDynamic;
-
-		// 0x30 large
-
-		// one for each player
-	} LevRenderLists[4];
+	// 1P2P lists (might change in 3P4P)
+	// [0] - 0x00: Force4x4
+	// [1] - 0x08: DynamicSubdiv
+	// [2] - 0x10: Force4x2
+	// [3] - 0x18: Force4x1
+	// [4] - 0x20: Water
+	struct DrawLevelOvr1PRenderList LevRenderLists[4];
 
 	// pointers to OT memory,
 	// used in ClearOTagR

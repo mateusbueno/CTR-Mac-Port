@@ -85,12 +85,16 @@ void LOAD_Hub_SwapNow()
 	cDC->visSCVertSrc = 0;
 
 	visMem = gGT->visMem1;
-	visMem->visLeafSrc[0] = 0;
-	visMem->visFaceSrc[0] = 0;
-	visMem->visOVertSrc[0] = 0;
-	visMem->visSCVertSrc[0] = 0;
+	if (visMem != NULL)
+	{
+		visMem->visLeafSrc[0] = 0;
+		visMem->visFaceSrc[0] = 0;
+		visMem->visOVertSrc[0] = 0;
+		visMem->visSCVertSrc[0] = 0;
+	}
 
-	gGT->drivers[0]->underDriver = 0;
+	if (gGT->drivers[0] != NULL)
+		gGT->drivers[0]->underDriver = 0;
 
 	gGT->framesInThisLEV = 0;
 	gGT->msInThisLEV = 0;

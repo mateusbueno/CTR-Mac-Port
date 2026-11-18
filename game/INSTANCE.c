@@ -205,6 +205,9 @@ void INSTANCE_LevInitAll(struct InstDef *levInstDef, int numInst)
 	struct MetaDataMODEL *meta;
 	struct GameTracker *gGT = sdata->gGT;
 
+	if (levInstDef == NULL || numInst <= 0)
+		return;
+
 	for (int i = 0; i < numInst; i++)
 	{
 		// get first free item in Instance Pool
@@ -291,7 +294,7 @@ void INSTANCE_LevInitAll(struct InstDef *levInstDef, int numInst)
 			idpp[j].pushBuffer = &gGT->pushBuffer[j];
 		}
 
-		modelID = levInstDef->model->id;
+		modelID = levInstDef->model ? levInstDef->model->id : 0;
 
 		// can be -1
 		if ((s16)modelID > 0)
@@ -373,12 +376,18 @@ void INSTANCE_LevInitAll(struct InstDef *levInstDef, int numInst)
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80030ed4-0x80030f58.
 void INSTANCE_LevDelayedLInBs(struct InstDef *instDef, int numInstances)
 {
+	if (instDef == NULL || numInstances <= 0)
+		return;
+
 	for (int i = 0; i < numInstances; i++)
 	{
-		struct MetaDataMODEL *meta = COLL_LevModelMeta(instDef->model->id);
+		if (instDef->model != NULL)
+		{
+			struct MetaDataMODEL *meta = COLL_LevModelMeta(instDef->model->id);
 
-		if ((meta != NULL) && (meta->LInB != NULL))
-			meta->LInB(instDef->ptrInstance);
+			if ((meta != NULL) && (meta->LInB != NULL))
+				meta->LInB(instDef->ptrInstance);
+		}
 
 		instDef++;
 	}

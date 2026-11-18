@@ -375,6 +375,7 @@ static int Ovr228_800a0cbc_EntryWithCallbacks(void *LevRenderList, struct PushBu
 	if (VisMem18 == NULL)
 		return 1;
 
+	DrawLevelOvr_SetWaterEnvMap(waterEnvMap);
 	*CTR_SCRATCHPAD_PTR(u32, 0x88) = (u32)(uintptr_t)waterEnvMap;
 	*CTR_SCRATCHPAD_PTR(u32, 0x30) = (u32)(uintptr_t)primMem->end;
 

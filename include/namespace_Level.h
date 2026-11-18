@@ -305,7 +305,18 @@ struct VisMemBspListNode
 	struct BSP *bsp;
 };
 
-_Static_assert(sizeof(struct VisMemBspListNode) == 8);
+struct DrawLevelOvr1PRenderListSlot
+{
+	struct QuadBlock **ptrQuadBlocksRendered;
+	struct VisMemBspListNode *bspListStart;
+};
+
+struct DrawLevelOvr1PRenderList
+{
+	struct DrawLevelOvr1PRenderListSlot list[5];
+	struct VisMemBspListNode *bspListStart_FullDynamic;
+	struct QuadBlock **ptrQuadBlocksRendered_FullDynamic;
+};
 
 struct LevVertex
 {
@@ -554,12 +565,15 @@ struct ShortVertex
 struct Skybox
 {
 	int numVertex;
+#if defined(__LP64__)
+	u32 ptrVertex;
+	s16 numFaces[NUM_SKYBOX_SEGMENTS];
+	u32 ptrFaces[NUM_SKYBOX_SEGMENTS];
+#else
 	struct ShortVertex *ptrVertex;
-
 	s16 numFaces[NUM_SKYBOX_SEGMENTS];
 	struct SkyboxFace *ptrFaces[NUM_SKYBOX_SEGMENTS];
-
-	// struct SkyboxFace allFaces[0];
+#endif
 };
 #define SKY_GETFACES(x) ((uintptr_t)x + sizeof(struct Skybox))
 

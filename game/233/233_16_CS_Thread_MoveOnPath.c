@@ -41,10 +41,14 @@ void CS_Thread_MoveOnPath(struct Thread *t)
 
 		digit = (u8)inst->name[strlen(inst->name) - 1] - '0';
 
-		if (level->numSpawnType2 <= digit)
+		if (level->numSpawnType2 <= digit || level->ptrSpawnType2 == NULL)
 			return;
 
+#if defined(__LP64__)
+		spawnEntry = &level->ptrSpawnType2[digit];
+#else
 		spawnEntry = (struct SpawnType2 *)((char *)level->ptrSpawnType2 + digit * 8);
+#endif
 		coords = spawnEntry->posCoords;
 
 		if (coords == 0)
@@ -97,10 +101,14 @@ void CS_Thread_MoveOnPath(struct Thread *t)
 
 		digit = (u8)inst->name[strlen(inst->name) - 1] - '0';
 
-		if (level->numSpawnType2_PosRot <= digit)
+		if (level->numSpawnType2_PosRot <= digit || level->ptrSpawnType2_PosRot == NULL)
 			return;
 
+#if defined(__LP64__)
+		spawnEntry = &level->ptrSpawnType2_PosRot[digit];
+#else
 		spawnEntry = (struct SpawnType2 *)((char *)level->ptrSpawnType2_PosRot + digit * 8);
+#endif
 		coords = spawnEntry->posCoords;
 
 		if (coords == 0)
@@ -132,7 +140,7 @@ void CS_Thread_MoveOnPath(struct Thread *t)
 
 	case 0x30:
 
-		if (level->numSpawnType2 <= 0)
+		if (level->numSpawnType2 <= 0 || level->ptrSpawnType2 == NULL)
 			return;
 
 		spawnEntry = level->ptrSpawnType2;
