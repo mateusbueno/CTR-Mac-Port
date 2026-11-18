@@ -5,12 +5,15 @@
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80031ee4-0x80031fdc.
 void LOAD_VramFileCallback(struct LoadQueueSlot *lqs)
 {
-        int *vramBuf = lqs->ptrDestination;
-
-        struct VramHeader *vh = (struct VramHeader *)vramBuf;
+        int *vramBuf = lqs ? lqs->ptrDestination : NULL;
 
         BFDBG_PRINTF("VramFileCallback: subfile=%d, ptrDst=%p, userCallback=%p",
-                lqs->subfileIndex, lqs->ptrDestination, (void *)lqs->callbackFuncPtr);
+                lqs ? lqs->subfileIndex : -1, vramBuf, lqs ? (void *)lqs->callbackFuncPtr : NULL);
+
+        if (vramBuf == NULL || (uintptr_t)vramBuf < 0x10000)
+                return;
+
+        struct VramHeader *vh = (struct VramHeader *)vramBuf;
 
         // if just one TIM
         if ((vramBuf != NULL) && (vramBuf[0] != 0x20))

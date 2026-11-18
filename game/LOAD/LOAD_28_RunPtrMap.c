@@ -8,6 +8,6 @@ void LOAD_RunPtrMap(char *origin, int *patchArr, int numPtrs)
 	for (ptrCurrOffset = &patchArr[0]; ptrCurrOffset < &patchArr[numPtrs]; ptrCurrOffset++)
 	{
 		int offset = (*ptrCurrOffset >> 2) << 2;
-		*(int *)&origin[offset] = *(int *)&origin[offset] + (int)origin;
+		*(int *)&origin[offset] = *(int *)&origin[offset] + (int)(uintptr_t)origin;
 	}
 }

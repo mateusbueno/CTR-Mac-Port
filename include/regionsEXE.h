@@ -2701,7 +2701,7 @@ struct sData
 
 // Other builds move these elsewhere
 #if BUILD == EurRetail
-	int XNFf_ptr;
+	void *XNFf_ptr;
 	int unk_8008D344;
 #endif
 
@@ -2832,7 +2832,7 @@ struct sData
 	// 8008bfe8 - JpnTrial
 	// 8008d424 - EurRetail
 	// 80090498 - JpnRetail
-	int PatchMem_Ptr;
+	void *PatchMem_Ptr;
 
 #if BUILD >= UsaRetail
 	// 8008d094 - size of PatchMem
@@ -4156,7 +4156,7 @@ struct sData
 	// 8008c84c -- JpnTrial
 	// 8008dca8 -- EurRetail
 	// 80090d1c -- JpnRetail
-	int ptrLoadSaveObj;
+	void *ptrLoadSaveObj;
 
 // 8008bd24 -- SepReview
 // 8008d8f8 -- UsaRetail

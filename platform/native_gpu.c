@@ -957,9 +957,6 @@ void ParsePrimitivesLinkedList(u32 *p, int singlePrimitive)
 		// walk OT_TAG linked list
 		for (uintptr_t basePacket = (uintptr_t)p; basePacket && --maxPrims > 0; basePacket = (uintptr_t)nextPrim(basePacket))
 		{
-			if (basePacket < g_gpuArenaBase || basePacket >= g_gpuArenaBase + 0x800000u)
-				break;
-
 			const int tagLength = getlen(basePacket);
 			if (tagLength > 0 && tagLength <= 32)
 			{

@@ -853,18 +853,18 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                         }
 
                         // Allocate room for LEV swapping
-                        iVar5 = (int)MEMPACK_AllocMem(iVar9 + iVar12); // "HUB ALLOC"
-                        sdata->ptrHubAlloc = (void *)iVar5;
+                        void *hubAlloc = MEMPACK_AllocMem(iVar9 + iVar12); // "HUB ALLOC"
+                        sdata->ptrHubAlloc = hubAlloc;
 
                         // Change active allocation system to #2
                         // pack = [hubAlloc, hubAlloc+size1]
                         MEMPACK_SwapPacks(1);
-                        MEMPACK_NewPack((void *)iVar5, iVar9);
+                        MEMPACK_NewPack(hubAlloc, iVar9);
 
                         // Change active allocation system to #3
                         // pack = [hubAlloc+size1, hubAlloc+size1+size2]
                         MEMPACK_SwapPacks(2);
-                        MEMPACK_NewPack((void *)(iVar5 + iVar9), iVar12);
+                        MEMPACK_NewPack((void *)((char *)hubAlloc + iVar9), iVar12);
 
                         // Intro cutscene with oxide spaceship and all racers
                         if ((gGT->gameMode1 & ADVENTURE_ARENA) == 0)

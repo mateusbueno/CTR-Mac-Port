@@ -9,7 +9,9 @@ int LOAD_HowlSectorChainEnd()
 
 	if (howlChainState == -1)
 	{
-		LOAD_HowlSectorChainStart((CdlFILE *)howlChainParams[0], (void *)howlChainParams[1], howlChainParams[2], howlChainParams[3]);
+		LOAD_HowlSectorChainStart(s_howlChain_cdlFile ? s_howlChain_cdlFile : (CdlFILE *)(uintptr_t)(u32)howlChainParams[0],
+		                          s_howlChain_dst ? s_howlChain_dst : (void *)(uintptr_t)(u32)howlChainParams[1],
+		                          howlChainParams[2], howlChainParams[3]);
 
 		return 0;
 	}

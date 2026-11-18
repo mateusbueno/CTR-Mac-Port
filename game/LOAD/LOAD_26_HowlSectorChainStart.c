@@ -1,5 +1,8 @@
 #include <common.h>
 
+static CdlFILE *s_howlChain_cdlFile = NULL;
+static void *s_howlChain_dst = NULL;
+
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80032594-0x8003266c
 int LOAD_HowlSectorChainStart(CdlFILE *cdlFileHWL, void *ptrDestination, int firstSector, int numSector)
 {
@@ -9,8 +12,10 @@ int LOAD_HowlSectorChainStart(CdlFILE *cdlFileHWL, void *ptrDestination, int fir
 		return 1;
 
 	// backup, so chain can use it later
-	sdata->howlChainParams[0] = (int)cdlFileHWL;
-	sdata->howlChainParams[1] = (int)ptrDestination;
+	s_howlChain_cdlFile = cdlFileHWL;
+	s_howlChain_dst = ptrDestination;
+	sdata->howlChainParams[0] = (int)(uintptr_t)cdlFileHWL;
+	sdata->howlChainParams[1] = (int)(uintptr_t)ptrDestination;
 	sdata->howlChainParams[2] = (int)firstSector;
 	sdata->howlChainParams[3] = (int)numSector;
 
