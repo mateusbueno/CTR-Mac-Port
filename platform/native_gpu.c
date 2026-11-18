@@ -953,31 +953,36 @@ void ParsePrimitivesLinkedList(u32 *p, int singlePrimitive)
 	}
 	else
 	{
+		int maxPrims = 65536;
 		// walk OT_TAG linked list
-		for (uintptr_t basePacket = (uintptr_t)p;; basePacket = (uintptr_t)nextPrim(basePacket))
+		for (uintptr_t basePacket = (uintptr_t)p; basePacket && --maxPrims > 0; basePacket = (uintptr_t)nextPrim(basePacket))
 		{
-			if (!basePacket)
+			if (basePacket < g_gpuArenaBase || basePacket >= g_gpuArenaBase + 0x800000u)
 				break;
-			const int tagLength = getlen(basePacket);
-			if (tagLength > 0)
-			{
-				if (tagLength > 32)
-				{
-					NATIVE_GPU_ERROR("got invalid tag length %d, code %d\n", tagLength, ((P_TAG *)basePacket)->code);
-				}
 
+			const int tagLength = getlen(basePacket);
+			if (tagLength > 0 && tagLength <= 32)
+			{
 				uintptr_t currentPacket = basePacket;
 				const uintptr_t endPacket = basePacket + (tagLength + P_LEN) * sizeof(u32);
 				int primLength = 0;
 				if (currentPacket < endPacket)
 				{
 					primLength = ParsePrimitive((P_TAG *)currentPacket);
+					if (primLength <= 0)
+					{
+						if (isendprim(basePacket))
+							break;
+						continue;
+					}
 					currentPacket += (primLength + P_LEN) * sizeof(u32);
 				}
 
 				while (currentPacket < endPacket)
 				{
 					primLength = ParseTaglessPrimitive((u32 *)currentPacket);
+					if (primLength <= 0)
+						break;
 					currentPacket += primLength * sizeof(u32);
 				}
 
@@ -985,6 +990,11 @@ void ParsePrimitivesLinkedList(u32 *p, int singlePrimitive)
 				{
 					NATIVE_GPU_ERROR("did not output valid primitive or ptag length is not valid (diff=%d)\n", endPacket - currentPacket);
 				}
+			}
+			else if (tagLength > 32)
+			{
+				NATIVE_GPU_ERROR("got invalid tag length %d, code %d\n", tagLength, ((P_TAG *)basePacket)->code);
+				break;
 			}
 
 			GPUDrawSplit *lastSplit = &s_gpu.splits[s_gpu.splitIndex];
@@ -1782,7 +1792,7 @@ int ParseTaglessPrimitive(u32 *command)
 	if (primLength == 0)
 	{
 		NATIVE_GPU_ERROR("Unhandled tagless primitive %08x\n", code);
-		return 1;
+		return 0;
 	}
 
 	return primLength;

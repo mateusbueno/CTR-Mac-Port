@@ -1717,7 +1717,12 @@ void NativeRenderer_StoreFrameBuffer(int x, int y, int w, int h)
 
 void NativeRenderer_CopyVRAM(u16 *src, int x, int y, int w, int h, int dst_x, int dst_y)
 {
-	s_vramNeedsUpdate = 1;
+	if (w <= 0 || h <= 0)
+		return;
+
+	// Bounds check destination
+	if (dst_x < 0 || dst_x >= VRAM_WIDTH || dst_y < 0 || dst_y >= VRAM_HEIGHT)
+		return;
 
 	int stride = w;
 
@@ -1731,10 +1736,28 @@ void NativeRenderer_CopyVRAM(u16 *src, int x, int y, int w, int h, int dst_x, in
 		NativeRenderer_ReadFramebufferDataToVRAM();
 		src = vram;
 		stride = VRAM_WIDTH;
+
+		// Bounds check source in VRAM
+		if (x < 0 || x >= VRAM_WIDTH || y < 0 || y >= VRAM_HEIGHT)
+			return;
+
+		if (x + w > VRAM_WIDTH)
+			w = VRAM_WIDTH - x;
+		if (y + h > VRAM_HEIGHT)
+			h = VRAM_HEIGHT - y;
 	}
 
-	src += x + y * stride;
+	if (dst_x + w > VRAM_WIDTH)
+		w = VRAM_WIDTH - dst_x;
+	if (dst_y + h > VRAM_HEIGHT)
+		h = VRAM_HEIGHT - dst_y;
 
+	if (w <= 0 || h <= 0)
+		return;
+
+	s_vramNeedsUpdate = 1;
+
+	src += x + y * stride;
 	u16 *dst = vram + dst_x + dst_y * VRAM_WIDTH;
 
 	for (int i = 0; i < h; i++)
@@ -1747,6 +1770,15 @@ void NativeRenderer_CopyVRAM(u16 *src, int x, int y, int w, int h, int dst_x, in
 
 void NativeRenderer_ReadVRAM(u16 *dst, int x, int y, int dst_w, int dst_h)
 {
+	if (!dst || dst_w <= 0 || dst_h <= 0)
+		return;
+	if (x < 0 || x >= VRAM_WIDTH || y < 0 || y >= VRAM_HEIGHT)
+		return;
+	if (x + dst_w > VRAM_WIDTH)
+		dst_w = VRAM_WIDTH - x;
+	if (y + dst_h > VRAM_HEIGHT)
+		dst_h = VRAM_HEIGHT - y;
+
 	u16 *src = vram + x + VRAM_WIDTH * y;
 
 	for (int i = 0; i < dst_h; i++)

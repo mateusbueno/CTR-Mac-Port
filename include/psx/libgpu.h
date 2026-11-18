@@ -279,7 +279,7 @@ static inline void *CtrGpu_NextPrim(const void *p)
 	if (!p)
 		return NULL;
 	u_int addr = ((const P_TAG *)(p))->addr;
-	if (addr == 0xffffffu)
+	if (addr == 0xffffffu || addr == 0 || addr >= 0x800000u)
 		return NULL;
 	return (void *)(g_gpuArenaBase + addr);
 }
