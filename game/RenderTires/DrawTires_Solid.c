@@ -509,7 +509,27 @@ static struct DrawTiresSolidProjectedWheel DrawTiresSolid_SelectProjectedWheel(s
 	if (angleValue < 0)
 		selected.jumpIndex += 4;
 
-	selected.wheelSprite = scratch->wheelSprites != NULL ? scratch->wheelSprites[spriteIndex] : NULL;
+	struct Icon *ws = NULL;
+	if (scratch->wheelSprites != NULL)
+	{
+#if defined(__LP64__)
+		uintptr_t ptrVal = (uintptr_t)scratch->wheelSprites[spriteIndex];
+		if ((ptrVal >> 32) != 0 && (ptrVal >> 32) != 1)
+		{
+			uint32_t *raw32 = (uint32_t *)scratch->wheelSprites;
+			uintptr_t base_hi = (uintptr_t)raw32 & 0xFFFFFFFF00000000ULL;
+			if (base_hi == 0) base_hi = 0x100000000ULL;
+			ws = (struct Icon *)(base_hi | (uintptr_t)raw32[spriteIndex]);
+		}
+		else
+		{
+			ws = scratch->wheelSprites[spriteIndex];
+		}
+#else
+		ws = scratch->wheelSprites[spriteIndex];
+#endif
+	}
+	selected.wheelSprite = ws;
 
 	return selected;
 }

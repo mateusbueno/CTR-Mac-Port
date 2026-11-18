@@ -7,6 +7,7 @@ debug/
 .claude/
 .opencode/
 _bmad/
+.DS_Store
 *.exe
 *.o
 *.gch

@@ -294,7 +294,7 @@ after_opcode:
 	cs->unk_C = 0;
 	cs->unk_E = 0;
 
-	cs->ptrIcons = (struct IconGroup *)((char *)gGT->iconGroup[0] + sizeof(struct IconGroup));
+	cs->ptrIcons = (struct IconGroup *)ICONGROUP_GETICONS(gGT->iconGroup[0]);
 
 	return t;
 }
