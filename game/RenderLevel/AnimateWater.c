@@ -40,7 +40,17 @@ void AnimateQuadVertex(int timer, struct SCVert *scVert, u32 *visBits)
 	if ((bits & 1) == 0)
 		return;
 
+#if defined(__LP64__)
+	uintptr_t base_hi = (uintptr_t)scVert & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	struct LevVertex *levVert = scVert->v ? (struct LevVertex *)(base_hi | (uintptr_t)scVert->v) : NULL;
+#else
 	struct LevVertex *levVert = scVert->v;
+#endif
+
+	if (levVert == NULL)
+		return;
+
 	u32 offsetPosZw = (u32)scVert->offset_pos_zw;
 	s32 flags = (s32)offsetPosZw >> 16;
 	struct AnimateQuadTrig trig = AnimateQuad_GetTrig((flags & 0x3fff) + timer);
@@ -71,6 +81,9 @@ void AnimateQuadVertex(int timer, struct SCVert *scVert, u32 *visBits)
 void AnimateQuad(int timer, int numSCVert, void *ptrSCVert, int *visSCVertList)
 {
 	// NOTE(aalhendi): ASM-verified NTSC-U 926 0x80069e70-0x80069f0c.
+	if (numSCVert <= 0 || ptrSCVert == NULL || visSCVertList == NULL)
+		return;
+
 	struct SCVert *scVert = (struct SCVert *)ptrSCVert;
 	u32 *visList = (u32 *)visSCVertList;
 	u32 visBits = *visList++;
@@ -110,8 +123,19 @@ void AnimateWaterVertex(struct WaterVert *waterVert, u16 colorOffset, int firstO
 	if ((bits & 1) == 0)
 		return;
 
+#if defined(__LP64__)
+	uintptr_t base_hi = (uintptr_t)waterVert & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	struct LevVertex *levVert = waterVert->v ? (struct LevVertex *)(base_hi | (uintptr_t)waterVert->v) : NULL;
+	struct OVert *waterColor = waterVert->w ? (struct OVert *)(base_hi | (uintptr_t)waterVert->w) : NULL;
+#else
 	struct LevVertex *levVert = waterVert->v;
 	struct OVert *waterColor = waterVert->w;
+#endif
+
+	if (levVert == NULL || waterColor == NULL)
+		return;
+
 	u16 first = *(u16 *)((char *)waterColor + firstOffset);
 	u16 second = *(u16 *)((char *)waterColor + secondOffset);
 
@@ -140,12 +164,8 @@ void AnimateWaterVertex(struct WaterVert *waterVert, u16 colorOffset, int firstO
 
 static void AnimateWater_Common(int timer, int numWaterVertices, struct WaterVert *waterVert, void *waterEnvMap, int numLists, int **visLists)
 {
-#if defined(CTR_NATIVE)
-	// NOTE(aalhendi): CTR_NATIVE divergence, not retail ASM: native tracks can
-	// supply empty water lists with null water data.
-	if (numWaterVertices == 0)
+	if (numWaterVertices <= 0 || waterVert == NULL || waterEnvMap == NULL || visLists == NULL)
 		return;
-#endif
 
 	u16 colorOffset = *(u16 *)waterEnvMap;
 	u32 visBits = 0;
@@ -158,8 +178,9 @@ static void AnimateWater_Common(int timer, int numWaterVertices, struct WaterVer
 
 	for (int i = 0; i < numLists; i++)
 	{
-		visList[i] = (u32 *)visLists[i];
-		visBits |= *visList[i]++;
+		visList[i] = visLists[i] ? (u32 *)visLists[i] : NULL;
+		if (visList[i] != NULL)
+			visBits |= *visList[i]++;
 	}
 
 	firstFrame = ((u32)timer >> 3) % 28;
@@ -180,7 +201,10 @@ static void AnimateWater_Common(int timer, int numWaterVertices, struct WaterVer
 			visBits = 0;
 
 			for (int i = 0; i < numLists; i++)
-				visBits |= *visList[i]++;
+			{
+				if (visList[i] != NULL)
+					visBits |= *visList[i]++;
+			}
 
 			bitCount = 31;
 		}

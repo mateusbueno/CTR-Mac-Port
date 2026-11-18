@@ -328,7 +328,11 @@ struct LevVertex
 // scenery vertex
 struct SCVert
 {
+#if defined(__LP64__)
+	u32 v;
+#else
 	struct LevVertex *v;
+#endif
 	int offset_pos_xy;
 	int offset_pos_zw;
 	int offset_color_rgba;
@@ -348,8 +352,13 @@ struct OVert
 
 struct WaterVert
 {
+#if defined(__LP64__)
+	u32 v;
+	u32 w;
+#else
 	struct LevVertex *v;
 	struct OVert *w;
+#endif
 };
 
 // used for rain and snow particles
