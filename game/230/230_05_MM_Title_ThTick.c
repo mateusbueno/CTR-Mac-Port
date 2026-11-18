@@ -56,8 +56,8 @@ void MM_Title_ThTick(struct Thread *title)
 	// frame counters
 	timer = D230.timerInTitle;
 
-	// If you press Cross, Circle, Triangle, or Square
-	if ((sdata->buttonTapPerPlayer[0] & 0x40070) != 0)
+	// If you press Cross, Circle, Triangle, Square, or Start
+	if ((sdata->buttonTapPerPlayer[0] & (0x40070 | BTN_START)) != 0)
 	{
 		// clear gamepad input (for menus)
 		RECTMENU_ClearInput();

@@ -662,6 +662,7 @@ static int DrawTiresSolid_EmitProjectedWheel(struct DrawTiresSolidScratch *scrat
 	int sxy[4];
 
 	*(u32 *)&p->r0 = scratch->tireColor;
+	p->code = ((scratch->tireColor >> 24) >= 0x20) ? (u8)(scratch->tireColor >> 24) : 0x2c;
 
 	if (selected->wheelSprite == 0)
 		return 1;

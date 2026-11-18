@@ -43,7 +43,12 @@ void MainInit_JitPoolsNew(struct GameTracker *gGT)
         int numDriver = poolScale >> 9;
         if ((gameMode & MAIN_MENU) != 0)
                 numDriver = 4;
+#ifdef CTR_NATIVE
+        int driverItemSize = (int)(sizeof(struct Driver) + sizeof(struct Item) + 0x20);
+        JitPool_Init(&gGT->JitPools.largeStack, numDriver, driverItemSize, rdata.s_LargeStackPool);
+#else
         JitPool_Init(&gGT->JitPools.largeStack, numDriver, 0x680 + (sizeof(struct Item) - 8), rdata.s_LargeStackPool);
+#endif
 
         int numParticle = poolScale >> 5;
         JitPool_Init(&gGT->JitPools.particle, numParticle, sizeof(struct Particle), rdata.s_ParticlePool);

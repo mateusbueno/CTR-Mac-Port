@@ -1763,7 +1763,19 @@ int ParsePrimitive(P_TAG *polyTag)
 
 	if (primLength == 0 && !handledZeroLength)
 	{
-		NATIVE_GPU_ERROR("Unhandled zero length %0x primitive\n", primType);
+#ifdef CTR_INTERNAL
+		static int s_unhandledPrimLogCount = 0;
+		if (s_unhandledPrimLogCount < 20)
+		{
+			s_unhandledPrimLogCount++;
+			const u32 *w = (const u32 *)polyTag;
+			NATIVE_GPU_ERROR("Unhandled zero length %0x primitive: code=0x%02x len=%d addr=0x%06x | %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+			                 primType, polyTag->code, polyTag->len, polyTag->addr,
+			                 w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8], w[9]);
+		}
+#endif
+		if (polyTag->len > 0)
+			primLength = polyTag->len;
 	}
 
 	return primLength;

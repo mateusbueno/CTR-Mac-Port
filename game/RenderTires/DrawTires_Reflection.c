@@ -584,6 +584,7 @@ static void DrawTiresReflection_EmitProjectedWheel(struct DrawTiresReflectionScr
 	int splitDelta;
 
 	*(u32 *)&p->r0 = scratch->tireColor;
+	p->code = ((scratch->tireColor >> 24) >= 0x20) ? (u8)(scratch->tireColor >> 24) : 0x2e;
 
 	if (selected->wheelSprite == 0)
 		return;
