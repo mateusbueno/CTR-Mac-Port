@@ -501,8 +501,10 @@ void GhostReplay_Init1(void)
 		// characterID and model
 		charID = data.characterIDs[i + 1];
 		model = VehBirth_GetModelByName(data.MetaDataCharacters[charID].name_Debug);
+		if (model == NULL)
+			model = gGT->modelPtr[0];
 
-		inst = INSTANCE_Birth3D(model, model->name, t);
+		inst = INSTANCE_Birth3D(model, model ? model->name : NULL, t);
 		t->inst = inst;
 
 		// Ptr Model "Wake"

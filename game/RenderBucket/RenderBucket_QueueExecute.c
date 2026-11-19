@@ -2459,8 +2459,6 @@ static struct TextureLayout *RenderBucket_GetCommandTexture(struct RenderBucketD
 	uint32_t texRel = rawTexArr[texIndex - 1];
 	if (texRel == 0)
 		return 0;
-	if (texRel < 0x01000000u)
-		return (struct TextureLayout *)(g_gpuArenaBase + (uintptr_t)texRel);
 	uintptr_t base_hi = (uintptr_t)rawTexArr & 0xFFFFFFFF00000000ULL;
 	return (struct TextureLayout *)(base_hi | (uintptr_t)texRel);
 #else

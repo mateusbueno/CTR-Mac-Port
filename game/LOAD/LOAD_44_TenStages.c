@@ -49,17 +49,32 @@ static int s_nativeHeaderCount = 0;
 static int s_nativeAnimCount = 0;
 static int s_nativeAnimObjCount = 0;
 
+struct NativeModelCacheEntry {
+        const void *raw;
+        struct Model *model;
+};
+static struct NativeModelCacheEntry s_nativeModelCache[MAX_NATIVE_MODELS];
+static int s_nativeModelCacheCount = 0;
+
 static void LOAD_NativeModelPool_Reset(void)
 {
         s_nativeModelCount = 0;
         s_nativeHeaderCount = 0;
         s_nativeAnimCount = 0;
         s_nativeAnimObjCount = 0;
+        s_nativeModelCacheCount = 0;
 }
 
 static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
 {
         if (rawModelPtr == NULL) return NULL;
+
+        for (int i = 0; i < s_nativeModelCacheCount; i++)
+        {
+                if (s_nativeModelCache[i].raw == rawModelPtr)
+                        return s_nativeModelCache[i].model;
+        }
+
         if (s_nativeModelCount >= MAX_NATIVE_MODELS) return NULL;
 
         const uint32_t *raw32 = (const uint32_t *)rawModelPtr;
@@ -67,6 +82,13 @@ static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
 
         struct Model *nm = &s_nativeModelPool[s_nativeModelCount++];
         memset(nm, 0, sizeof(*nm));
+
+        if (s_nativeModelCacheCount < MAX_NATIVE_MODELS)
+        {
+                s_nativeModelCache[s_nativeModelCacheCount].raw = rawModelPtr;
+                s_nativeModelCache[s_nativeModelCacheCount].model = nm;
+                s_nativeModelCacheCount++;
+        }
 
         // Name (16 bytes)
         memcpy(nm->name, &raw32[0], 16);

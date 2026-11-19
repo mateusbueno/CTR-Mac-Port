@@ -33,13 +33,19 @@ void VehBirth_NonGhost(struct Thread *t, int index)
 #endif
 
 	struct Model *m = VehBirth_GetModelByName(data.MetaDataCharacters[id].name_Debug);
+	if (m == NULL)
+	{
+		fprintf(stderr, "[CTR Native] WARNING: VehBirth_NonGhost: model for '%s' not found, falling back to modelPtr[0]\n",
+			data.MetaDataCharacters[id].name_Debug);
+		m = gGT->modelPtr[0];
+	}
 
 #ifdef CTR_NATIVE
 	fprintf(stdout, "[Netplay] VehBirth_NonGhost: index=%d model=%p\n",
 		index, (void*)m); fflush(stdout);
 #endif
 
-	struct Instance *inst = INSTANCE_Birth3D(m, m->name, t);
+	struct Instance *inst = INSTANCE_Birth3D(m, m ? m->name : NULL, t);
 
 	t->inst = inst;
 

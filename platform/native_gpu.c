@@ -985,12 +985,18 @@ void ParsePrimitivesLinkedList(u32 *p, int singlePrimitive)
 
 				if (currentPacket != endPacket)
 				{
-					NATIVE_GPU_ERROR("did not output valid primitive or ptag length is not valid (diff=%d)\n", endPacket - currentPacket);
+					const u32 *pw = (const u32 *)basePacket;
+					NATIVE_GPU_ERROR("did not output valid primitive (diff=%d, base=%p, tagLen=%d, code=0x%02x, primLen=%d, words: %08x %08x %08x %08x)\n",
+						(int)(endPacket - currentPacket), (void *)basePacket, tagLength, ((P_TAG *)basePacket)->code, primLength,
+						pw[0], pw[1], pw[2], pw[3]);
 				}
 			}
 			else if (tagLength > 32)
 			{
-				NATIVE_GPU_ERROR("got invalid tag length %d, code %d\n", tagLength, ((P_TAG *)basePacket)->code);
+				const u32 *pw = (const u32 *)basePacket;
+				NATIVE_GPU_ERROR("got invalid tag length %d, code %d at %p (words: %08x %08x %08x %08x %08x %08x %08x %08x)\n",
+					tagLength, ((P_TAG *)basePacket)->code, (void *)basePacket,
+					pw[0], pw[1], pw[2], pw[3], pw[4], pw[5], pw[6], pw[7]);
 				break;
 			}
 
