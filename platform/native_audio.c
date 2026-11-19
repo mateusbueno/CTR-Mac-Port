@@ -1736,8 +1736,13 @@ internal void NativeAudio_SelectDriverHint(void)
 		SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "pulseaudio,alsa,pipewire");
 	}
 #endif
+#if defined(__APPLE__)
+	if (SDL_GetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES) == NULL)
+		SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "2048");
+#else
 	if (SDL_GetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES) == NULL)
 		SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "1024");
+#endif
 }
 
 internal int NativeAudio_BuildXAPath(char *path, size_t pathSize, int categoryID, int fileNumber)
@@ -2370,10 +2375,29 @@ internal void SDLCALL NativeAudio_StreamCallback(void *userdata, SDL_AudioStream
 	(void)userdata;
 	(void)total_amount;
 
-	if ((stream == NULL) || (additional_amount <= 0))
+	if (stream == NULL)
 		return;
 
-	framesNeeded = (additional_amount + frameBytes - 1) / frameBytes;
+	framesNeeded = (additional_amount > 0) ? ((additional_amount + frameBytes - 1) / frameBytes) : 0;
+
+	if (!s_audio.output.deterministicRenderMode)
+	{
+		const int targetBufferFrames = 2048;
+		int availableBytes = SDL_GetAudioStreamAvailable(stream);
+		if (availableBytes >= 0)
+		{
+			int availableFrames = availableBytes / frameBytes;
+			if (availableFrames < targetBufferFrames)
+			{
+				int cushionNeeded = targetBufferFrames - availableFrames;
+				if (cushionNeeded > framesNeeded)
+					framesNeeded = cushionNeeded;
+			}
+		}
+	}
+
+	if (framesNeeded <= 0)
+		return;
 #ifdef CTR_INTERNAL
 	if (framesNeeded > s_audio.output.callbackMaxRequestFrames)
 		s_audio.output.callbackMaxRequestFrames = framesNeeded;

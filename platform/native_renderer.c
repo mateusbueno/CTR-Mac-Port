@@ -300,6 +300,10 @@ void NativeRenderer_Shutdown(void)
 
 void NativeRenderer_UpdateSwapIntervalState(int swapInterval)
 {
+	static int s_currentSwapInterval = -999;
+	if (s_currentSwapInterval == swapInterval)
+		return;
+	s_currentSwapInterval = swapInterval;
 	SDL_GL_SetSwapInterval(swapInterval);
 }
 

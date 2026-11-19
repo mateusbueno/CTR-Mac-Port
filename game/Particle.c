@@ -592,7 +592,13 @@ static void Particle_RenderList_LinkAndAdvance(u32 **primCursor, u32 **payloadCu
 		if ((u16)idpp->depthOffset[1] < otIndex)
 			otIndex = (u16)idpp->depthOffset[1];
 
+#if defined(__LP64__)
+		uintptr_t base_hi = (uintptr_t)defaultOT & ~0xFFFFFFFFULL;
+		if (base_hi == 0) base_hi = 0x100000000ULL;
+		otBase = (u_long *)(base_hi | (u32)idpp->unkE4);
+#else
 		otBase = (u_long *)(uintptr_t)idpp->unkE4;
+#endif
 	}
 	else
 	{
