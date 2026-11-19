@@ -87,14 +87,14 @@ struct Instance *INSTANCE_Birth2D(struct Model *model, const char *name, struct 
 	if (inst != NULL)
 	{
 		INSTANCE_Birth(inst, model, name, th, 0x40f);
-	}
 
-	idpp = INST_GETIDPP(inst);
-	idpp[0].pushBuffer = &gGT->pushBuffer_UI;
+		idpp = INST_GETIDPP(inst);
+		idpp[0].pushBuffer = &gGT->pushBuffer_UI;
 
-	for (i = 1; i < gGT->numPlyrCurrGame; i++)
-	{
-		idpp[i].pushBuffer = 0;
+		for (i = 1; i < gGT->numPlyrCurrGame; i++)
+		{
+			idpp[i].pushBuffer = 0;
+		}
 	}
 
 	return inst;
@@ -144,31 +144,19 @@ struct Instance *INSTANCE_BirthWithThread(int modelID, const char *name, int poo
 	    parent      // thread relative
 	);
 
-	/*
-
-	June 1999
-	if (iVar2 == 0) {
-	  printf("%s thread create failed (b)\n",param_2);
-	  do {
-	                // WARNING: Do nothing block with infinite loop
-	  } while( true );
+	if (t == NULL)
+	{
+		return NULL;
 	}
-
-	*/
 
 	t->modelIndex = modelID;
 	inst = INSTANCE_Birth3D(m, name, t);
 
-	/*
-
-	if (iVar3 == 0) {
-	  printf("%s instance create failed (b)\n",param_2);
-	  do {
-	                // WARNING: Do nothing block with infinite loop
-	  } while( true );
+	if (inst == NULL)
+	{
+		PROC_DestroyObject(t->object, t->flags);
+		return NULL;
 	}
-
-	*/
 
 	t->inst = inst;
 

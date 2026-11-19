@@ -37,8 +37,15 @@ void MainInit_JitPoolsNew(struct GameTracker *gGT)
          * Rendering loops still only iterate NUM_LOCAL_PLAYERS(gGT) times. */
         JitPool_Init(&gGT->JitPools.instance, renderBucketSize >> 5, sizeof(struct Instance) + (sizeof(struct InstDrawPerPlayer) * gGT->numPlyrCurrGame),
                      rdata.s_InstancePool);
+#ifdef CTR_NATIVE
+        int smallItemSize = 0x80 + (int)sizeof(struct Item);
+        int mediumItemSize = 0x100 + (int)sizeof(struct Item);
+        JitPool_Init(&gGT->JitPools.smallStack, (poolScale * 0x19) >> 10, smallItemSize, rdata.s_SmallStackPool);
+        JitPool_Init(&gGT->JitPools.mediumStack, poolScale >> 7, mediumItemSize, rdata.s_MediumStackPool);
+#else
         JitPool_Init(&gGT->JitPools.smallStack, (poolScale * 0x19) >> 10, 0x48 + (sizeof(struct Item) - 8), rdata.s_SmallStackPool);
         JitPool_Init(&gGT->JitPools.mediumStack, poolScale >> 7, 0x88 + (sizeof(struct Item) - 8), rdata.s_MediumStackPool);
+#endif
 
         int numDriver = poolScale >> 9;
         if ((gameMode & MAIN_MENU) != 0)

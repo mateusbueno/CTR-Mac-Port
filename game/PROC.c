@@ -190,7 +190,7 @@ struct Thread *PROC_BirthWithObject(int flags, void *funcThTick, const char *nam
 	}
 
 	// validate size fits in pool
-	if ((u32)(flags >> 0x10) >= (stackPool->itemSize - sizeof(struct Item)))
+	if ((u32)(flags >> 0x10) > (stackPool->itemSize - sizeof(struct Item)))
 	{
 		if (stackObj != 0)
 			PROC_DestroyObject((void *)((uintptr_t)stackObj + sizeof(struct Item)), flags);
