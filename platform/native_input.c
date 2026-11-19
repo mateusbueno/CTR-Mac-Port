@@ -410,7 +410,7 @@ internal u16 NativeInput_ReadKeyboardMapping(const struct NativeInputKeyboardMap
 		buttons &= ~0x2000;
 	if (s_keyboardState[mapping->kc_triangle] || s_keyboardState[SDL_SCANCODE_ESCAPE] || s_keyboardState[SDL_SCANCODE_BACKSPACE])
 		buttons &= ~0x1000;
-	if (s_keyboardState[mapping->kc_cross] || s_keyboardState[SDL_SCANCODE_RETURN] || s_keyboardState[SDL_SCANCODE_KP_ENTER])
+	if (s_keyboardState[mapping->kc_cross] || s_keyboardState[SDL_SCANCODE_KP_ENTER])
 		buttons &= ~0x4000;
 	if (s_keyboardState[mapping->kc_l1])
 		buttons &= ~0x400;

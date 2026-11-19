@@ -1020,6 +1020,8 @@ playerStruct->BattleHUD.cooldown--;
                                         return;
                                 }
 
+                                setPolyG4(TurboCounterBar);
+
                                 *(u32 *)&TurboCounterBar->r0 = 0x3800c8ff;
                                 *(u32 *)&TurboCounterBar->r1 = 0x3800c8ff;
                                 *(u32 *)&TurboCounterBar->r2 = 0x380000ff;

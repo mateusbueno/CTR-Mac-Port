@@ -83,7 +83,7 @@ static void CAM_SkyboxGlow_EmitG3(struct PrimMem *primMem, u_long *ot, u32 color
         prim[4] = xy1;
         prim[5] = color2 & 0xffffff;
         prim[6] = xy2;
-        prim[0] = *ot | 0x06000000;
+        prim[0] = (*ot & 0x00ffffffu) | 0x06000000u;
         *ot = CAM_SkyboxGlow_PrimAddr(prim);
 
         primMem->curr = prim + 7;
@@ -101,7 +101,7 @@ static void CAM_SkyboxGlow_EmitG4(struct PrimMem *primMem, u_long *ot, u32 color
         prim[6] = xy2;
         prim[7] = color3 & 0xffffff;
         prim[8] = xy3;
-        prim[0] = *ot | 0x08000000;
+        prim[0] = (*ot & 0x00ffffffu) | 0x08000000u;
         *ot = CAM_SkyboxGlow_PrimAddr(prim);
 
         primMem->curr = prim + 9;
@@ -115,7 +115,7 @@ static void CAM_SkyboxGlow_EmitF3(struct PrimMem *primMem, u_long *ot, u32 color
         prim[2] = xy0;
         prim[3] = xy1;
         prim[4] = xy2;
-        prim[0] = *ot | 0x04000000;
+        prim[0] = (*ot & 0x00ffffffu) | 0x04000000u;
         *ot = CAM_SkyboxGlow_PrimAddr(prim);
 
         primMem->curr = prim + 5;
@@ -130,7 +130,7 @@ static void CAM_SkyboxGlow_EmitF4(struct PrimMem *primMem, u_long *ot, u32 color
         prim[3] = xy1;
         prim[4] = xy2;
         prim[5] = xy3;
-        prim[0] = *ot | 0x05000000;
+        prim[0] = (*ot & 0x00ffffffu) | 0x05000000u;
         *ot = CAM_SkyboxGlow_PrimAddr(prim);
 
         primMem->curr = prim + 6;
@@ -353,7 +353,7 @@ void CAM_ClearScreen(struct GameTracker *gGT)
                         *(int *)&tile->r0 = *(int *)&level1->clearColor[0].rgb[0];
                         tile->code = 0x2;
 
-                        tile->tag = *(u32 *)endOT | 0x3000000;
+                        tile->tag = (*(u32 *)endOT & 0x00ffffffu) | 0x3000000;
                         *(u32 *)endOT = CtrGpu_PrimToOTLink24(tile);
 
                         tile++;
@@ -371,7 +371,7 @@ void CAM_ClearScreen(struct GameTracker *gGT)
                         *(int *)&tile->r0 = *(int *)&level1->clearColor[1].rgb[0];
                         tile->code = 0x2;
 
-                        tile->tag = *(u32 *)endOT | 0x3000000;
+                        tile->tag = (*(u32 *)endOT & 0x00ffffffu) | 0x3000000;
                         *(u32 *)endOT = CtrGpu_PrimToOTLink24(tile);
 
                         tile++;
@@ -424,10 +424,12 @@ int CAM_Path_GetNumPoints(void)
                 return 0;
 
         ptrSpawnType1 = level1->ptrSpawnType1;
-        if (ptrSpawnType1->count < 3)
+        if (ptrSpawnType1 == NULL || ptrSpawnType1->count < 3)
                 return 0;
 
         void **ptrs = ST1_GETPOINTERS(ptrSpawnType1);
+        if (ptrs == NULL)
+                return 0;
         introCam = ptrs[ST1_CAMERA_PATH];
         if (introCam == NULL)
                 return 0;
@@ -463,8 +465,15 @@ u8 CAM_Path_Move(int frameIndex, s16 *position, s16 *rotation, s16 *getPath)
         if (frame >= numPos)
                 return 0;
 
+        if (sdata->gGT->level1 == NULL || sdata->gGT->level1->ptrSpawnType1 == NULL)
+                return 0;
+
         void **ptrs = ST1_GETPOINTERS(sdata->gGT->level1->ptrSpawnType1);
+        if (ptrs == NULL)
+                return 0;
         ptrCam = ptrs[ST1_CAMERA_PATH];
+        if (ptrCam == NULL)
+                return 0;
 
         pathNumNode = (u16)ptrCam[0];
         pathID = (u16)ptrCam[1];

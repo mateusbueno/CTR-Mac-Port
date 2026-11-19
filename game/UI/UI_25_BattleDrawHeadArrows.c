@@ -100,8 +100,9 @@ void UI_BattleDrawHeadArrows(struct Driver *player)
 
 		primMem->curr = p + 1;
 
+		setlen(p, 8);
 		p->tpage = 0xe1000a20;
-		p->g3.tag = 0;
+		setPolyG3(&p->g3);
 
 		p->g3.code = 0x32;
 

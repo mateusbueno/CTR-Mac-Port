@@ -997,7 +997,9 @@ void ParsePrimitivesLinkedList(u32 *p, int singlePrimitive)
 				NATIVE_GPU_ERROR("got invalid tag length %d, code %d at %p (words: %08x %08x %08x %08x %08x %08x %08x %08x)\n",
 					tagLength, ((P_TAG *)basePacket)->code, (void *)basePacket,
 					pw[0], pw[1], pw[2], pw[3], pw[4], pw[5], pw[6], pw[7]);
-				break;
+				if (isendprim(basePacket))
+					break;
+				continue;
 			}
 
 			GPUDrawSplit *lastSplit = &s_gpu.splits[s_gpu.splitIndex];

@@ -63,7 +63,7 @@ static void DrawSky_EmitPrimitive(u32 **primCursor, u_long *ot)
 	prim[4] = MFC2(13);
 	prim[5] = MFC2(22);
 	prim[6] = MFC2(14);
-	prim[0] = (u32)*ot | 0x06000000;
+	prim[0] = ((u32)*ot & 0x00ffffffu) | 0x06000000;
 	*ot = (u_long)DrawSky_Ptr24(prim);
 
 	*primCursor = prim + 7;

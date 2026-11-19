@@ -206,7 +206,7 @@ void DecalMP_03(struct GameTracker *gGT)
 		*(u16 *)((char *)prim + 0x16) = (u16)(((texY & 0x100) >> 4) | ((texX & 0x3ff) >> 6) | 0x100 | ((texY & 0x200) << 2));
 
 		u_long *ot = gGT->pushBuffer[cameraID].ptrOT + (entry->pb.renderBucketOTByteOffset >> 2);
-		prim[0] = *ot | 0x09000000;
+		prim[0] = (*ot & 0x00ffffffu) | 0x09000000;
 		CtrGpu_LinkPrimToOT(ot, prim);
 		gGT->backBuffer->primMem.curr = prim + 10;
 	}

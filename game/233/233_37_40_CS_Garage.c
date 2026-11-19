@@ -184,6 +184,7 @@ void CS_Garage_MenuProc(struct RectMenu *param_1)
 					return;
 
 				primMem->curr = p + 1;
+				setPolyG4(p);
 
 				// color data
 				*(int *)&p->r0 = barColor[0] | 0x38000000;

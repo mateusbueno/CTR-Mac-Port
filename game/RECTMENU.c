@@ -65,6 +65,7 @@ void RECTMENU_DrawRwdBlueRect_Subset(s16 *pos, int *color, u_long *ot, struct Pr
 	if (p <= (POLY_G4 *)primMem->endMin100)
 	{
 		primMem->curr = p + 1;
+		setPolyG4(p);
 
 		*(int *)&p->r0 = color[0] & 0xffffff;
 		*(int *)&p->r1 = color[1] & 0xffffff;
