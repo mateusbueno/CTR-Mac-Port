@@ -11,7 +11,7 @@ static void VehGroundSkids_WriteLo16(u32 *word, u16 value)
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8005c120-0x8005c278.
-void VehGroundSkids_Subset1(u32 *currXY, u32 *prevXY, int depth, u8 *scratch)
+void VehGroundSkids_Subset1(u32 *currXY, u32 *prevXY, int depth, u8 *scratch, struct PushBuffer *pb)
 {
 	struct GameTracker *gGT = sdata->gGT;
 	struct DB *backBuffer = gGT->backBuffer;
@@ -46,7 +46,8 @@ void VehGroundSkids_Subset1(u32 *currXY, u32 *prevXY, int depth, u8 *scratch)
 	VehGroundSkids_WriteLo16(&prim[9], *(u16 *)&icon->texLayout.u2);
 	VehGroundSkids_WriteLo16(&prim[12], *(u16 *)&icon->texLayout.u3);
 
-	struct PushBuffer *pb = *(struct PushBuffer **)(scratch + 0x18);
+	if (pb == NULL)
+		return;
 	u_long *ot = pb->ptrOT + ((s32)depth >> 6);
 	prim[0] = (u32)*ot | 0x0c000000;
 	*ot = (u_long)VehGroundSkids_Ptr24(prim);

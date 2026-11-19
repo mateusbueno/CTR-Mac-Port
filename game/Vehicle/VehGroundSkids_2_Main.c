@@ -85,7 +85,7 @@ static void VehGroundSkids_ProjectFrame(SVECTOR *scratch, SVECTOR *frame, u32 *s
 }
 
 static void VehGroundSkids_TryEmitSegment(u32 *currXY, u32 *prevXY, s32 *currDepth, s32 *prevDepth, u32 flags, u32 prevFlags, int bit, u8 *frameBase,
-                                          int pointIndex, u8 *scratchBytes)
+                                          int pointIndex, u8 *scratchBytes, struct PushBuffer *pb)
 {
 	if ((flags & prevFlags & bit) == 0)
 		return;
@@ -96,7 +96,7 @@ static void VehGroundSkids_TryEmitSegment(u32 *currXY, u32 *prevXY, s32 *currDep
 
 	scratchBytes[0x24] = frameBase[(pointIndex * sizeof(SVECTOR)) + 7];
 	int depth = (currDepth[pointIndex] >> 2) + (frameBase[(pointIndex * sizeof(SVECTOR)) + 6] << 6);
-	VehGroundSkids_Subset1(&currXY[pointIndex], &prevXY[pointIndex], depth, scratchBytes);
+	VehGroundSkids_Subset1(&currXY[pointIndex], &prevXY[pointIndex], depth, scratchBytes, pb);
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8005c354-0x8005ca24.
@@ -109,7 +109,7 @@ void VehGroundSkids_Main(struct Thread *thread, struct PushBuffer *pb)
 	SVECTOR *scratch = CTR_SCRATCHPAD_PTR(SVECTOR, 0x0);
 	s32 *origin = CTR_SCRATCHPAD_PTR(s32, VEH_GROUND_SKIDS_SCRATCH_ORIGIN);
 
-	*(struct PushBuffer **)(scratchBytes + 0x18) = pb;
+	*(u32 *)(scratchBytes + 0x18) = (u32)(uintptr_t)pb;
 	origin[0] = 0;
 	origin[1] = 0;
 	origin[2] = 0;
@@ -157,10 +157,10 @@ void VehGroundSkids_Main(struct Thread *thread, struct PushBuffer *pb)
 							frame = (SVECTOR *)(void *)&d->skidmarks[frameIndex * VEH_GROUND_SKIDS_FRAME_SIZE];
 							VehGroundSkids_ProjectFrame(scratch, frame, currXY, currDepth);
 
-							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 1, (u8 *)frame, 0, scratchBytes);
-							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 2, (u8 *)frame, 2, scratchBytes);
-							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 4, (u8 *)frame, 4, scratchBytes);
-							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 8, (u8 *)frame, 6, scratchBytes);
+							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 1, (u8 *)frame, 0, scratchBytes, pb);
+							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 2, (u8 *)frame, 2, scratchBytes, pb);
+							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 4, (u8 *)frame, 4, scratchBytes, pb);
+							VehGroundSkids_TryEmitSegment(currXY, prevXY, currDepth, prevDepth, currFlags, prevFlags, 8, (u8 *)frame, 6, scratchBytes, pb);
 						}
 
 						u32 *tmpXY = currXY;
