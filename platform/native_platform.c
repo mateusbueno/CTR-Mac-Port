@@ -467,7 +467,11 @@ int NikoGetEnterKey(void)
 // native_libetc.c; native VSync emits that callback at each emulated VBlank.
 #define NATIVE_VSYNC_HZ          60
 #define NATIVE_VSYNC_CATCHUP_MAX 8
+#if defined(__APPLE__)
+#define NATIVE_VSYNC_SPIN_US     3000
+#else
 #define NATIVE_VSYNC_SPIN_US     1000
+#endif
 
 global_variable u64 s_nextVBlankCounter = 0;
 global_variable u64 s_vblankRemainder = 0;

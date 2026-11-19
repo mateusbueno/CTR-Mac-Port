@@ -935,7 +935,7 @@ void Particle_RenderList(struct PushBuffer *pb, void *particleList)
 	struct Particle *particle = particleList;
 	u32 *scratch = CTR_SCRATCHPAD_PTR(u32, 0x00);
 	u16 *scratchR33Low = CTR_SCRATCHPAD_PTR(u16, 0x10);
-	u_long **scratchOT = CTR_SCRATCHPAD_PTR(u_long *, 0x20);
+	u_long *defaultOT = pb->ptrOT;
 	s32 *scratchCameraOffset = CTR_SCRATCHPAD_PTR(s32, 0x24);
 	s32 *scratchDepth = CTR_SCRATCHPAD_PTR(s32, 0x30);
 	u32 *prim = (u32 *)primMem->curr;
@@ -956,7 +956,7 @@ void Particle_RenderList(struct PushBuffer *pb, void *particleList)
 	CTC2(scratch[3], 11);
 	CTC2(scratch[4], 12);
 
-	*scratchOT = pb->ptrOT;
+	*CTR_SCRATCHPAD_PTR(u32, 0x20) = (u32)(uintptr_t)pb->ptrOT;
 	cameraID = (char)pb->cameraID;
 	scratchCameraOffset[0] = (s32)Particle_RenderList_ReadWord(pb, 0x7c) << 2;
 	scratchCameraOffset[1] = (s32)Particle_RenderList_ReadWord(pb, 0x80) << 2;
@@ -1076,7 +1076,7 @@ void Particle_RenderList(struct PushBuffer *pb, void *particleList)
 			if ((flagsSetColor & 0x1000) != 0)
 			{
 				Particle_RenderList_WriteSpecialPrimitive(prim, particle, flagsAxis, flagsSetColor, color, scratch, scratchDepth);
-				Particle_RenderList_LinkAndAdvance(&primCursor, &payloadCursor, particle, idpp, flagsSetColor, *scratchDepth, *scratchOT);
+				Particle_RenderList_LinkAndAdvance(&primCursor, &payloadCursor, particle, idpp, flagsSetColor, *scratchDepth, defaultOT);
 				prim = primCursor;
 				goto next_particle;
 			}
@@ -1084,7 +1084,7 @@ void Particle_RenderList(struct PushBuffer *pb, void *particleList)
 			struct ParticleRenderListMatrix matrix = Particle_RenderList_BuildNormalMatrix(particle, flagsAxis);
 
 			Particle_RenderList_WriteNormalPrimitive(prim, icon, flagsAxis, flagsSetColor, color, &matrix, scratchDepth);
-			Particle_RenderList_LinkAndAdvance(&primCursor, &payloadCursor, particle, idpp, flagsSetColor, *scratchDepth, *scratchOT);
+			Particle_RenderList_LinkAndAdvance(&primCursor, &payloadCursor, particle, idpp, flagsSetColor, *scratchDepth, defaultOT);
 			prim = primCursor;
 
 		next_particle:
