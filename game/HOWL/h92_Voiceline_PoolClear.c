@@ -14,7 +14,7 @@ void Voiceline_PoolClear(void)
 	LIST_Clear(&sdata->Voiceline2);
 
 	// put them all on free list
-	LIST_Init(&sdata->Voiceline1, (struct Item *)&sdata->voicelinePool[0].next, sizeof(sdata->voicelinePool[0]), 8);
+	LIST_Init(&sdata->Voiceline1, (struct Item *)&sdata->voicelinePool[0], sizeof(sdata->voicelinePool[0]), 8);
 
 	Voiceline_ClearTimeStamp();
 }

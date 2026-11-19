@@ -13,4 +13,6 @@ struct LinkedList
 	int count;
 };
 
+#if !defined(__LP64__)
 _Static_assert(sizeof(struct LinkedList) == 0xC);
+#endif

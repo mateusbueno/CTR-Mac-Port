@@ -58,7 +58,7 @@ void Voiceline_RequestPlay(u32 voiceID, u32 characterID, u32 characterID2)
 	{
 		canQueue = 0;
 	}
-	else if ((sdata->voicelineCooldown != 0) && (((u8 *)sdata->backupParams_FUN_8002cf28)[0xa] == characterID))
+	else if ((sdata->voicelineCooldown != 0) && (sdata->backupVoiceline.characterID_1 == (char)characterID))
 	{
 		canQueue = 0;
 	}
@@ -111,9 +111,9 @@ queueVoiceline:
 
 	for (struct Item *item = sdata->Voiceline2.first; item != NULL; item = item->next)
 	{
-		u8 *itemBytes = (u8 *)item;
+		struct Voiceline *vl = (struct Voiceline *)item;
 
-		if ((voiceID == (u32) * (s16 *)(itemBytes + 8)) && (characterID == itemBytes[0xa]))
+		if ((voiceID == (u32)vl->voiceID) && (characterID == (u32)(u8)vl->characterID_1))
 			return;
 	}
 
@@ -134,11 +134,11 @@ queueVoiceline:
 	LIST_AddFront(&sdata->Voiceline2, item);
 
 	{
-		u8 *itemBytes = (u8 *)item;
+		struct Voiceline *vl = (struct Voiceline *)item;
 
-		itemBytes[0xa] = characterID;
-		itemBytes[0xb] = characterID2;
-		*(s16 *)(itemBytes + 8) = voiceID;
-		*(s32 *)(itemBytes + 0xc) = sdata->gGT->timer;
+		vl->characterID_1 = (char)characterID;
+		vl->characterID_2 = (char)characterID2;
+		vl->voiceID = (s16)voiceID;
+		vl->startFrame = sdata->gGT->timer;
 	}
 }

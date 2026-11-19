@@ -2625,10 +2625,33 @@ static int DrawLevelOvr1P_ShouldSetSemiTransFromTpage(u16 tpage)
 	return (tpage & 0x60) != 0x60;
 }
 
+static inline u32 DrawLevelOvr1P_EncodeOtEntry(u_long *otEntry)
+{
+#if defined(__LP64__)
+	return (u32)((uintptr_t)otEntry - g_gpuArenaBase);
+#else
+	return (u32)(uintptr_t)otEntry;
+#endif
+}
+
+static inline u_long *DrawLevelOvr1P_DecodeOtEntry(u32 encoded)
+{
+#if defined(__LP64__)
+	return (u_long *)(g_gpuArenaBase + encoded);
+#else
+	return (u_long *)(uintptr_t)encoded;
+#endif
+}
+
 static void DrawLevelOvr1P_AddRawPrimToOt(struct PrimMem *primMem, u32 *primWords, u32 wordCount, u_long *otEntry)
 {
+#if defined(__LP64__)
+	primWords[0] = ((u32)*otEntry & 0x00ffffff) | (wordCount << 24);
+	*otEntry = (*otEntry & 0xff000000) | (CtrGpu_PrimToOTLink24(primWords) & 0x00ffffff);
+#else
 	primWords[0] = ((u32)*otEntry & 0x00ffffff) | (wordCount << 24);
 	*otEntry = (u32)(uintptr_t)primWords & 0x00ffffff;
+#endif
 	// NOTE(aalhendi): Retail keeps the overlay primitive count in `sp`, seeded
 	// from PrimMem+0x14 and stored back at the epilogue.
 	primMem->unk1++;
@@ -3015,7 +3038,7 @@ static int DrawLevelOvr1P_WriteRenderedClippedRecordAtOt(struct PushBuffer *pb, 
 
 	record = (struct DrawLevelOvr1PClipRecord *)cursor;
 	record->header = DrawLevelOvr1P_GetRenderedClipRecordHeader(block, count);
-	record->otEntry = (u32)(uintptr_t)&pb->ptrOT[otIndex];
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(&pb->ptrOT[otIndex]);
 	// NOTE(aalhendi): Retail terminal near writers 0x800a89dc/0x800aa5fc
 	// store the freshly selected scratch UV metadata, not the caller texture.
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
@@ -3057,7 +3080,7 @@ static int DrawLevelOvr1P_WriteWaterRenderedClippedRecordAtOt(struct PushBuffer 
 	// NOTE(aalhendi): Retail water direct helpers 0x800a34d4/0x800a3578 set
 	// bit 31 on clipped-record headers so the consumer keeps the NCLIP result.
 	record->header = count == 4 ? 0x80000001u : 0x80000000u;
-	record->otEntry = (u32)(uintptr_t)&pb->ptrOT[otIndex];
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(&pb->ptrOT[otIndex]);
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
 	record->clut = *CTR_SCRATCHPAD_PTR(s16, 0x1a2);
 
@@ -3084,7 +3107,7 @@ static int Ovr226_800a34d4_WriteWaterRenderedClippedRecordAtOtEntry(struct PushB
 	// NOTE(aalhendi): Retail water-rendered clipped-record writers
 	// 0x800a34d4/0x800a3578 store the inherited GP/OT pointer directly.
 	record->header = count == 4 ? 0x80000001u : 0x80000000u;
-	record->otEntry = (u32)(uintptr_t)otEntry;
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(otEntry);
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
 	record->clut = *CTR_SCRATCHPAD_PTR(s16, 0x1a2);
 
@@ -3685,7 +3708,7 @@ static int DrawLevelOvr1P_EmitClipRecordGT4Table(struct PushBuffer *pb, struct P
 static int Ovr226_800aaed4_ProjectFourthClipRecordAndDispatchGT4(struct PushBuffer *pb, struct PrimMem *primMem, struct DrawLevelOvr1PScratchVertex *projected,
                                                                  const struct DrawLevelOvr1PClipRecord *record)
 {
-	u_long *otEntry = (u_long *)(uintptr_t)record->otEntry;
+	u_long *otEntry = DrawLevelOvr1P_DecodeOtEntry(record->otEntry);
 
 	Ovr226_800aa858_ProjectClipRecordRawVertex(&projected[3], &record->vertex[3]);
 	DrawLevelOvr1P_PrepareClipRecordDepthScratchRange(projected, 4);
@@ -3724,7 +3747,7 @@ static int Ovr226_800aa848_ProjectFirstThreeClipRecordsAndDispatch(struct PushBu
 	DrawLevelOvr1P_PrepareClipRecordDepthScratchRange(projected, 3);
 	// NOTE(aalhendi): Retail 0x800aa934..0x800aa968 dispatches through scratch
 	// 0x240; native keeps the handler bodies as C cases keyed by copied addresses.
-	return DrawLevelOvr1P_EmitClipRecordGT3Table(pb, primMem, (u_long *)(uintptr_t)record->otEntry, projected, record);
+	return DrawLevelOvr1P_EmitClipRecordGT3Table(pb, primMem, DrawLevelOvr1P_DecodeOtEntry(record->otEntry), projected, record);
 }
 
 static int Ovr226_800aa790_TerminalPreamble(struct PushBuffer *pb, const u8 *cursor, const u8 *end)
@@ -5328,7 +5351,7 @@ static int Ovr226_800a4dcc_WriteGround4x1RenderedClippedRecordAtOtEntry(struct P
 
 	record = (struct DrawLevelOvr1PClipRecord *)cursor;
 	record->header = DrawLevelOvr1P_GetRenderedClipRecordHeader(block, count);
-	record->otEntry = (u32)(uintptr_t)otEntry;
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(otEntry);
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
 	record->clut = *CTR_SCRATCHPAD_PTR(s16, 0x1a2);
 
@@ -6469,7 +6492,7 @@ static int Ovr226_800a6d6c_WriteGround4x2RenderedClippedRecordAtOtEntry(struct P
 
 	record = (struct DrawLevelOvr1PClipRecord *)cursor;
 	record->header = DrawLevelOvr1P_GetRenderedClipRecordHeader(block, count);
-	record->otEntry = (u32)(uintptr_t)otEntry;
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(otEntry);
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
 	record->clut = *CTR_SCRATCHPAD_PTR(s16, 0x1a2);
 
@@ -6856,7 +6879,7 @@ static int Ovr226_800a898c_WriteDynamicRenderedClippedRecordAtOtEntry(struct Pus
 
 	record = (struct DrawLevelOvr1PClipRecord *)cursor;
 	record->header = DrawLevelOvr1P_GetRenderedClipRecordHeader(block, count);
-	record->otEntry = (u32)(uintptr_t)otEntry;
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(otEntry);
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
 	record->clut = *CTR_SCRATCHPAD_PTR(s16, 0x1a2);
 
@@ -7218,7 +7241,7 @@ static int Ovr226_800aa5ac_WriteQuad4x4RenderedClippedRecordAtOtEntry(struct Pus
 
 	record = (struct DrawLevelOvr1PClipRecord *)cursor;
 	record->header = DrawLevelOvr1P_GetRenderedClipRecordHeader(block, count);
-	record->otEntry = (u32)(uintptr_t)otEntry;
+	record->otEntry = DrawLevelOvr1P_EncodeOtEntry(otEntry);
 	record->tpage = *CTR_SCRATCHPAD_PTR(s16, 0x1a6);
 	record->clut = *CTR_SCRATCHPAD_PTR(s16, 0x1a2);
 

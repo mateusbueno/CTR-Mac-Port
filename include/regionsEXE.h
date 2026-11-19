@@ -4691,7 +4691,11 @@ struct sData
 	// ==================================
 
 	// 80096194 -- next variable
-	int backupParams_FUN_8002cf28[4];
+	union
+	{
+		int backupParams_FUN_8002cf28[sizeof(struct Voiceline) / sizeof(int)];
+		struct Voiceline backupVoiceline;
+	};
 
 	// 800961a4
 	struct LinkedList Voiceline1;
@@ -4706,24 +4710,7 @@ struct sData
 	int unk_hole2;
 
 	// 800961c4
-	// eight members, 0x10 each
-	struct
-	{
-		// 0x0
-		void *next;
-
-		// 0x4
-		void *prev;
-
-		// 0x8
-		s16 voiceID;        // param_1
-		char characterID_1; // param_2
-		char characterID_2; // param_3
-
-		// 0xC
-		int startFrame;
-
-	} voicelinePool[8];
+	struct Voiceline voicelinePool[8];
 
 	// 80096244
 	int timeSet1[0x10];

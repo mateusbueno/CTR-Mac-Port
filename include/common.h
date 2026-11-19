@@ -48,13 +48,13 @@ extern int g_cfg_chaosRng;       // remove position-based RNG, any item regardle
 #include <namespace_Display.h>
 #include <namespace_Gamepad.h>
 #include <namespace_Ghost.h>
+#include <namespace_List.h>
 #include <namespace_Howl.h>
 #include <namespace_Instance.h>
 
 // jitpool should be here
 
 #include <namespace_Level.h>
-#include <namespace_List.h>
 #include <namespace_Lng.h>
 
 // should not be here

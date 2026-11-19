@@ -497,6 +497,15 @@ enum VoiceType_XAGAME2
 }
 #endif
 
+struct Voiceline
+{
+	struct Item item;
+	s16 voiceID;
+	char characterID_1;
+	char characterID_2;
+	int startFrame;
+};
+
 _Static_assert(sizeof(SpuReverbAttr) == 0x14);
 _Static_assert(sizeof(struct ChannelAttr) == 0x10);
 _Static_assert(sizeof(struct ChannelStats) == 0x20);

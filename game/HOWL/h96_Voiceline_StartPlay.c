@@ -3,16 +3,12 @@
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8002cf28-0x8002d0f8
 void Voiceline_StartPlay(struct Item *voiceLine)
 {
-	u8 *voiceLineBytes = (u8 *)voiceLine;
-	int *voiceLineWords = (int *)voiceLine;
-	u32 voiceID = *(u16 *)(voiceLineBytes + 8);
-	u32 characterID = voiceLineBytes[0xa];
+	struct Voiceline *vl = (struct Voiceline *)voiceLine;
+	u32 voiceID = (u16)vl->voiceID;
+	u32 characterID = (u8)vl->characterID_1;
 	u32 voiceSetIndex;
 
-	sdata->backupParams_FUN_8002cf28[0] = voiceLineWords[0];
-	sdata->backupParams_FUN_8002cf28[1] = voiceLineWords[1];
-	sdata->backupParams_FUN_8002cf28[2] = voiceLineWords[2];
-	sdata->backupParams_FUN_8002cf28[3] = voiceLineWords[3];
+	sdata->backupVoiceline = *vl;
 
 	if (((s32)sdata->gGT->gameMode1 < 0) && ((u32)(voiceID - 10) < 6) && (((u32)(characterID - 8) < 4) || (characterID == 0xf)))
 	{
