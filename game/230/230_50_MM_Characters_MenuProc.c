@@ -439,15 +439,15 @@ dontDrawSelectCharacter:
 		globalIconPerPlayerPtr[i] = globalIconPerPlayerCopy;
 
 		// transition of each icon
-		iVar24 = (int)&D230.ptrTransitionMeta[globalIconPerPlayerCopy];
+		struct TransitionMeta *playerIconTrans = &D230.ptrTransitionMeta[globalIconPerPlayerCopy];
 
 		// if player has not selected a character
 		if (((sdata->characterSelectFlags >> i) & 1U) == 0)
 		{
 			// draw string
 			// "1", "2", "3", "4", above the character icon
-			DecalFont_DrawLine(D230.PlayerNumberStrings[i], ((struct TransitionMeta *)iVar24)->currX + (u32)*puVar26 + -6,
-			                   ((struct TransitionMeta *)iVar24)->currY + (u32)puVar26[1] + -3, FONT_BIG, WHITE);
+			DecalFont_DrawLine(D230.PlayerNumberStrings[i], playerIconTrans->currX + (u32)*puVar26 + -6,
+			                   playerIconTrans->currY + (u32)puVar26[1] + -3, FONT_BIG, WHITE);
 			puVar12 = auStack120;
 		}
 		else
@@ -455,8 +455,8 @@ dontDrawSelectCharacter:
 			puVar12 = (u8 *)&D230.characterSelect_Outline;
 		}
 
-		r->x = ((struct TransitionMeta *)iVar24)->currX + *puVar26;
-		r->y = ((struct TransitionMeta *)iVar24)->currY + puVar26[1];
+		r->x = playerIconTrans->currX + *puVar26;
+		r->y = playerIconTrans->currY + puVar26[1];
 		r->w = 0x34;
 		r->h = 0x21;
 
@@ -497,10 +497,10 @@ dontDrawSelectCharacter:
 				}
 			}
 
-			iVar8 = (int)&D230.ptrTransitionMeta[i];
+			struct TransitionMeta *charIconTrans = &D230.ptrTransitionMeta[i];
 
 			RECTMENU_DrawPolyGT4(gGT->ptrIcons[data.MetaDataCharacters[csm_Active->characterID].iconID],
-			                     ((struct TransitionMeta *)iVar8)->currX + csm_Active->posX + 6, ((struct TransitionMeta *)iVar8)->currY + csm_Active->posY + 4,
+			                     charIconTrans->currX + csm_Active->posX + 6, charIconTrans->currY + csm_Active->posY + 4,
 
 			                     &gGT->backBuffer->primMem, gGT->pushBuffer_UI.ptrOT,
 
@@ -536,10 +536,10 @@ dontDrawSelectCharacter:
 			colorRGBA[1] = (u8)((int)((u32)colorRGBA[1] << 2) / 5);
 			colorRGBA[2] = (u8)((int)((u32)colorRGBA[2] << 2) / 5);
 
-			iVar8 = (int)&D230.ptrTransitionMeta[playerIcon];
+			struct TransitionMeta *playerTrans = &D230.ptrTransitionMeta[playerIcon];
 
-			r->x = ((struct TransitionMeta *)iVar8)->currX + csm_Active->posX + 3;
-			r->y = ((struct TransitionMeta *)iVar8)->currY + csm_Active->posY + 2;
+			r->x = playerTrans->currX + csm_Active->posX + 3;
+			r->y = playerTrans->currY + csm_Active->posY + 2;
 			r->w = 0x2e;
 			r->h = 0x1d;
 
@@ -559,8 +559,8 @@ dontDrawSelectCharacter:
 			if (numPlyrNextGame >= 3)
 				fontType = FONT_SMALL;
 
-			iVar8 = (int)&D230.ptrTransitionMeta[j + 0x10];
-			sVar10 = ((struct TransitionMeta *)iVar8)->currY + D230.characterSelect_ptrWindowXY[j * 2 + 1];
+			struct TransitionMeta *nameTrans = &D230.ptrTransitionMeta[j + 0x10];
+			sVar10 = nameTrans->currY + D230.characterSelect_ptrWindowXY[j * 2 + 1];
 			sVar6 = (s16)((((u32)(numPlyrNextGame < 3) ^ 1) << 0x12) >> 0x10);
 
 			if ((numPlyrNextGame == 4) && (j > 1))
@@ -570,7 +570,7 @@ dontDrawSelectCharacter:
 
 			// draw string
 			DecalFont_DrawLine(sdata->lngStrings[data.MetaDataCharacters[csm_Active->characterID].name_LNG_long],
-			                   (int)((struct TransitionMeta *)iVar8)->currX + D230.characterSelect_ptrWindowXY[j * 2] +
+			                   (int)nameTrans->currX + D230.characterSelect_ptrWindowXY[j * 2] +
 			                       (int)((u32)D230.characterSelect_sizeX >> 1),
 			                   (int)sVar6, fontType, (JUSTIFY_CENTER | ORANGE));
 		}
@@ -596,10 +596,10 @@ dontDrawSelectCharacter:
 		    // also the variable written by cheats
 		    ((sdata->gameProgress.unlocks[iVar8 >> 5] >> (iVar8 & 0x1fU) & 1) != 0))
 		{
-			iVar8 = (int)&D230.ptrTransitionMeta[i];
+			struct TransitionMeta *bgTrans = &D230.ptrTransitionMeta[i];
 
-			r->x = ((struct TransitionMeta *)iVar8)->currX + csm_Active[i].posX;
-			r->y = ((struct TransitionMeta *)iVar8)->currY + csm_Active[i].posY;
+			r->x = bgTrans->currX + csm_Active[i].posX;
+			r->y = bgTrans->currY + csm_Active[i].posY;
 			r->w = 0x34;
 			r->h = 0x21;
 
@@ -613,11 +613,11 @@ dontDrawSelectCharacter:
 	for (i = 0; i < gGT->numPlyrNextGame; i++)
 	{
 		j = i;
-		iVar8 = (int)&D230.ptrTransitionMeta[j];
+		struct TransitionMeta *winTrans = &D230.ptrTransitionMeta[j + 0x10];
 
 		// store window width and height in one 4-byte variable
-		r->x = *(s16 *)(iVar8 + 0xa6) + *psVar22;
-		r->y = *(s16 *)(iVar8 + 0xa8) + psVar22[1];
+		r->x = winTrans->currX + *psVar22;
+		r->y = winTrans->currY + psVar22[1];
 		r->w = D230.characterSelect_sizeX;
 		r->h = D230.characterSelect_sizeY;
 

@@ -217,7 +217,7 @@ sdata->ghostOverflowTextTimer--;
 			}
 		}
 
-		tape->numPacketsInArray = ((u32)packet - (u32)&tape->packets[0]) >> 4;
+		tape->numPacketsInArray = (int)(packet - &tape->packets[0]);
 
 		tape->numPacketsInArray -= 1;
 

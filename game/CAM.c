@@ -1987,10 +1987,10 @@ void CAM_ThTick(struct Thread *t)
                 pb->rot[1] = psVar21[5];
                 pb->rot[2] = psVar21[6];
                 *(s16 *)&cDC->action = *psVar19;
-                *(s16 *)((int)&cDC->action + 2) = psVar21[2];
+                *(s16 *)((char *)&cDC->action + 2) = psVar21[2];
                 *(s16 *)&cDC->mode = psVar21[3];
                 *(s16 *)&cDC->unk0xC = psVar21[4];
-                *(s16 *)((int)&cDC->unk0xC + 2) = psVar21[5];
+                *(s16 *)((char *)&cDC->unk0xC + 2) = psVar21[5];
                 cDC->desiredRot[0] = psVar21[6];
                 break;
         case 4:

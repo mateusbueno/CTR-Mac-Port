@@ -172,11 +172,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 			newInst = INSTANCE_Birth3D(gGT->modelPtr[STATIC_BEAM], "beam", t);
 
 			// copy matrix
-			*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-			*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-			*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-			*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-			*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+			*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+			*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+			*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+			*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+			*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 			newInst->matrix.t[0] = inst->matrix.t[0];
 			newInst->matrix.t[1] = inst->matrix.t[1];
 			newInst->matrix.t[2] = inst->matrix.t[2];
@@ -194,11 +194,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 				newInst = INSTANCE_Birth3D(gGT->modelPtr[STATIC_BOTTOMRING], "bottomRing", t);
 
 				// copy matrix
-				*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-				*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-				*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-				*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-				*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+				*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+				*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+				*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+				*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+				*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 				newInst->matrix.t[0] = inst->matrix.t[0];
 				newInst->matrix.t[1] = inst->matrix.t[1] + i * 0x400;
 				newInst->matrix.t[2] = inst->matrix.t[2];
@@ -246,11 +246,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 					warppadObj->inst[WPIS_OPEN_PRIZE1 + i] = newInst;
 
 					// copy matrix
-					*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-					*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-					*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-					*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-					*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+					*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+					*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+					*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+					*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+					*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 					newInst->matrix.t[0] = inst->matrix.t[0] + ((MATH_Sin(rewardAngle) * 0xc0) >> 0xc);
 					newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 					newInst->matrix.t[2] = inst->matrix.t[2] + ((MATH_Cos(rewardAngle) * 0xc0) >> 0xc);
@@ -316,11 +316,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 				warppadObj->specLightRelic[2] = D232.specLightRelic[2];
 
 				// copy matrix
-				*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-				*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-				*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-				*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-				*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+				*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+				*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+				*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+				*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+				*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 				newInst->matrix.t[0] = inst->matrix.t[0];
 				newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 				newInst->matrix.t[2] = inst->matrix.t[2];
@@ -355,11 +355,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 			warppadObj->specLightToken[2] = D232.specLightToken[tokenGroupID * 3 + 2];
 
 			// copy matrix
-			*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-			*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-			*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-			*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-			*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+			*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+			*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+			*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+			*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+			*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 			newInst->matrix.t[0] = inst->matrix.t[0];
 			newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 			newInst->matrix.t[2] = inst->matrix.t[2];
@@ -413,11 +413,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 					continue;
 
 				// copy matrix
-				*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-				*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-				*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-				*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-				*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+				*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+				*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+				*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+				*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+				*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 				newInst->matrix.t[0] = inst->matrix.t[0];
 				newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 				newInst->matrix.t[2] = inst->matrix.t[2];
@@ -538,11 +538,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 	newInst = INSTANCE_Birth3D(gGT->modelPtr[unlockItem_modelID], "reqObj", t);
 
 	// copy matrix
-	*(int *)((int)&newInst->matrix + 0x0) = *(int *)((int)&inst->matrix + 0x0);
-	*(int *)((int)&newInst->matrix + 0x4) = *(int *)((int)&inst->matrix + 0x4);
-	*(int *)((int)&newInst->matrix + 0x8) = *(int *)((int)&inst->matrix + 0x8);
-	*(int *)((int)&newInst->matrix + 0xC) = *(int *)((int)&inst->matrix + 0xC);
-	*(s16 *)((int)&newInst->matrix + 0x10) = *(s16 *)((int)&inst->matrix + 0x10);
+	*(int *)((char *)&newInst->matrix + 0x0) = *(int *)((char *)&inst->matrix + 0x0);
+	*(int *)((char *)&newInst->matrix + 0x4) = *(int *)((char *)&inst->matrix + 0x4);
+	*(int *)((char *)&newInst->matrix + 0x8) = *(int *)((char *)&inst->matrix + 0x8);
+	*(int *)((char *)&newInst->matrix + 0xC) = *(int *)((char *)&inst->matrix + 0xC);
+	*(s16 *)((char *)&newInst->matrix + 0x10) = *(s16 *)((char *)&inst->matrix + 0x10);
 	newInst->matrix.t[0] = inst->matrix.t[0];
 	newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 	newInst->matrix.t[2] = inst->matrix.t[2];
@@ -613,11 +613,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 	newInst = INSTANCE_Birth3D(gGT->modelPtr[STATIC_BIGX], "x", t);
 
 	// copy matrix
-	*(int *)((int)&newInst->matrix + 0x0) = 0x1000;
-	*(int *)((int)&newInst->matrix + 0x4) = 0;
-	*(int *)((int)&newInst->matrix + 0x8) = 0x1000;
-	*(int *)((int)&newInst->matrix + 0xC) = 0;
-	*(s16 *)((int)&newInst->matrix + 0x10) = 0x1000;
+	*(int *)((char *)&newInst->matrix + 0x0) = 0x1000;
+	*(int *)((char *)&newInst->matrix + 0x4) = 0;
+	*(int *)((char *)&newInst->matrix + 0x8) = 0x1000;
+	*(int *)((char *)&newInst->matrix + 0xC) = 0;
+	*(s16 *)((char *)&newInst->matrix + 0x10) = 0x1000;
 	newInst->matrix.t[0] = inst->matrix.t[0];
 	newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 	newInst->matrix.t[2] = inst->matrix.t[2];
@@ -639,11 +639,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 		newInst = INSTANCE_Birth3D(gGT->modelPtr[STATIC_BIG1], "warpnum", t);
 
 		// copy matrix
-		*(int *)((int)&newInst->matrix + 0x0) = 0x1000;
-		*(int *)((int)&newInst->matrix + 0x4) = 0;
-		*(int *)((int)&newInst->matrix + 0x8) = 0x1000;
-		*(int *)((int)&newInst->matrix + 0xC) = 0;
-		*(s16 *)((int)&newInst->matrix + 0x10) = 0x1000;
+		*(int *)((char *)&newInst->matrix + 0x0) = 0x1000;
+		*(int *)((char *)&newInst->matrix + 0x4) = 0;
+		*(int *)((char *)&newInst->matrix + 0x8) = 0x1000;
+		*(int *)((char *)&newInst->matrix + 0xC) = 0;
+		*(s16 *)((char *)&newInst->matrix + 0x10) = 0x1000;
 		newInst->matrix.t[0] = inst->matrix.t[0];
 		newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 		newInst->matrix.t[2] = inst->matrix.t[2];
@@ -672,11 +672,11 @@ void AH_WarpPad_LInB(struct Instance *inst)
 	newInst = INSTANCE_Birth3D(gGT->modelPtr[i], "warpnum", t);
 
 	// copy matrix
-	*(int *)((int)&newInst->matrix + 0x0) = 0x1000;
-	*(int *)((int)&newInst->matrix + 0x4) = 0;
-	*(int *)((int)&newInst->matrix + 0x8) = 0x1000;
-	*(int *)((int)&newInst->matrix + 0xC) = 0;
-	*(s16 *)((int)&newInst->matrix + 0x10) = 0x1000;
+	*(int *)((char *)&newInst->matrix + 0x0) = 0x1000;
+	*(int *)((char *)&newInst->matrix + 0x4) = 0;
+	*(int *)((char *)&newInst->matrix + 0x8) = 0x1000;
+	*(int *)((char *)&newInst->matrix + 0xC) = 0;
+	*(s16 *)((char *)&newInst->matrix + 0x10) = 0x1000;
 	newInst->matrix.t[0] = inst->matrix.t[0];
 	newInst->matrix.t[1] = inst->matrix.t[1] + 0x100;
 	newInst->matrix.t[2] = inst->matrix.t[2];

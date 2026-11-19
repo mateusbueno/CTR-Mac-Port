@@ -9,7 +9,7 @@ void MM_Battle_MenuProc(struct RectMenu *unused)
 	int iVar8;
 	int iVar9;
 	u32 uVar10;
-	u32 color;
+	u32 *color;
 	u32 uVar12;
 	int iVar13;
 	int iVar16;
@@ -817,13 +817,13 @@ LAB_800b25f0:
 		iVar8 = (int)(s16)i;
 		j = (iVar8 / 6);
 
-		color = (u32)&D230.color1;
+		color = &D230.color1;
 		uVar17 = 4;
 
 		// Check if this weapon is not enabled
 		if ((gGT->battleSetup.enabledWeapons & D230.battleWeaponsEnabled[iVar8 * 2]) == 0)
 		{
-			color = (u32)&D230.color2;
+			color = &D230.color2;
 			uVar17 = 0x15;
 		}
 
