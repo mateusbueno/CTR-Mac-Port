@@ -46,9 +46,14 @@ void VehGroundSkids_Subset1(u32 *currXY, u32 *prevXY, int depth, u8 *scratch, st
 	VehGroundSkids_WriteLo16(&prim[9], *(u16 *)&icon->texLayout.u2);
 	VehGroundSkids_WriteLo16(&prim[12], *(u16 *)&icon->texLayout.u3);
 
-	if (pb == NULL)
+	if (pb == NULL || pb->ptrOT == NULL)
 		return;
-	u_long *ot = pb->ptrOT + ((s32)depth >> 6);
+	int otIndex = (s32)depth >> 6;
+	if (otIndex < 0)
+		otIndex = 0;
+	else if (otIndex > 0x3ff)
+		otIndex = 0x3ff;
+	u_long *ot = pb->ptrOT + otIndex;
 	prim[0] = (u32)*ot | 0x0c000000;
 	*ot = (u_long)VehGroundSkids_Ptr24(prim);
 }
