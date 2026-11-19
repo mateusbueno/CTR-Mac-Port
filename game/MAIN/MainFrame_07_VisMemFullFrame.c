@@ -5,7 +5,7 @@
 
 static void MainFrame_ReplacePackedVisList(int *dst, void *src, int byteCount)
 {
-        u32 srcWord = (u32)src;
+        uintptr_t srcWord = (uintptr_t)src;
 
         if ((srcWord & 1) == 0)
         {
@@ -13,12 +13,12 @@ static void MainFrame_ReplacePackedVisList(int *dst, void *src, int byteCount)
                 return;
         }
 
-        CTR_unknownMaybeThunk1(dst, (void *)(srcWord & ~(u32)3));
+        CTR_unknownMaybeThunk1(dst, (void *)(srcWord & ~(uintptr_t)3));
 }
 
 static void MainFrame_OrPackedVisList(int *dst, void *src, int byteCount)
 {
-        u32 srcWord = (u32)src;
+        uintptr_t srcWord = (uintptr_t)src;
 
         if ((srcWord & 1) == 0)
         {
@@ -26,7 +26,7 @@ static void MainFrame_OrPackedVisList(int *dst, void *src, int byteCount)
                 return;
         }
 
-        CTR_unknownMaybeThunk2(dst, (void *)(srcWord & ~(u32)3));
+        CTR_unknownMaybeThunk2(dst, (void *)(srcWord & ~(uintptr_t)3));
 }
 
 static int MainFrame_VisMemHasQuad(const int *visFaceList, const struct QuadBlock *quad, const struct mesh_info *mesh)

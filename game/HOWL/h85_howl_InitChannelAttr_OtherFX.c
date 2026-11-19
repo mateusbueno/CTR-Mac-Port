@@ -23,5 +23,5 @@ void howl_InitChannelAttr_OtherFX(struct OtherFX *otherFX, struct ChannelAttr *a
 	attr->ad = 0x80ff;
 	attr->sr = 0x1fc2;
 
-	attr->spuStartAddr = (void *)(sdata->howl_spuAddrs[otherFX->spuIndex].spuAddr << 3);
+	attr->spuStartAddr = (void *)(uintptr_t)(sdata->howl_spuAddrs[otherFX->spuIndex].spuAddr << 3);
 }

@@ -145,10 +145,10 @@ void RB_GenericMine_ThTick(struct Thread *t)
 		}
 
 		// spin driver
-		coll = (struct Instance *)RB_Hazard_HurtDriver(d, 1, mw->instParent->thread->object, param);
+		int hurt = RB_Hazard_HurtDriver(d, 1, mw->instParent->thread->object, param);
 
 		// if collision, and if this was a red potion
-		if ((coll != 0) && (mw->extraFlags & 1) != 0)
+		if ((hurt != 0) && (mw->extraFlags & 1) != 0)
 		{
 			RB_RainCloud_Init(d);
 		}
@@ -242,9 +242,7 @@ void RB_GenericMine_ThTick(struct Thread *t)
 		if (model == 0x27)
 		{
 			// RB_Hazard_HurtDriver (keep driving?)
-			crate = (struct Crate *)RB_Hazard_HurtDriver(d, 0, mw->instParent->thread->object, 2);
-
-			if (crate == 0)
+			if (RB_Hazard_HurtDriver(d, 0, mw->instParent->thread->object, 2) == 0)
 				goto LAB_800ad174;
 
 			// if Instance has no InstDef,

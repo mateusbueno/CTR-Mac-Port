@@ -1,7 +1,7 @@
 #include <common.h>
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8004dee8-0x8004dffc.
-void UI_Map_DrawGhosts(int ptrMap, struct Thread *bucket)
+void UI_Map_DrawGhosts(void *ptrMap, struct Thread *bucket)
 {
 	int color;
 	struct Driver *d;
@@ -11,14 +11,12 @@ void UI_Map_DrawGhosts(int ptrMap, struct Thread *bucket)
 	{
 		d = bucket->object;
 
-		// Need to finish Driver struct
-
 		// if ghost not initialized
-		if (*(s16 *)((uintptr_t)d + 0x632) == 0)
+		if (d->ghostBoolInit == 0)
 			continue;
 
 		// ghost made by player
-		if (*(s16 *)((uintptr_t)d + 0x630) == 0)
+		if (d->ghostID == 0)
 		{
 			// flash red and blue
 

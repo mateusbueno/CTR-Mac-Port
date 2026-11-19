@@ -11,20 +11,20 @@ void RB_Burst_Init(struct Instance *weaponInst)
 	struct ModelHeader *headers;
 	struct Instance *currInst;
 	struct Thread *t;
-	int *burst;
+	struct Instance **burst;
 
 	// initialize thread for burst
-	currInst = INSTANCE_BirthWithThread(0x2b, s_burst_explosion1, SMALL, BURST, RB_Burst_ThTick, 0xc, 0);
+	currInst = INSTANCE_BirthWithThread(0x2b, s_burst_explosion1, SMALL, BURST, RB_Burst_ThTick, 3 * sizeof(struct Instance *), 0);
 
 	// get thread from instance
 	t = currInst->thread;
 
 	// get object from thread
-	burst = t->object;
+	burst = (struct Instance **)t->object;
 
 	// ====== First Instance =========
 
-	burst[1] = (int)currInst;
+	burst[1] = currInst;
 	currInst->unk50 += -2;
 
 	// set rotation to identity matrix
@@ -42,7 +42,7 @@ void RB_Burst_Init(struct Instance *weaponInst)
 
 	currInst = INSTANCE_Birth3D(gGT->modelPtr[STATIC_WARPEDBURST], s_burst_explosion2, t);
 
-	burst[2] = (int)currInst;
+	burst[2] = currInst;
 	currInst->unk50 += -2;
 
 	// instance flags
@@ -65,7 +65,7 @@ void RB_Burst_Init(struct Instance *weaponInst)
 
 	currInst = INSTANCE_Birth3D(gGT->modelPtr[STATIC_SHOCKWAVE_RED], s_burst_shockwave1, t);
 
-	burst[0] = (int)currInst;
+	burst[0] = currInst;
 	currInst->unk50 += -2;
 
 	// instance flags

@@ -95,7 +95,7 @@ void UI_BattleDrawHeadArrows(struct Driver *player)
 		struct PrimMem *primMem = &gGT->backBuffer->primMem;
 
 		p = primMem->curr;
-		if ((int)p > (int)primMem->endMin100)
+		if (p > (G3_SEMITRANS *)primMem->endMin100)
 			return;
 
 		primMem->curr = p + 1;
@@ -131,7 +131,6 @@ void UI_BattleDrawHeadArrows(struct Driver *player)
 
 		u_long *ot = gGT->pushBuffer[playerID].ptrOT;
 
-		*(int *)p = *ot | 0x8000000;
-		*ot = CtrGpu_PrimToOTLink24(p);
+		addPrim(ot, p);
 	}
 }

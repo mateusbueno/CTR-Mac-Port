@@ -1823,12 +1823,11 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 	return rbi + 1;
 }
 
-void *RenderBucket_QueueLevInstances(struct CameraDC *cDC, u_long *otMem, void *rbi, char *lod, char numPlyr, int gameMode1)
+void *RenderBucket_QueueLevInstances(struct CameraDC *cDC, u_long *otMem, void *rbi, u32 lodMask, char numPlyr, int gameMode1)
 {
 	struct RenderBucketEntry *entry = (struct RenderBucketEntry *)rbi;
 	struct RenderBucketQueueState queueState = {0};
 	struct OTMem *otState = (struct OTMem *)otMem;
-	u32 lodMask = (u32)(u8)(u32)lod;
 	int count = (int)(u8)numPlyr;
 
 	// NOTE(aalhendi): ASM-verified NTSC-U 926 0x80070720-0x8007084c.
@@ -1867,12 +1866,11 @@ void *RenderBucket_QueueLevInstances(struct CameraDC *cDC, u_long *otMem, void *
 	return entry;
 }
 
-void *RenderBucket_QueueNonLevInstances(struct Item *item, u_long *otMem, void *rbi, char *lod, char numPlyr, int gameMode1)
+void *RenderBucket_QueueNonLevInstances(struct Item *item, u_long *otMem, void *rbi, u32 lodMask, char numPlyr, int gameMode1)
 {
 	struct RenderBucketEntry *entry = (struct RenderBucketEntry *)rbi;
 	struct RenderBucketQueueState queueState = {0};
 	struct OTMem *otState = (struct OTMem *)otMem;
-	u32 lodMask = (u32)(u8)(u32)lod;
 	int count = (int)(u8)numPlyr;
 
 	// NOTE(aalhendi): ASM-verified NTSC-U 926 0x8007084c-0x80070950.

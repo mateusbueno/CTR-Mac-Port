@@ -10,7 +10,7 @@ void VehPickupItem_ShootOnCirclePress(struct Driver *d)
 
         if (d->ChangeState_param2 != 0)
         {
-                VehPickState_NewState(d, d->ChangeState_param2, (struct Driver *)d->ChangeState_param3, d->ChangeState_param4);
+                VehPickState_NewState(d, d->ChangeState_param2, d->ChangeState_param3, d->ChangeState_param4);
         }
 
         // If you want to fire a weapon

@@ -796,7 +796,7 @@ void BOTS_ThTick_Drive(struct Thread *botThread)
 	}
 	else
 	{
-		BOTS_ChangeState(botDriver, botDriver->ChangeState_param2, (struct Driver *)botDriver->ChangeState_param3, botDriver->ChangeState_param4);
+		BOTS_ChangeState(botDriver, botDriver->ChangeState_param2, botDriver->ChangeState_param3, botDriver->ChangeState_param4);
 	}
 
 	int elapsedMilliseconds = gGT->elapsedTimeMS; // local_34
@@ -2928,15 +2928,7 @@ void BOTS_GotoStartingLine(struct Driver *d)
 	u8 spawnPos = sdata->kartSpawnOrderArray[d->driverID];
 
 	// all within unk5bc
-	*(int *)((u32)d + 0x5ec) = 0;
-	*(int *)((u32)d + 0x5e8) = 0;
-	*(int *)((u32)d + 0x5e4) = 0;
-	*(int *)((u32)d + 0x5e0) = 0;
-	*(int *)((u32)d + 0x5dc) = 0;
-	*(int *)((u32)d + 0x5d8) = 0;
-	*(int *)((u32)d + 0x5d4) = 0;
-	*(int *)((u32)d + 0x5d0) = 0;
-	*(int *)((u32)d + 0x5cc) = 0;
+	memset(&d->botData.unk5bc.raw[0x10], 0, 9 * sizeof(int));
 
 	d->botData.ai_posBackup[0] = d->posCurr.x;
 	d->botData.ai_posBackup[1] = d->posCurr.y;

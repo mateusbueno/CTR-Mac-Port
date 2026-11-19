@@ -288,7 +288,7 @@ int RB_CrateWeapon_ThCollide(struct Thread *crateThread, struct Thread *collidin
                         RB_CrateAny_ExplodeInit(crateInst, 0xfafafa0);
 
                         driver = RB_CrateAny_GetDriver(collidingTh, sps);
-                        if ((int)driver == 1)
+                        if (driver == (struct Driver *)1)
                                 return 1;
 
                         if ((driver->heldItemID != 0xf) && (driver->noItemTimer == 0))
@@ -393,7 +393,7 @@ int RB_CrateFruit_ThCollide(struct Thread *crateThread, struct Thread *colliding
                         RB_CrateAny_ExplodeInit(crateInst, 0xf2953a0);
 
                         driver = RB_CrateAny_GetDriver(collidingTh, sps);
-                        if ((int)driver == 1)
+                        if (driver == (struct Driver *)1)
                                 return 1;
 
                         random = MixRNG_Scramble();
@@ -474,7 +474,7 @@ int RB_CrateTime_ThCollide(struct Thread *crateThread, struct Thread *driverTh, 
 
                         gGT = sdata->gGT;
                         driver = RB_CrateAny_GetDriver(driverTh, sps);
-                        if ((int)driver == 1)
+                        if (driver == (struct Driver *)1)
                                 return 1;
 
                         modelID = crateInst->model->id;

@@ -1,11 +1,11 @@
 #include <common.h>
 
-static void RB_Burst_UpdateSlot(int *slot)
+static void RB_Burst_UpdateSlot(struct Instance **slot)
 {
 	struct Instance *inst;
 	int nextFrame;
 
-	inst = (struct Instance *)*slot;
+	inst = *slot;
 	if (inst == NULL)
 		return;
 
@@ -21,19 +21,19 @@ static void RB_Burst_UpdateSlot(int *slot)
 	}
 
 	INSTANCE_Death(inst);
-	*slot = 0;
+	*slot = NULL;
 }
 
 // NOTE(aalhendi): ASM-verified against NTSC-U 926 overlay 231 0x800b1d2c-0x800b1e90.
 void RB_Burst_ThTick(struct Thread *t)
 {
-	int *burst;
-	burst = t->object;
+	struct Instance **burst;
+	burst = (struct Instance **)t->object;
 
 	RB_Burst_UpdateSlot(&burst[1]);
 	RB_Burst_UpdateSlot(&burst[2]);
 	RB_Burst_UpdateSlot(&burst[0]);
 
-	if ((burst[1] == 0) && (burst[2] == 0))
+	if ((burst[1] == NULL) && (burst[2] == NULL))
 		t->flags |= 0x800;
 }

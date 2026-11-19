@@ -45,24 +45,24 @@ void ElimBG_SaveScreenshot_Full(struct GameTracker *gGT)
 
 	// vram copy, then overwrite vram with pause image
 
-	u32 start1 = (u32)gGT->db[0].primMem.end;
-	u32 start2 = (u32)gGT->db[1].primMem.end;
+	char *start1 = (char *)gGT->db[0].primMem.end;
+	char *start2 = (char *)gGT->db[1].primMem.end;
 	start1 -= 0xc800;
 	start2 -= 0xc800;
-	gGT->db[0].primMem.end = (void *)start1;
-	gGT->db[1].primMem.end = (void *)start2;
+	gGT->db[0].primMem.end = start1;
+	gGT->db[1].primMem.end = start2;
 
 	// 0x800 byte hole
-	sdata->PausePtrsVRAM[4] = (char *)start1;
-	sdata->PausePtrsVRAM[5] = (char *)start2;
+	sdata->PausePtrsVRAM[4] = start1;
+	sdata->PausePtrsVRAM[5] = start2;
 
 	// 0x4000 byte hole
-	sdata->PausePtrsVRAM[2] = (char *)(start1 + 0x800);
-	sdata->PausePtrsVRAM[3] = (char *)(start2 + 0x800);
+	sdata->PausePtrsVRAM[2] = start1 + 0x800;
+	sdata->PausePtrsVRAM[3] = start2 + 0x800;
 
 	// 0x8000 byte hole
-	sdata->PausePtrsVRAM[0] = (char *)(start1 + 0x4800);
-	sdata->PausePtrsVRAM[1] = (char *)(start2 + 0x4800);
+	sdata->PausePtrsVRAM[0] = start1 + 0x4800;
+	sdata->PausePtrsVRAM[1] = start2 + 0x4800;
 
 	// copy texture vram into PrimMem
 	StoreImage(&rect1, (u32 *)sdata->PausePtrsVRAM[0]);
@@ -208,8 +208,8 @@ void ElimBG_HandleState(struct GameTracker *gGT)
 
 		DrawSync(0);
 
-		gGT->db[0].primMem.end = (void *)((int)gGT->db[0].primMem.end + 0xc800);
-		gGT->db[1].primMem.end = (void *)((int)gGT->db[1].primMem.end + 0xc800);
+		gGT->db[0].primMem.end = (char *)gGT->db[0].primMem.end + 0xc800;
+		gGT->db[1].primMem.end = (char *)gGT->db[1].primMem.end + 0xc800;
 
 		// Enable all instances
 		ElimBG_ToggleAllInstances(gGT, 0);

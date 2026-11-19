@@ -62,7 +62,7 @@ void RECTMENU_DrawRwdBlueRect_Subset(s16 *pos, int *color, u_long *ot, struct Pr
 {
 	POLY_G4 *p = (POLY_G4 *)primMem->curr;
 
-	if ((u32)p <= (u32)primMem->endMin100)
+	if (p <= (POLY_G4 *)primMem->endMin100)
 	{
 		primMem->curr = p + 1;
 
@@ -78,8 +78,7 @@ void RECTMENU_DrawRwdBlueRect_Subset(s16 *pos, int *color, u_long *ot, struct Pr
 		*(int *)&p->x2 = pos[0] | ((pos[1] + pos[3]) << 16);
 		*(int *)&p->x3 = (pos[0] + pos[2]) | ((pos[1] + pos[3]) << 16);
 
-		*(int *)p = (*(int *)ot & 0xffffff) | 0x8000000;
-		*(int *)ot = (int)CtrGpu_PrimToOTLink24(p);
+		addPrim(ot, p);
 	}
 }
 

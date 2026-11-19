@@ -20,7 +20,7 @@ int VehPhysCrash_Attack(struct Driver *driver1, struct Driver *driver2, int canP
 #endif
 			driver1->ChangeState_param2 = 2;
 			VehPhysCrash_Attack_SetReason(driver1, 6);
-			driver1->ChangeState_param3 = (int)driver2;
+			driver1->ChangeState_param3 = driver2;
 
 			if ((canPlayFeedback != 0) && (driver1->kartState != KS_BLASTED) && (driver1->invincibleTimer == 0))
 			{
@@ -38,7 +38,7 @@ int VehPhysCrash_Attack(struct Driver *driver1, struct Driver *driver2, int canP
 
 			driver1->ChangeState_param2 = 2;
 			VehPhysCrash_Attack_SetReason(driver1, 0);
-			driver1->ChangeState_param3 = (int)driver2;
+			driver1->ChangeState_param3 = driver2;
 
 			if ((canPlayFeedback != 0) && (driver1->kartState != KS_BLASTED) && (driver1->invincibleTimer == 0))
 			{
@@ -59,7 +59,7 @@ int VehPhysCrash_Attack(struct Driver *driver1, struct Driver *driver2, int canP
 
 			driver1->ChangeState_param2 = 3;
 			VehPhysCrash_Attack_SetReason(driver1, 5);
-			driver1->ChangeState_param3 = (int)driver2;
+			driver1->ChangeState_param3 = driver2;
 		}
 	}
 

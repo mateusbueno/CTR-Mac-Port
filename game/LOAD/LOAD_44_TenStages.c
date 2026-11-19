@@ -427,7 +427,7 @@ struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
         s_nativeLevel[s].unk_16C = (int)raw32[91];
 
         // 0x170: unk_170
-        s_nativeLevel[s].unk_170 = (int)raw32[92];
+        s_nativeLevel[s].unk_170 = (void *)LEV_PTR64(raw32[92]);
 
         // 0x174: numSCVert
         s_nativeLevel[s].numSCVert = (int)raw32[93];
@@ -804,7 +804,7 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                 sdata->ptrMPK = 0;
 
                 // Clear driver extras, and podium models
-                int *ptrArray = &data.driverModelExtras[0];
+                uintptr_t *ptrArray = &data.driverModelExtras[0];
                 for (int i = 0; i < 11; i++)
                 {
                         ptrArray[i] = 0;
@@ -1071,7 +1071,7 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
 
                 int fileIndex;
                 u8 *ptrIndexArr = &gGT->podium_modelIndex_First;
-                int *ptrModelPtrArr = &data.podiumModel_firstPlace;
+                uintptr_t *ptrModelPtrArr = &data.podiumModel_firstPlace;
                 void (*setPtrCb)(struct LoadQueueSlot *) = (void (*)(struct LoadQueueSlot *))-2;
 
                 // podium first place
@@ -1121,7 +1121,7 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                 if (((gGT->gameMode1 & ADVENTURE_ARENA) != 0) && (gGT->podiumRewardID != NOFUNC) // 0
                 )
                 {
-                        struct Model **modelPtrArr = &data.podiumModel_firstPlace;
+                        struct Model **modelPtrArr = (struct Model **)&data.podiumModel_firstPlace;
 
                         for (int i = 0; i < 8; i++)
                         {

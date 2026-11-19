@@ -659,11 +659,11 @@ void RenderBucket_QueueAllInstances(struct GameTracker *gGT)
                 lod |= 4;
 
         RBI = (struct RenderBucketEntry *)RenderBucket_QueueLevInstances(&gGT->cameraDC[0], (u_long *)&gGT->backBuffer->otMem, gGT->ptrRenderBucketInstance,
-                                             (char *)(u32)(u8)sdata->LOD[lod], // this weird cast is what ghidra does
+                                             (u32)(u8)sdata->LOD[lod],
                                              (char)numPlyrCurrGame, gGT->gameMode1 & PAUSE_ALL);
 
         RBI = (struct RenderBucketEntry *)RenderBucket_QueueNonLevInstances(gGT->JitPools.instance.taken.first, (u_long *)&gGT->backBuffer->otMem, (void *)RBI,
-                                                (char *)(u32)(u8)sdata->LOD[lod], // this weird cast is what ghidra does
+                                                (u32)(u8)sdata->LOD[lod],
                                                 (char)numPlyrCurrGame, gGT->gameMode1 & PAUSE_ALL);
 
         // Aug prototype

@@ -1,11 +1,11 @@
 #include <common.h>
 
-static void RB_Blowup_UpdateSlot(int *slot)
+static void RB_Blowup_UpdateSlot(struct Instance **slot)
 {
 	struct Instance *inst;
 	int nextFrame;
 
-	inst = (struct Instance *)*slot;
+	inst = *slot;
 	if (inst == NULL)
 		return;
 
@@ -21,19 +21,19 @@ static void RB_Blowup_UpdateSlot(int *slot)
 	}
 
 	INSTANCE_Death(inst);
-	*slot = 0;
+	*slot = NULL;
 }
 
 // NOTE(aalhendi): ASM-verified against NTSC-U 926 overlay 231 0x800b17f0-0x800b18f8.
 void RB_Blowup_ThTick(struct Thread *t)
 {
-	int *blowup;
-	blowup = t->object;
+	struct Instance **blowup;
+	blowup = (struct Instance **)t->object;
 
 	RB_Blowup_UpdateSlot(&blowup[1]);
 	RB_Blowup_UpdateSlot(&blowup[0]);
 
-	if ((blowup[1] == 0) && (blowup[0] == 0))
+	if ((blowup[1] == NULL) && (blowup[0] == NULL))
 		t->flags |= 0x800;
 
 	ThTick_FastRET(t);

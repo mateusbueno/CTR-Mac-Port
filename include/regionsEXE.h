@@ -1655,25 +1655,25 @@ struct Data
 	// 80082910 -- JpnTrial
 	// 80083ce8 -- EurRetail
 	// 80086ca4 -- JpnRetail
-	int driverModelExtras[3]; // maybe should be `struct Model**[3]`
+	uintptr_t driverModelExtras[3];
 
 	// 80083a1c
-	int podiumModel_firstPlace;
-	int podiumModel_secondPlace;
-	int podiumModel_thirdPlace;
-	int podiumModel_tawna;
+	uintptr_t podiumModel_firstPlace;
+	uintptr_t podiumModel_secondPlace;
+	uintptr_t podiumModel_thirdPlace;
+	uintptr_t podiumModel_tawna;
 
 	// 80083a2c
-	int podiumModel_unk1;
+	uintptr_t podiumModel_unk1;
 
 	// 80083a30
-	int podiumModel_dingoFire;
+	uintptr_t podiumModel_dingoFire;
 
 	// 80083a34
-	int podiumModel_unk2;
+	uintptr_t podiumModel_unk2;
 
 	// 80083a38
-	int podiumModel_podiumStands; // maybe should be a ptr of some sort instead of `int`
+	uintptr_t podiumModel_podiumStands;
 
 	// 80083a3c
 	struct LoadQueueSlot currSlot;

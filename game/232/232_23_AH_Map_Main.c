@@ -7,7 +7,7 @@ void AH_Map_Main(void)
 	struct Driver *advDriver;
 	struct UiElement2D *ptrHudData;
 	int iVar1;
-	int hubPtrs; // int*?
+	void *hubPtrs;
 	s16 local_20;
 	s16 local_1e[3];
 
@@ -17,7 +17,7 @@ void AH_Map_Main(void)
 	local_20 = 0;
 	advDriver = gGT->drivers[0];
 	ptrHudData = data.hudStructPtr[gGT->numPlyrCurrGame - 1];
-	hubPtrs = 0;
+	hubPtrs = NULL;
 	iVar1 = RaceFlag_GetCanDraw();
 	if (iVar1 == 0)
 	{
@@ -45,7 +45,7 @@ void AH_Map_Main(void)
 	if (gGT->level1->ptrSpawnType1->count != 0)
 	{
 		void **pointers = ST1_GETPOINTERS(gGT->level1->ptrSpawnType1);
-		hubPtrs = (int)pointers[ST1_MAP]; // cast as int*?
+		hubPtrs = pointers[ST1_MAP];
 	}
 
 	// if game is not paused
@@ -64,10 +64,10 @@ void AH_Map_Main(void)
 
 		UI_Map_DrawDrivers(hubPtrs, gGT->threadBuckets[0].thread, &local_20);
 
-		AH_Map_Warppads((s16 *)hubPtrs, gGT->threadBuckets[5].thread,
+		AH_Map_Warppads(hubPtrs, gGT->threadBuckets[5].thread,
 		                (s16 *)&local_1e[0]); // local_1e index 1 and 2 are never assigned to, so garbage data?
 
-		AH_Map_HubItems((void *)hubPtrs, &local_1e[0]);
+		AH_Map_HubItems(hubPtrs, &local_1e[0]);
 
 		UI_Map_DrawMap(gGT->ptrIcons[3], gGT->ptrIcons[4],
 

@@ -2,7 +2,7 @@
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8004dc44-0x8004dd5c.
 // Draw icon on map
-void UI_Map_DrawRawIcon(int ptrMap, int *param_2, int iconID, int colorID, int unused, s16 scale)
+void UI_Map_DrawRawIcon(void *ptrMap, int *param_2, int iconID, int colorID, int unused, s16 scale)
 {
 	int posX;
 	int posY;

@@ -5,15 +5,13 @@ void UI_Map_DrawMap(struct Icon *mapTop, struct Icon *mapBottom, s16 posX, s16 p
 {
 	s16 mapBottomHeight;
 	s16 mapTopHeight;
-	int iVar9;
+	char *mapPtr = NULL;
 	POLY_FT4 *p;
 	u32 color;
 	u32 transparency;
 	struct GameTracker *gGT;
 
 	gGT = sdata->gGT;
-
-	iVar9 = 0;
 
 	// draw minimap with neutral/none vertex color, minimap's regular color is white
 	color = 0x808080;
@@ -38,7 +36,7 @@ void UI_Map_DrawMap(struct Icon *mapTop, struct Icon *mapBottom, s16 posX, s16 p
 	if (gGT->level1->ptrSpawnType1 != 0)
 	{
 		void **pointers = ST1_GETPOINTERS(gGT->level1->ptrSpawnType1);
-		iVar9 = (int)pointers[ST1_MAP];
+		mapPtr = (char *)pointers[ST1_MAP];
 	}
 
 	// position of the bottom margin of the primitive for the bottom half of the minimap
@@ -48,7 +46,7 @@ void UI_Map_DrawMap(struct Icon *mapTop, struct Icon *mapBottom, s16 posX, s16 p
 
 	// if these conditions are met, then draw the top half of the minimap; otherwise, only draw the bottom half
 	// not sure when the game ever draws only the bottom half
-	if (((iVar9 != 0) && (*(s16 *)(iVar9 + 0x12) == 0)) ||
+	if (((mapPtr != NULL) && (*(s16 *)(mapPtr + 0x12) == 0)) ||
 
 	    // if in main menu (character selection, track selection, any part of it)
 	    ((gGT->gameMode1 & MAIN_MENU) != 0))

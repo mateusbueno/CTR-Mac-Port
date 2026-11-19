@@ -268,10 +268,10 @@ static void VehEmitter_SkidmarkAudio(struct Thread *thread, struct Driver *d, st
 {
         if (((d->actionsFlagSet & 1) == 0) || ((d->actionsFlagSet & 0x1800) == 0) || (absSpeedApprox < 0x201))
         {
-                if (d->driverAudioPtrs[0] != NULL)
+                if (d->driverAudioPtrs[0] != 0)
                 {
-                        OtherFX_Stop1((int)d->driverAudioPtrs[0]);
-                        d->driverAudioPtrs[0] = NULL;
+                        OtherFX_Stop1(d->driverAudioPtrs[0]);
+                        d->driverAudioPtrs[0] = 0;
                 }
                 return;
         }

@@ -178,7 +178,7 @@ struct Instance *INSTANCE_BirthWithThread(int modelID, const char *name, int poo
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80030a50-0x80030aa8.
 // used for every explosion
-struct Instance *INSTANCE_BirthWithThread_Stack(int *spArr)
+struct Instance *INSTANCE_BirthWithThread_Stack(uintptr_t *spArr)
 {
 	// spArr = array on $sp (stack pointer)
 

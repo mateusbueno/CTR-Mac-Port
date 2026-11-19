@@ -17,7 +17,7 @@ void CS_Credits_AnimateCreditGhost(struct Instance *dst, struct Instance *src, i
 	dst->scale[2] = scale;
 
 	dst->flags &= ~0x80;
-	if ((int)dst->model == 0)
+	if (dst->model == NULL)
 		dst->flags |= 0x80;
 
 	dst->alphaScale = (index + 1) * 630;

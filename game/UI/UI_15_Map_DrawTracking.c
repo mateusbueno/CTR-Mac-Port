@@ -1,7 +1,7 @@
 #include <common.h>
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8004dffc-0x8004e0e0.
-void UI_Map_DrawTracking(int ptrMap, struct Thread *bucket)
+void UI_Map_DrawTracking(void *ptrMap, struct Thread *bucket)
 
 {
 	int uVar1;

@@ -40,7 +40,7 @@ void UI_TrackerSelf(struct Driver *d)
 	    (d->thTrackingMe == 0))
 	{
 		// clear type of object tracking the player
-		data.trackerType[driverid] = (s16)(int)NULL;
+		data.trackerType[driverid] = 0;
 		return;
 	}
 

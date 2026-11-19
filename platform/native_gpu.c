@@ -955,7 +955,7 @@ void ParsePrimitivesLinkedList(u32 *p, int singlePrimitive)
 	{
 		int maxPrims = 65536;
 		// walk OT_TAG linked list
-		for (uintptr_t basePacket = (uintptr_t)p; basePacket && --maxPrims > 0; basePacket = (uintptr_t)nextPrim(basePacket))
+		for (uintptr_t basePacket = (uintptr_t)p; basePacket && --maxPrims > 0; basePacket = (uintptr_t)nextPrim((const void *)basePacket))
 		{
 			const int tagLength = getlen(basePacket);
 			if (tagLength > 0 && tagLength <= 32)

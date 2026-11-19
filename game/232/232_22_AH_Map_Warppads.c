@@ -74,7 +74,7 @@ void AH_Map_Warppads(s16 *ptrMap, struct Thread *warppadThread, s16 *param_3)
 			*param_3 = *param_3 + 1;
 		}
 
-		UI_Map_DrawRawIcon((int)ptrMap, (int *)&warppadInst->matrix.t[0], 0x31, color, 0, 0x1000);
+		UI_Map_DrawRawIcon(ptrMap, (int *)&warppadInst->matrix.t[0], 0x31, color, 0, 0x1000);
 
 		if (skipDistance)
 		{

@@ -24,8 +24,8 @@ struct ZoomData
 
 struct FlyInData
 {
-	int ptrEnd;
-	int ptrStart;
+	s16 *ptrEnd;
+	s16 *ptrStart;
 	s16 frameCount1;
 	s16 frameCount2;
 };

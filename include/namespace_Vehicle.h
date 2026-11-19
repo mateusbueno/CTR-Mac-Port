@@ -774,7 +774,7 @@ struct Driver
 	// 0x304 = No sound yet defined* (VehEmitter_DriverMain.c: Line#290)
 	// 0x308 = Kart "kirb_dirt" sound
 	// 0x30C = Kart "engine_jet" sound
-	void *driverAudioPtrs[4];
+	u32 driverAudioPtrs[4];
 
 	// 0x310
 	MATRIX matrixMovingDir;
@@ -1377,9 +1377,9 @@ struct Driver
 	char ChangeState_param2;
 
 	// 0x500
-	int ChangeState_param3;
+	struct Driver *ChangeState_param3;
 
-	// 0x504
+	// 0x508
 	int ChangeState_param4;
 
 	// 0x508

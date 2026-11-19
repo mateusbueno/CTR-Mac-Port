@@ -16,5 +16,5 @@ void howl_InitChannelAttr_EngineFX(struct EngineFX *engineFX, struct ChannelAttr
 	attr->ad = 0x80ff;
 	attr->sr = 0x1fc2;
 
-	attr->spuStartAddr = (void *)(sdata->howl_spuAddrs[engineFX->spuIndex].spuAddr << 3);
+	attr->spuStartAddr = (void *)(uintptr_t)(sdata->howl_spuAddrs[engineFX->spuIndex].spuAddr << 3);
 }

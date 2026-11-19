@@ -734,9 +734,7 @@ SKIP_LOADING_TEXT:
 					setPolyG4(p);
 
 					// Prim/OT
-					// addPrim(ot, p); works but uses more instructions.
-					*(int *)p = *ot | 0x8000000;
-					*ot = CtrGpu_PrimToOTLink24(p);
+					addPrim(ot, p);
 
 					p++;
 				}

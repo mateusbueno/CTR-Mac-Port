@@ -578,7 +578,7 @@ playerStruct->BattleHUD.cooldown--;
 
 							// Background (dark with border)
 							POLY_G4 *bg = (POLY_G4 *)gGT->backBuffer->primMem.curr;
-							if ((int)bg < (int)gGT->backBuffer->primMem.endMin100)
+							if (bg < (POLY_G4 *)gGT->backBuffer->primMem.endMin100)
 							{
 								gGT->backBuffer->primMem.curr += sizeof(POLY_G4);
 								setPolyG4(bg);
@@ -596,7 +596,7 @@ playerStruct->BattleHUD.cooldown--;
 
 							// Border (team blue)
 							POLY_G4 *border = (POLY_G4 *)gGT->backBuffer->primMem.curr;
-							if ((int)border < (int)gGT->backBuffer->primMem.endMin100)
+							if (border < (POLY_G4 *)gGT->backBuffer->primMem.endMin100)
 							{
 								gGT->backBuffer->primMem.curr += sizeof(POLY_G4);
 								setPolyG4(border);
@@ -620,11 +620,11 @@ playerStruct->BattleHUD.cooldown--;
 							// Color gradient: blue -> green -> yellow -> gold
 							int r = 0x00, g = 0x80, b = 0xff;
 							if (charge >= 750) { r = 0xff; g = 0xff; b = 0x00; }
-							else if (charge >= 500) { r = 0x00; g = 0xff; b = 0x00; }
 							else if (charge >= 250) { r = 0xff; g = 0xa0; b = 0x00; }
+							else if (charge >= 500) { r = 0x00; g = 0xff; b = 0x00; }
 
 							POLY_G4 *fill = (POLY_G4 *)gGT->backBuffer->primMem.curr;
-							if ((int)fill < (int)gGT->backBuffer->primMem.endMin100)
+							if (fill < (POLY_G4 *)gGT->backBuffer->primMem.endMin100)
 							{
 								gGT->backBuffer->primMem.curr += sizeof(POLY_G4);
 								setPolyG4(fill);
@@ -648,7 +648,7 @@ playerStruct->BattleHUD.cooldown--;
 								if ((pulse & 0x1F) < 0x10) // blink ~0.5s at 30fps
 								{
 									POLY_G4 *glow = (POLY_G4 *)gGT->backBuffer->primMem.curr;
-									if ((int)glow < (int)gGT->backBuffer->primMem.endMin100)
+									if (glow < (POLY_G4 *)gGT->backBuffer->primMem.endMin100)
 									{
 										gGT->backBuffer->primMem.curr += sizeof(POLY_G4);
 										setPolyG4(glow);
@@ -1009,7 +1009,7 @@ playerStruct->BattleHUD.cooldown--;
                                 primMemCurr = backBuffer->primMem.curr;
                                 TurboCounterBar = 0;
 
-                                if ((int)primMemCurr <= (int)backBuffer->primMem.endMin100)
+                                if (primMemCurr <= (uint32_t *)backBuffer->primMem.endMin100)
                                 {
                                         backBuffer->primMem.curr = primMemCurr + 9;
                                         TurboCounterBar = (POLY_G4 *)primMemCurr;
@@ -1036,8 +1036,7 @@ playerStruct->BattleHUD.cooldown--;
                                 // pointer to OT memory
                                 primMemCurr = gGT->pushBuffer_UI.ptrOT;
 
-                                *(int *)TurboCounterBar = *primMemCurr | 0x8000000;
-                                *primMemCurr = (u32)TurboCounterBar & 0xffffff;
+                                addPrim(primMemCurr, TurboCounterBar);
                         }
                 }
         }
@@ -1064,12 +1063,12 @@ playerStruct->BattleHUD.cooldown--;
                 {
                         local_30[0] = 0;
 
-                        UI_Map_DrawDrivers((int)levPtrMap, gGT->threadBuckets[PLAYER].thread, local_30);
-                        UI_Map_DrawDrivers((int)levPtrMap, gGT->threadBuckets[ROBOT].thread, local_30);
+                        UI_Map_DrawDrivers(levPtrMap, gGT->threadBuckets[PLAYER].thread, local_30);
+                        UI_Map_DrawDrivers(levPtrMap, gGT->threadBuckets[ROBOT].thread, local_30);
 
-                        UI_Map_DrawGhosts((int)levPtrMap, gGT->threadBuckets[GHOST].thread);
+                        UI_Map_DrawGhosts(levPtrMap, gGT->threadBuckets[GHOST].thread);
 
-                        UI_Map_DrawTracking((int)levPtrMap, gGT->threadBuckets[TRACKING].thread);
+                        UI_Map_DrawTracking(levPtrMap, gGT->threadBuckets[TRACKING].thread);
 
                         mapPosX = 500;
                         mapPosY = 195;

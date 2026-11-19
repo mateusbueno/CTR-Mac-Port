@@ -657,12 +657,12 @@ void VehStuckProc_PlantEaten_Init(struct Thread *t, struct Driver *d)
 	// make invisible
 	inst->flags |= HIDE_MODEL;
 
-	OtherFX_Stop1((int)d->driverAudioPtrs[1]);
-	d->driverAudioPtrs[1] = NULL;
-	OtherFX_Stop1((int)d->driverAudioPtrs[2]);
-	d->driverAudioPtrs[2] = NULL;
-	OtherFX_Stop1((int)d->driverAudioPtrs[0]);
-	d->driverAudioPtrs[0] = NULL;
+	OtherFX_Stop1(d->driverAudioPtrs[1]);
+	d->driverAudioPtrs[1] = 0;
+	OtherFX_Stop1(d->driverAudioPtrs[2]);
+	d->driverAudioPtrs[2] = 0;
+	OtherFX_Stop1(d->driverAudioPtrs[0]);
+	d->driverAudioPtrs[0] = 0;
 
 	for (i = 0; i < 13; i++)
 		d->funcPtrs[i] = PlayerEatenFuncTable[i];
@@ -1556,12 +1556,12 @@ void VehStuckProc_Warp_Init(struct Thread *th, struct Driver *d)
 	// Warp sound?
 	OtherFX_Play(0x97, 1);
 
-	OtherFX_Stop1((int)d->driverAudioPtrs[1]);
-	d->driverAudioPtrs[1] = NULL;
-	OtherFX_Stop1((int)d->driverAudioPtrs[2]);
-	d->driverAudioPtrs[2] = NULL;
-	OtherFX_Stop1((int)d->driverAudioPtrs[0]);
-	d->driverAudioPtrs[0] = NULL;
+	OtherFX_Stop1(d->driverAudioPtrs[1]);
+	d->driverAudioPtrs[1] = 0;
+	OtherFX_Stop1(d->driverAudioPtrs[2]);
+	d->driverAudioPtrs[2] = 0;
+	OtherFX_Stop1(d->driverAudioPtrs[0]);
+	d->driverAudioPtrs[0] = 0;
 
 	u8 playerID = d->driverID;
 

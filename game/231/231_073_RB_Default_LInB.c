@@ -4,16 +4,16 @@
 
 void RB_Default_LInB(struct Instance *inst)
 {
-	char *scratch = CTR_SCRATCHPAD_PTR(char, 0);
+	u8 *scratch = CTR_SCRATCHPAD_BASE;
+	struct ScratchpadStruct *sps = (struct ScratchpadStruct *)&scratch[0x118];
 
 	int var;
 
 	// high-LOD coll (8 triangles)
-	*(s16 *)&scratch[0x13a] = 2;
-
-	*(int *)&scratch[0x13C] = 0x3000;
-	*(int *)&scratch[0x140] = 0;
-	*(int *)&scratch[0x144] = (int)sdata->gGT->level1->ptr_mesh_info;
+	sps->Union.QuadBlockColl.searchFlags = 2;
+	sps->Union.QuadBlockColl.qbFlagsWanted = 0x3000;
+	sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
+	sps->ptr_mesh_info = sdata->gGT->level1->ptr_mesh_info;
 
 	// Make a hitbox
 	var = inst->matrix.t[0];
@@ -26,7 +26,7 @@ void RB_Default_LInB(struct Instance *inst)
 	*(s16 *)&scratch[0x10a] = var - 0x180;
 	*(s16 *)&scratch[0x112] = var + 0x80;
 
-	COLL_SearchBSP_CallbackQUADBLK((u32 *)&scratch[0x108], (u32 *)&scratch[0x110], (struct ScratchpadStruct *)&scratch[0x118], 0);
+	COLL_SearchBSP_CallbackQUADBLK((u32 *)&scratch[0x108], (u32 *)&scratch[0x110], sps, 0);
 
 	RB_MakeInstanceReflective((struct ScratchpadStruct *)&scratch[0x118], inst);
 }

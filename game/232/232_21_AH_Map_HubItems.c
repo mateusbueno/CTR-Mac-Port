@@ -261,7 +261,7 @@ void AH_Map_HubItems(void *hubPtrs, s16 *param_2)
 				}
 
 				// draw star icon for boss
-				UI_Map_DrawRawIcon((int)hubPtrs, &pos3D[0], 0x37, uVar6, 0, 0x1000);
+				UI_Map_DrawRawIcon(hubPtrs, &pos3D[0], 0x37, uVar6, 0, 0x1000);
 			}
 			psVar10 = psVar10 + 4;
 			psVar9 = psVar9 + 4;

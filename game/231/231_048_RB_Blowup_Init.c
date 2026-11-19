@@ -9,15 +9,15 @@ void RB_Blowup_Init(struct Instance *weaponInst)
 	struct ModelHeader *headers;
 	struct GameTracker *gGT = sdata->gGT;
 	u32 color;
-	int *blowup;
+	struct Instance **blowup;
 
 	// initialize thread for blowup
-	explosionInst = INSTANCE_BirthWithThread(0x26, 0, SMALL, BLOWUP, RB_Blowup_ThTick, 0xc, 0);
+	explosionInst = INSTANCE_BirthWithThread(0x26, 0, SMALL, BLOWUP, RB_Blowup_ThTick, 2 * sizeof(struct Instance *), 0);
 
 	explosionInst->flags |= 0x2040000;
 
 	explosionTh = explosionInst->thread;
-	blowup = explosionTh->object;
+	blowup = (struct Instance **)explosionTh->object;
 
 	// set explosion instance
 	blowup[1] = explosionInst;
