@@ -848,6 +848,17 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                         sdata->PLYROBJECTLIST = 0;
                 }
 
+                for (int i = 0; i < 3; i++)
+                {
+                        if (data.driverModelExtras[i] != 0)
+                        {
+                                data.driverModelExtras[i] += 4;
+#if defined(__LP64__)
+                                data.driverModelExtras[i] = (uintptr_t)LOAD_NativeModel_Convert((void *)data.driverModelExtras[i]);
+#endif
+                        }
+                }
+
                 LOAD_GlobalModelPtrs_MPK();
                 DecalGlobal_Clear(gGT);
 
@@ -887,12 +898,7 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                         Cutscene_VolumeRestore();
                 }
 
-                // NOTE(aalhendi): ASM-verified NTSC-U 926 0x80033f1c-0x80033f44; retail converts driver DRAM file headers to model payload pointers here.
-                for (int i = 0; i < 3; i++)
-                {
-                        if (data.driverModelExtras[i] != 0)
-                                data.driverModelExtras[i] += 4;
-                }
+                // NOTE(aalhendi): driver model DRAM file headers were already advanced and converted in stage 5 before LOAD_GlobalModelPtrs_MPK.
 
                 // == banks are done parsing ===
 
@@ -1133,10 +1139,13 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
                                 if (i < 7)
                                 {
                                         m = (struct Model *)((u8 *)m + 4);
+#if defined(__LP64__)
+                                        m = LOAD_NativeModel_Convert((void *)m);
+#endif
                                         modelPtrArr[i] = m;
                                 }
 
-                                if (m->id == -1)
+                                if (m == NULL || m->id == -1)
                                         continue;
 
                                 gGT->modelPtr[m->id] = m;
