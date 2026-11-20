@@ -18,7 +18,7 @@ void AH_Sign_LInB(struct Instance *inst)
 	sps->Union.QuadBlockColl.searchFlags = 2;
 	sps->Union.QuadBlockColl.qbFlagsWanted = 0x3000;
 	sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
-	sps->ptr_mesh_info = sdata->gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, sdata->gGT->level1->ptr_mesh_info);
 
 	*(s16 *)&scratch[0x108] = inst->matrix.t[0] + normal[0] * 2;
 	*(s16 *)&scratch[0x110] = *(s16 *)&scratch[0x108] - normal[0] * 4;

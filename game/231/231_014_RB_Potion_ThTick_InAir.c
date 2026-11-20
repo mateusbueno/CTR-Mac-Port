@@ -56,7 +56,7 @@ void RB_Potion_ThTick_InAir(struct Thread *t)
 		SPS->Union.QuadBlockColl.searchFlags = 0x43;
 	}
 
-	SPS->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(SPS, gGT->level1->ptr_mesh_info);
 
 	COLL_SearchBSP_CallbackQUADBLK((u32 *)&posBottom, (u32 *)&posTop, SPS, 0); // the method signature goes posTop, posBottom? is this a bug?
 
@@ -129,13 +129,13 @@ void RB_Potion_ThTick_InAir(struct Thread *t)
 	// hit BSP hitbox, and instance is TEETH
 	else
 	{
-		bspHitbox = SPS->bspHitbox;
+		bspHitbox = SPS_GET_BSPHITBOX(SPS);
 
 		if ((
 		        // bsp->flags & hitbox
 		        ((bspHitbox->flag & 0x80) != 0) && (
 		                                               // hitbox contains instDef
-		                                               instDef = bspHitbox->data.hitbox.instDef, instDef != 0)) &&
+		                                               instDef = BSP_HITBOX_INSTDEF(bspHitbox), instDef != 0)) &&
 
 		    // instDef->modelID == TEETH
 		    (instDef->modelID == STATIC_TEETH) &&

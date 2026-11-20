@@ -55,18 +55,20 @@ static void MainFrame_VisMemAddDriverPVS(struct GameTracker *gGT, int playerInde
         if (quad == NULL)
                 return;
 
-        pvs = quad->pvs;
+        pvs = QB_PVS(quad);
         if (pvs == NULL)
                 return;
 
-        if (pvs->visLeafSrc != NULL)
+        void *visLeaf = LEV_PTR64_RESOLVE(pvs->visLeafSrc);
+        if (visLeaf != NULL)
         {
-                MainFrame_OrPackedVisList(gGT->visMem1->visLeafList[visIndex], pvs->visLeafSrc, ((mesh->numBspNodes + 0x1f) >> 5) << 2);
+                MainFrame_OrPackedVisList(gGT->visMem1->visLeafList[visIndex], visLeaf, ((mesh->numBspNodes + 0x1f) >> 5) << 2);
         }
 
-        if (pvs->visFaceSrc != NULL)
+        void *visFace = LEV_PTR64_RESOLVE(pvs->visFaceSrc);
+        if (visFace != NULL)
         {
-                MainFrame_OrPackedVisList(gGT->visMem1->visFaceList[visIndex], pvs->visFaceSrc, ((mesh->numQuadBlock + 0x1f) >> 5) << 2);
+                MainFrame_OrPackedVisList(gGT->visMem1->visFaceList[visIndex], visFace, ((mesh->numQuadBlock + 0x1f) >> 5) << 2);
         }
 }
 
@@ -156,16 +158,19 @@ void MainFrame_VisMemFullFrame(struct GameTracker *gGT, struct Level *level)
                 driverQuad = driver->underDriver;
 
                 if (driverQuad != NULL)
-                        driverPVS = driverQuad->pvs;
+                        driverPVS = QB_PVS(driverQuad);
 
                 camDC->flags &= ~0x4000;
 
+                void *driverLeaf = (driverPVS != NULL) ? LEV_PTR64_RESOLVE(driverPVS->visLeafSrc) : NULL;
+                void *driverFace = (driverPVS != NULL) ? LEV_PTR64_RESOLVE(driverPVS->visFaceSrc) : NULL;
+
                 if (camDC->visLeafSrc == NULL)
                 {
-                        if ((driverPVS != NULL) && (driverPVS->visLeafSrc != NULL))
+                        if (driverLeaf != NULL)
                         {
-                                visMem->visLeafSrc[visMemIndex] = driverPVS->visLeafSrc;
-                                MainFrame_ReplacePackedVisList(visMem->visLeafList[visMemIndex], driverPVS->visLeafSrc, ((mesh->numBspNodes + 0x1f) >> 5) << 2);
+                                visMem->visLeafSrc[visMemIndex] = driverLeaf;
+                                MainFrame_ReplacePackedVisList(visMem->visLeafList[visMemIndex], driverLeaf, ((mesh->numBspNodes + 0x1f) >> 5) << 2);
                         }
                 }
                 else if (visMem->visLeafSrc[visMemIndex] != camDC->visLeafSrc)
@@ -176,10 +181,10 @@ void MainFrame_VisMemFullFrame(struct GameTracker *gGT, struct Level *level)
 
                 if (camDC->visFaceSrc == NULL)
                 {
-                        if ((driverPVS != NULL) && (driverPVS->visFaceSrc != NULL))
+                        if (driverFace != NULL)
                         {
-                                visMem->visFaceSrc[visMemIndex] = driverPVS->visFaceSrc;
-                                MainFrame_ReplacePackedVisList(visMem->visFaceList[visMemIndex], driverPVS->visFaceSrc, ((mesh->numQuadBlock + 0x1f) >> 5) << 2);
+                                visMem->visFaceSrc[visMemIndex] = driverFace;
+                                MainFrame_ReplacePackedVisList(visMem->visFaceList[visMemIndex], driverFace, ((mesh->numQuadBlock + 0x1f) >> 5) << 2);
                         }
                 }
                 else if (visMem->visFaceSrc[visMemIndex] != camDC->visFaceSrc)
@@ -187,7 +192,7 @@ void MainFrame_VisMemFullFrame(struct GameTracker *gGT, struct Level *level)
                         visMem->visFaceSrc[visMemIndex] = camDC->visFaceSrc;
                         MainFrame_ReplacePackedVisList(visMem->visFaceList[visMemIndex], camDC->visFaceSrc, ((mesh->numQuadBlock + 0x1f) >> 5) << 2);
 
-                        if ((driverPVS == NULL) || (driverPVS->visLeafSrc == NULL) || (driverPVS->visFaceSrc == NULL) || (driverPVS->visInstSrc == NULL) ||
+                        if ((driverPVS == NULL) || (driverLeaf == NULL) || (driverFace == NULL) || (driverPVS->visInstSrc == 0) ||
                             MainFrame_VisMemHasQuad(visMem->visFaceList[visMemIndex], driverQuad, mesh))
                         {
                                 camDC->flags &= ~0x2000;
@@ -217,9 +222,13 @@ void MainFrame_VisMemFullFrame(struct GameTracker *gGT, struct Level *level)
 #endif
                 }
 
-                if ((camDC->cameraMode == 0) && ((camDC->flags & 0x2000) != 0) && (driverPVS != NULL) && (driverPVS->visInstSrc != NULL))
+                if ((camDC->cameraMode == 0) && ((camDC->flags & 0x2000) != 0) && (driverPVS != NULL) && (driverPVS->visInstSrc != 0))
                 {
+#if defined(__LP64__)
+                        camDC->visInstSrc = (struct Instance **)LEV_PTR64_RESOLVE(driverPVS->visInstSrc);
+#else
                         camDC->visInstSrc = driverPVS->visInstSrc;
+#endif
                 }
 
                 if ((level->configFlags & 4) == 0)

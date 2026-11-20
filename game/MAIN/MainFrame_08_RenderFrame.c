@@ -772,6 +772,13 @@ void RenderAllTires(struct GameTracker *gGT)
 
         gGT_primMem = &gGT->backBuffer->primMem;
         numPlyrCurrGame = NUM_LOCAL_PLAYERS(gGT);
+        if ((gGT->gameMode1 & MAIN_MENU) != 0)
+        {
+                if (numPlyrCurrGame < gGT->numPlyrNextGame)
+                        numPlyrCurrGame = gGT->numPlyrNextGame;
+                if (numPlyrCurrGame < 1)
+                        numPlyrCurrGame = 1;
+        }
 
         if (gGT->threadBuckets[PLAYER].thread != 0)
         {

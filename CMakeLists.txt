@@ -182,6 +182,11 @@ elseif(APPLE)
         $<$<BOOL:${CARBON_FRAMEWORK}>:${CARBON_FRAMEWORK}>
     )
     target_link_options(ctr_native PRIVATE -Wl,-flat_namespace)
+    add_custom_command(TARGET ctr_native POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/CTR Native.app/Contents/MacOS"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:ctr_native>" "${CMAKE_BINARY_DIR}/CTR Native.app/Contents/MacOS/ctr_native"
+        COMMENT "Syncing ctr_native binary into CTR Native.app bundle"
+    )
 else()
     target_link_options(ctr_native PRIVATE -static-libgcc -Wl,--image-base,0x400000 -no-pie -Wl,--allow-multiple-definition)
 endif()

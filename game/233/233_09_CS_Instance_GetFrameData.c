@@ -43,7 +43,7 @@ void CS_Instance_GetFrameData(struct Instance *inst, int animIndex, u32 animFram
 		animFrame = numFrames - 1;
 	}
 
-	framePos = (s16 *)((char *)ptrAnim + ptrAnim->frameSize * (int)animFrame + sizeof(struct ModelAnim));
+	framePos = (s16 *)((char *)MODELANIM_GETFRAME(ptrAnim) + ptrAnim->frameSize * (int)animFrame);
 
 	{
 		int boneOff = offset * 3 + 0x1c;

@@ -106,8 +106,8 @@ void RB_Blowup_Init(struct Instance *weaponInst)
 
 	sps->Input1.modelID = weaponInst->model->id;
 
-	sps->Union.ThBuckColl.thread = weaponInst->thread;
-	sps->Union.ThBuckColl.funcCallback = RB_Burst_CollThBucket;
+	SPS_SET_THBUCK_THREAD(sps, weaponInst->thread);
+	SPS_SET_THBUCK_CALLBACK(sps, RB_Burst_CollThBucket);
 
 	PROC_StartSearch_Self(sps);
 
@@ -125,6 +125,6 @@ void RB_Blowup_Init(struct Instance *weaponInst)
 	// check collision with player threads
 	PROC_CollideHitboxWithBucket(gGT->threadBuckets[PLAYER].thread, sps, 0);
 
-	sps->Union.ThBuckColl.funcCallback = RB_Burst_CollLevInst;
+	SPS_SET_THBUCK_CALLBACK(sps, RB_Burst_CollLevInst);
 	return;
 }

@@ -12,8 +12,8 @@ void RB_Potion_OnShatter_TeethSearch(struct Instance *inst)
 	SPS->Input1.hitRadiusSquared = 0x19000;
 	SPS->Input1.modelID = inst->model->id;
 
-	SPS->Union.ThBuckColl.thread = inst->thread;
-	SPS->Union.ThBuckColl.funcCallback = RB_Potion_OnShatter_TeethCallback;
+	SPS_SET_THBUCK_THREAD(SPS, inst->thread);
+	SPS_SET_THBUCK_CALLBACK(SPS, RB_Potion_OnShatter_TeethCallback);
 
 	PROC_StartSearch_Self(SPS);
 }

@@ -466,7 +466,7 @@ void BOTS_LevInstColl(struct Thread *param_1)
 	struct ScratchpadStruct *sps = CTR_SCRATCHPAD_PTR(struct ScratchpadStruct, 0x108);
 
 	// scratchpad stuff
-	sps->ptr_mesh_info = sdata->gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, sdata->gGT->level1->ptr_mesh_info);
 	sps->Union.QuadBlockColl.searchFlags = 1;
 	sps->Input1.modelID = DYNAMIC_ROBOT_CAR;
 	sps->Union.QuadBlockColl.qbFlagsWanted = 0;
@@ -487,10 +487,11 @@ void BOTS_LevInstColl(struct Thread *param_1)
 	{
 		sps->Union.QuadBlockColl.searchFlags &= 0xfff7;
 
-		if ((sps->bspHitbox->flag & 0x80) != 0)
+		struct BSP *bspHit = SPS_GET_BSPHITBOX(sps);
+		if (bspHit != NULL && (bspHit->flag & 0x80) != 0)
 		{
-			struct InstDef *instDef = sps->bspHitbox->data.hitbox.instDef;
-			struct Instance *inst = instDef->ptrInstance;
+			struct InstDef *instDef = BSP_HITBOX_INSTDEF(bspHit);
+			struct Instance *inst = (instDef != NULL) ? instDef->ptrInstance : NULL;
 			if (inst != NULL)
 			{
 				struct MetaDataMODEL *mdm = COLL_LevModelMeta(instDef->modelID);
@@ -1889,7 +1890,7 @@ botDriver->botData.ai_progress_cooldown--;
 		    second param: 92 is padding, 90 is x, 8e is y, 8c is z
 		*/
 
-		sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+		SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 		sps->Union.QuadBlockColl.qbFlagsWanted = 0x1000;
 		sps->Union.QuadBlockColl.qbFlagsIgnored = 0x10;
 		sps->Union.QuadBlockColl.searchFlags = 2;
@@ -1900,7 +1901,8 @@ botDriver->botData.ai_progress_cooldown--;
 		{
 			botDriver->quadBlockHeight = sps->Union.QuadBlockColl.hitPos[1] << 8;
 
-			botDriver->botData.ai_quadblock_checkpointIndex = sps->Set2.ptrQuadblock->checkpointIndex;
+			struct QuadBlock *hitQuad = SPS_GET_SET2_QUAD(sps);
+			botDriver->botData.ai_quadblock_checkpointIndex = hitQuad ? hitQuad->checkpointIndex : 0;
 
 			VehPhysForce_RotAxisAngle(&botInstance->matrix, &sps->Set2.normalVec[0], botDriver->botData.ai_rot4[1]);
 
@@ -1912,7 +1914,7 @@ botDriver->botData.ai_progress_cooldown--;
 			botInstance->bitCompressed_NormalVector_AndDriverIndex = ((sps->Set2.normalVec[0] >> 6) & 0xff) | ((sps->Set2.normalVec[1] & 0x3fc0) << 2) |
 			                                                         (((sps->Set2.normalVec[2] >> 6) & 0xff) << 0x10) | ((botDriver->driverID + 1) * 0x1000000);
 
-			if ((sps->Set2.ptrQuadblock->quadFlags & 0x200) != 0)
+			if (hitQuad != NULL && (hitQuad->quadFlags & 0x200) != 0)
 			{
 				BOTS_Killplane(botThread);
 			}
@@ -2668,7 +2670,7 @@ LAB_8001686c:
 		posBot[0] = posTop[0];
 		posBot[2] = posTop[2];
 
-		sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+		SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 		sps->Union.QuadBlockColl.qbFlagsWanted = 0x1000;
 		sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
 		sps->Union.QuadBlockColl.searchFlags = 2;
@@ -2677,7 +2679,7 @@ LAB_8001686c:
 
 		if (sps->boolDidTouchQuadblock != 0)
 		{
-			botDriver->underDriver = sps->Set2.ptrQuadblock;
+			botDriver->underDriver = SPS_GET_SET2_QUAD(sps);
 		}
 	}
 }

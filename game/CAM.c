@@ -659,7 +659,7 @@ static int CAM_FindClosestQuadblock_GetScratchpadWord(s16 *scratchpad, int halfw
 
 static void CAM_FindClosestQuadblock_SetCameraHitFlag(struct CameraDC *cDC, int value)
 {
-        *(int *)((u8 *)cDC + 0x3c) = value;
+        *(int *)&cDC->unk30fill[8] = value;
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x800188a8-0x80018b18
@@ -701,12 +701,12 @@ void CAM_FindClosestQuadblock(s16 *scratchpad, struct CameraDC *cDC, struct Driv
 
         if ((gGT->level1 == NULL) || (gGT->level1->ptr_mesh_info == NULL) || (gGT->level1->ptr_mesh_info->bspRoot == NULL))
         {
-                ((struct ScratchpadStruct *)scratchpad)->ptr_mesh_info = NULL;
+                SPS_SET_MESHINFO(((struct ScratchpadStruct *)scratchpad), NULL);
                 return;
         }
 
         meshInfo = gGT->level1->ptr_mesh_info;
-        ((struct ScratchpadStruct *)scratchpad)->ptr_mesh_info = meshInfo;
+        SPS_SET_MESHINFO(((struct ScratchpadStruct *)scratchpad), meshInfo);
 
         if (cDC->ptrQuadBlock != NULL)
         {
@@ -727,7 +727,7 @@ void CAM_FindClosestQuadblock(s16 *scratchpad, struct CameraDC *cDC, struct Driv
 
         CAM_FindClosestQuadblock_SetCameraHitFlag(cDC, 1);
 
-        quad = *(struct QuadBlock **)((u8 *)scratchpad + 0x80);
+        quad = SPS_GET_SET2_QUAD((struct ScratchpadStruct *)scratchpad);
         cDC->ptrQuadBlock = quad;
         gGT->unk1cac[0] = quad - meshInfo->ptrQuadBlockArray;
 }
@@ -750,7 +750,7 @@ void CAM_StartLine_FlyIn_FixY(s16 *posRot)
         sps->Union.QuadBlockColl.qbFlagsWanted = 0x3000;
         sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
         sps->Union.QuadBlockColl.searchFlags = 2;
-        sps->ptr_mesh_info = sdata->gGT->level1->ptr_mesh_info;
+        SPS_SET_MESHINFO(sps, sdata->gGT->level1->ptr_mesh_info);
 
         pos[0] = posRot[0];
         pos[1] = posRot[1];
@@ -1362,16 +1362,16 @@ void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBu
                 *(int *)(scratchpad + 0x248) = (int)pb->pos[2];
 
                 // reset camera interpolation
-                *(s16 *)((uintptr_t)cDC + 0xc0) = 0;
-                *(s16 *)((uintptr_t)cDC + 0xc2) = 0;
+                *(s16 *)&cDC->unk_c0 = 0;
+                *((s16 *)&cDC->unk_c0 + 1) = 0;
                 cDC->framesZoomingOut = 0;
         }
 
         if (state == KS_ENGINE_REVVING)
         {
                 // reset camera interpolation
-                *(s16 *)((uintptr_t)cDC + 0xc0) = 0;
-                *(s16 *)((uintptr_t)cDC + 0xc2) = 0;
+                *(s16 *)&cDC->unk_c0 = 0;
+                *((s16 *)&cDC->unk_c0 + 1) = 0;
                 cDC->framesZoomingOut = 0;
         }
 
@@ -1398,14 +1398,14 @@ void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBu
 
                 if (cDC->BlastedLerp.boolLerpPending == 0)
                 {
-                        *(s16 *)((uintptr_t)cDC + 0xc8) = cDC->unkTriplet3[1] - cDC->unkTriplet2[1];
-                        *(s16 *)((uintptr_t)cDC + 0xca) = cDC->unkTriplet2[1] - (d->quadBlockHeight >> 8);
+                        cDC->BlastedLerp.unkOffset[0] = cDC->unkTriplet3[1] - cDC->unkTriplet2[1];
+                        cDC->BlastedLerp.unkOffset[1] = cDC->unkTriplet2[1] - (d->quadBlockHeight >> 8);
                 }
 
                 cDC->BlastedLerp.boolLerpPending = 1;
 
                 if (((int)cDC->unkTriplet2[1] < *(int *)(scratchpad + 0x244)) &&
-                    (x = (int)*(s16 *)((uintptr_t)cDC + 0xca) + (d->quadBlockHeight >> 8), x < *(int *)(scratchpad + 0x244)))
+                    (x = (int)cDC->BlastedLerp.unkOffset[1] + (d->quadBlockHeight >> 8), x < *(int *)(scratchpad + 0x244)))
                 {
                         *(int *)(scratchpad + 0x244) = x;
                 }
@@ -1460,22 +1460,22 @@ cDC->BlastedLerp.framesRemaining--;
 
         CAM_FindClosestQuadblock((s16 *)scratchpad, cDC, d, (s16 *)(scratchpad + 0x240));
 
-        struct QuadBlock *camQuadHit = *(struct QuadBlock **)((u8 *)scratchpad + 0x80);
+        struct QuadBlock *camQuadHit = SPS_GET_SET2_QUAD((struct ScratchpadStruct *)scratchpad);
 
         if ((*(s16 *)(scratchpad + 0x3e) == 0) ||
             (camQuadHit != NULL && ((camQuadHit->quadFlags & 0x4100) != 0)))
         {
                 if (*(int *)(scratchpad + 0x244) < (int)cDC->framesZoomingOut + (d->posCurr.y >> 8))
                 {
-                        *(s16 *)((uintptr_t)cDC + 0xc2) = 8;
-                        *(s16 *)((uintptr_t)cDC + 0xc0) = cDC->framesZoomingOut;
+                        *((s16 *)&cDC->unk_c0 + 1) = 8;
+                        *(s16 *)&cDC->unk_c0 = cDC->framesZoomingOut;
                         *(int *)(scratchpad + 0x244) = (int)cDC->framesZoomingOut + (d->posCurr.y >> 8);
 
                         goto LAB_8001ab04;
                 }
 
-                *(s16 *)((uintptr_t)cDC + 0xc2) = 8;
-                *(s16 *)((uintptr_t)cDC + 0xc0) = *(s16 *)(scratchpad + 0x244) - (s16)(d->posCurr.y >> 8);
+                *((s16 *)&cDC->unk_c0 + 1) = 8;
+                *(s16 *)&cDC->unk_c0 = *(s16 *)(scratchpad + 0x244) - (s16)(d->posCurr.y >> 8);
         }
 
         else
@@ -1495,14 +1495,14 @@ cDC->BlastedLerp.framesRemaining--;
                         *(int *)(scratchpad + 0x244) = x;
                 }
 
-                x = (int)*(s16 *)((uintptr_t)cDC + 0xc2);
+                x = (int)*((s16 *)&cDC->unk_c0 + 1);
                 if (x != 0)
                 {
                         *(int *)(scratchpad + 0x244) =
 
-                            (8 - x) * *(int *)(scratchpad + 0x244) + x * ((int)*(s16 *)((uintptr_t)cDC + 0xc0) + (d->posCurr.y >> 8)) >> 3;
+                            (8 - x) * *(int *)(scratchpad + 0x244) + x * ((int)*(s16 *)&cDC->unk_c0 + (d->posCurr.y >> 8)) >> 3;
 
-                        *(s16 *)((uintptr_t)cDC + 0xc2) += -1;
+                        *((s16 *)&cDC->unk_c0 + 1) += -1;
                 }
         }
         cDC->framesZoomingOut = *(s16 *)(scratchpad + 0x244) - (d->posCurr.y >> 8);
@@ -1516,7 +1516,7 @@ LAB_8001ab04:
 
         if (cDC->BlastedLerp.boolLerpPending != 0)
         {
-                *(int *)(scratchpad + 0x25c) = *(int *)(scratchpad + 0x244) + (int)*(s16 *)((uintptr_t)cDC + 0xc8);
+                *(int *)(scratchpad + 0x25c) = *(int *)(scratchpad + 0x244) + (int)cDC->BlastedLerp.unkOffset[0];
         }
 
         if (d->kartState == KS_MASK_GRABBED)
@@ -1567,9 +1567,9 @@ LAB_8001ab04:
         *(int *)(scratchpad + 0x218) = *(int *)(scratchpad + 0x244) - (int)pb->pos[1];
         *(int *)(scratchpad + 0x21c) = *(int *)(scratchpad + 0x248) - (int)pb->pos[2];
 
-        cDC->unkTriplet1[0] -= (*(int *)(scratchpad + 0x240) - *(int *)((uintptr_t)cDC + 0x58));
-        cDC->unkTriplet1[1] -= (*(int *)(scratchpad + 0x244) - *(int *)((uintptr_t)cDC + 0x5c));
-        cDC->unkTriplet1[2] -= (*(int *)(scratchpad + 0x248) - *(int *)((uintptr_t)cDC + 0x60));
+        cDC->unkTriplet1[0] -= (*(int *)(scratchpad + 0x240) - cDC->unkTriplet2[0]);
+        cDC->unkTriplet1[1] -= (*(int *)(scratchpad + 0x244) - cDC->unkTriplet2[1]);
+        cDC->unkTriplet1[2] -= (*(int *)(scratchpad + 0x248) - cDC->unkTriplet2[2]);
 
         if (cDC->unkTriplet1[0] > 2)
                 cDC->unkTriplet1[0] = 2;
@@ -2341,27 +2341,27 @@ LAB_8001c150:
 
         if (cDC->ptrQuadBlock != 0)
         {
-                psVar11 = cDC->ptrQuadBlock->pvs;
-                if ((psVar11 != 0) && (piVar12 = psVar11->visLeafSrc, piVar12 != 0))
+                psVar11 = QB_PVS(cDC->ptrQuadBlock);
+                if ((psVar11 != 0) && (piVar12 = (int *)LEV_PTR64_RESOLVE(psVar11->visLeafSrc), piVar12 != 0))
                 {
                         cDC->visLeafSrc = piVar12;
                         gGT->unk1cac[1] = ((int)((uintptr_t)cDC->ptrQuadBlock - (uintptr_t)gGT->level1->ptr_mesh_info->ptrQuadBlockArray)) * -0x1642c859 >> 2;
                 }
                 if (cDC->ptrQuadBlock != 0)
                 {
-                        psVar11 = cDC->ptrQuadBlock->pvs;
-                        if ((psVar11 != 0) && (piVar12 = psVar11->visFaceSrc, piVar12 != 0))
+                        psVar11 = QB_PVS(cDC->ptrQuadBlock);
+                        if ((psVar11 != 0) && (piVar12 = (int *)LEV_PTR64_RESOLVE(psVar11->visFaceSrc), piVar12 != 0))
                         {
                                 cDC->visFaceSrc = piVar12;
                         }
                         if (cDC->ptrQuadBlock != 0)
                         {
-                                psVar11 = cDC->ptrQuadBlock->pvs;
-                                if ((psVar11 != 0) && (ppsVar13 = psVar11->visInstSrc, ppsVar13 != 0))
+                                psVar11 = QB_PVS(cDC->ptrQuadBlock);
+                                if ((psVar11 != 0) && (ppsVar13 = (struct Instance **)LEV_PTR64_RESOLVE(psVar11->visInstSrc), ppsVar13 != 0))
                                 {
                                         cDC->visInstSrc = ppsVar13;
                                 }
-                                if (((cDC->ptrQuadBlock != 0) && (psVar11 = cDC->ptrQuadBlock->pvs, psVar11 != 0)) && (piVar12 = psVar11->visExtraSrc, piVar12 != 0))
+                                if (((cDC->ptrQuadBlock != 0) && (psVar11 = QB_PVS(cDC->ptrQuadBlock), psVar11 != 0)) && (piVar12 = (int *)LEV_PTR64_RESOLVE(psVar11->visExtraSrc), piVar12 != 0))
                                 {
                                         if ((gGT->level1->configFlags & 4) == 0)
                                         {
@@ -2376,10 +2376,23 @@ LAB_8001c150:
                 }
         }
 
-        if (*(int *)&cDC->unk30fill[8] == 0)
+        if (cDC->ptrQuadBlock == NULL)
         {
-                cDC->visLeafSrc = 0;
-                cDC->visFaceSrc = 0;
+                if (d != NULL && d->underDriver != NULL)
+                {
+                        cDC->ptrQuadBlock = d->underDriver;
+                        psVar11 = QB_PVS(cDC->ptrQuadBlock);
+                        if (psVar11 != NULL)
+                        {
+                                cDC->visLeafSrc = (int *)LEV_PTR64_RESOLVE(psVar11->visLeafSrc);
+                                cDC->visFaceSrc = (int *)LEV_PTR64_RESOLVE(psVar11->visFaceSrc);
+                        }
+                }
+                else
+                {
+                        cDC->visLeafSrc = 0;
+                        cDC->visFaceSrc = 0;
+                }
         }
 
         if ((cDC->flags & 1) != 0)

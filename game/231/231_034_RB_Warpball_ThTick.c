@@ -23,9 +23,10 @@ static int RB_Warpball_NodeDeltaLength(struct CheckpointNode *curr, struct Check
 
 static void RB_Warpball_SetQuadblockIndex(struct TrackerWeapon *tw, struct ScratchpadStruct *sps)
 {
-	if (sps->Set2.ptrQuadblock->checkpointIndex != 0xff)
+	struct QuadBlock *qb = SPS_GET_SET2_QUAD(sps);
+	if (qb != NULL && qb->checkpointIndex != 0xff)
 	{
-		tw->nodeNextIndex = sps->Set2.ptrQuadblock->checkpointIndex;
+		tw->nodeNextIndex = qb->checkpointIndex;
 	}
 }
 
@@ -258,7 +259,7 @@ void RB_Warpball_ThTick(struct Thread *t)
 		sps->Union.QuadBlockColl.searchFlags = 0x43;
 	}
 
-	sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 	COLL_SearchBSP_CallbackQUADBLK((u32 *)&posTop[0], (u32 *)&posBottom[0], sps, 0);
 	RB_MakeInstanceReflective(sps, inst);
 
@@ -286,7 +287,8 @@ void RB_Warpball_ThTick(struct Thread *t)
 		if (((tw->flags & 0xc) != 0) && (inst->matrix.t[1] < sps->Set2.hitPos[1]))
 		{
 			inst->matrix.t[1] = sps->Set2.hitPos[1];
-			inst->unk50 = sps->Set2.ptrQuadblock->draw_order_low - 1;
+			struct QuadBlock *qb = SPS_GET_SET2_QUAD(sps);
+			inst->unk50 = (qb ? qb->draw_order_low : 0) - 1;
 		}
 	}
 	else

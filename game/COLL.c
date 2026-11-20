@@ -11,6 +11,82 @@ struct MetaDataMODEL *COLL_LevModelMeta(u32 id)
 	return &data.MetaDataModels[id];
 }
 
+void *LEV_PTR64_RESOLVE(u32 x32)
+{
+	if (x32 == 0) return NULL;
+#if defined(__LP64__)
+	uintptr_t base_hi = 0;
+	if (sdata != NULL && sdata->ptrLevelFile != NULL)
+		base_hi = (uintptr_t)sdata->ptrLevelFile & 0xFFFFFFFF00000000ULL;
+	else if (sdata != NULL && sdata->mempack[0].start != NULL)
+		base_hi = (uintptr_t)sdata->mempack[0].start & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0)
+		base_hi = (uintptr_t)&sdata & 0xFFFFFFFF00000000ULL;
+	return (void *)(base_hi | (uintptr_t)x32);
+#else
+	return (void *)(uintptr_t)x32;
+#endif
+}
+
+#if defined(__LP64__)
+uintptr_t g_nativeRawInstDefsBase[2] = {0, 0};
+u32 g_nativeRawInstDefsCount[2] = {0, 0};
+struct InstDef *g_nativeInstDefsPtr[2] = {NULL, NULL};
+#endif
+
+struct InstDef *BSP_HitboxInstDef(const struct BSP *bsp)
+{
+	if (bsp == NULL || bsp->data.hitbox.instDef == 0)
+		return NULL;
+
+#if defined(__LP64__)
+	uintptr_t targetAddr = (uintptr_t)LEV_PTR64_RESOLVE(bsp->data.hitbox.instDef);
+	for (int s = 0; s < 2; s++)
+	{
+		uintptr_t rawBase = g_nativeRawInstDefsBase[s];
+		u32 numInst = g_nativeRawInstDefsCount[s];
+		struct InstDef *nativeInstDefs = g_nativeInstDefsPtr[s];
+		if (rawBase != 0 && numInst > 0 && nativeInstDefs != NULL)
+		{
+			if (targetAddr >= rawBase && targetAddr < rawBase + (uintptr_t)numInst * 64ULL)
+			{
+				uint32_t instIdx = (uint32_t)((targetAddr - rawBase) / 64ULL);
+				return &nativeInstDefs[instIdx];
+			}
+		}
+	}
+	return NULL;
+#else
+	return bsp->data.hitbox.instDef;
+#endif
+}
+
+struct Instance *LEV_ResolveVisInst(u32 x32)
+{
+	if (x32 == 0)
+		return NULL;
+#if defined(__LP64__)
+	uintptr_t targetAddr = (uintptr_t)LEV_PTR64_RESOLVE(x32);
+	for (int s = 0; s < 2; s++)
+	{
+		uintptr_t rawBase = g_nativeRawInstDefsBase[s];
+		u32 numInst = g_nativeRawInstDefsCount[s];
+		struct InstDef *nativeInstDefs = g_nativeInstDefsPtr[s];
+		if (rawBase != 0 && numInst > 0 && nativeInstDefs != NULL)
+		{
+			if (targetAddr >= rawBase && targetAddr < rawBase + (uintptr_t)numInst * 64ULL)
+			{
+				uint32_t instIdx = (uint32_t)((targetAddr - rawBase) / 64ULL);
+				return nativeInstDefs[instIdx].ptrInstance;
+			}
+		}
+	}
+	return NULL;
+#else
+	return (struct Instance *)(uintptr_t)x32;
+#endif
+}
+
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8001eb0c-0x8001ebec
 void COLL_SearchBSP_CallbackQUADBLK(u32 *posTop, u32 *posBottom, struct ScratchpadStruct *sps, int hitRadius)
@@ -36,7 +112,7 @@ void COLL_SearchBSP_CallbackQUADBLK(u32 *posTop, u32 *posBottom, struct Scratchp
 	sps->unk3C = 0;
 	sps->boolDidTouchQuadblock = 0;
 	*(int *)&sps->dataOutput[0] = 0;
-	meshInfo = sps->ptr_mesh_info;
+	meshInfo = SPS_GET_MESHINFO(sps);
 	sps->numInstHitboxesHit = 0;
 
 	topXY = posTop[0];
@@ -431,7 +507,7 @@ u32 COLL_FIXED_INSTANC_TestPoint(struct ScratchpadStruct *sps, struct BSP *node)
 
 	if (nodeBytes[1] == 4)
 	{
-		*(struct BSP **)(spsBytes + 0x48) = node;
+		SPS_SET_BSPHITBOX(sps, node);
 		CollFixed_WriteS16(spsBytes, 0x42, CollFixed_ReadU16(spsBytes, 0x42) + 1);
 	}
 
@@ -442,7 +518,7 @@ u32 COLL_FIXED_INSTANC_TestPoint(struct ScratchpadStruct *sps, struct BSP *node)
 		CollFixed_WriteS16(spsBytes, 0x74, 0);
 		spsBytes[0x7e] = 6;
 		CollFixed_WriteS32(spsBytes, 0x84, 0);
-		*(struct BSP **)(spsBytes + 0x48) = node;
+		SPS_SET_BSPHITBOX(sps, node);
 		CollFixed_WriteS16(spsBytes, 0x1c, CollFixed_ReadU16(spsBytes, 0x10));
 		CollFixed_WriteS16(spsBytes, 0x1e, CollFixed_ReadU16(spsBytes, 0x12));
 		CollFixed_WriteS16(spsBytes, 0x20, CollFixed_ReadU16(spsBytes, 0x14));
@@ -572,7 +648,7 @@ u32 COLL_FIXED_INSTANC_TestPoint(struct ScratchpadStruct *sps, struct BSP *node)
 		return 0;
 	}
 
-	*(struct BSP **)(spsBytes + 0x48) = node;
+	SPS_SET_BSPHITBOX(sps, node);
 	CollFixed_WriteS32(spsBytes, 0x84, factor);
 	CollFixed_WriteS16(spsBytes, 0x42, CollFixed_ReadU16(spsBytes, 0x42) + 1);
 	CollFixed_WriteS32(spsBytes, 0x1e8, hitX);
@@ -633,7 +709,7 @@ u32 COLL_FIXED_INSTANC_TestPoint(struct ScratchpadStruct *sps, struct BSP *node)
 void COLL_FIXED_BSPLEAF_TestInstance(struct BSP *node, struct ScratchpadStruct *sps)
 {
 	int arraySize;
-	struct BSP *bspArray = node->data.leaf.bspHitboxArray;
+	struct BSP *bspArray = BSP_LEAF_HITBOX(node);
 	struct BoundingBox *bbox;
 
 	if (bspArray == NULL)
@@ -641,7 +717,7 @@ void COLL_FIXED_BSPLEAF_TestInstance(struct BSP *node, struct ScratchpadStruct *
 
 	// check every instance hitbox until
 	// end of list (null flag) is found
-	for (/**/; bspArray->flag != 0; bspArray++)
+	for (int hitboxCount = 0; bspArray->flag != 0 && hitboxCount < 256; bspArray++, hitboxCount++)
 	{
 		bbox = &bspArray->box;
 
@@ -649,9 +725,11 @@ void COLL_FIXED_BSPLEAF_TestInstance(struct BSP *node, struct ScratchpadStruct *
 		arraySize = sps->numInstHitboxesHit - 1;
 		for (; arraySize >= 0; arraySize--)
 		{
-			if (bspArray == sps->bspInstHitboxArr[arraySize])
+			if ((u32)(uintptr_t)bspArray == sps->bspInstHitboxArr[arraySize])
 				goto NextBSP;
 		}
+
+		struct InstDef *instDef = BSP_HITBOX_INSTDEF(bspArray);
 
 		if ((
 		        // if data is invalid (what?)
@@ -659,14 +737,14 @@ void COLL_FIXED_BSPLEAF_TestInstance(struct BSP *node, struct ScratchpadStruct *
 		            // if collision for instance is disabled
 		            ((bspArray->flag & 0x80) == 0) ||
 		            // if bspHitbox.InstDef doesn't exist
-		            (bspArray->data.hitbox.instDef == NULL))
+		            (instDef == NULL))
 
 		        ||
 
 		        // if data is valid
 
 		        // allows drawing flag is enabled
-		        ((bspArray->data.hitbox.instDef->ptrInstance->flags & 0xf) != 0)) &&
+		        (instDef->ptrInstance != NULL && ((instDef->ptrInstance->flags & 0xf) != 0))) &&
 
 		    // compare bsp boundingbox to scratchpad boundingbox
 		    ((sps->bbox.min[0] <= bbox->max[0]) &&
@@ -725,7 +803,7 @@ void COLL_FIXED_BotsSearch(s16 *posCurr, s16 *posPrev, struct ScratchpadStruct *
 	sps->numInstHitboxesHit = 0;
 	*(u32 *)&sps->dataOutput[0] = 0;
 
-	COLL_SearchBSP_CallbackPARAM(sps->ptr_mesh_info->bspRoot, &sps->bbox, COLL_FIXED_BSPLEAF_TestInstance, sps);
+	COLL_SearchBSP_CallbackPARAM(SPS_GET_MESHINFO(sps)->bspRoot, &sps->bbox, COLL_FIXED_BSPLEAF_TestInstance, sps);
 }
 
 
@@ -909,9 +987,13 @@ static void COLL_FIXED_TRIANGL_TestPoint_Body(u8 *sps, u8 *v1, u8 *v2, u8 *v3, s
 		}
 	}
 
-	quad = *(struct QuadBlock **)(sps + 0x64);
+	struct ScratchpadStruct *spsStruct = (struct ScratchpadStruct *)sps;
+	quad = SPS_GET_SET1_QUAD(spsStruct);
 
 	if ((baryA < 0) || ((baryA + baryB - 0x1000) > 0))
+		return;
+
+	if (quad == NULL)
 		return;
 
 	if ((quad->quadFlags & 0x40) != 0)
@@ -920,19 +1002,26 @@ static void COLL_FIXED_TRIANGL_TestPoint_Body(u8 *sps, u8 *v1, u8 *v2, u8 *v3, s
 		return;
 	}
 
-	*(struct QuadBlock **)(sps + 0x80) = quad;
+	SPS_SET_SET2_QUAD(spsStruct, quad);
 	CollFixed_WriteS16(sps, 0xc8, baryA);
 	CollFixed_WriteS16(sps, 0xca, baryB);
-	*(struct LevVertex **)(sps + 0xcc) = *(struct LevVertex **)(v1 + 8);
-	*(struct LevVertex **)(sps + 0xd0) = *(struct LevVertex **)(baryV2 + 8);
-	*(struct LevVertex **)(sps + 0xd4) = *(struct LevVertex **)(baryV3 + 8);
+	spsStruct->levVertHit[0] = ((struct BspSearchVertex *)v1)->pLevelVertex;
+	spsStruct->levVertHit[1] = ((struct BspSearchVertex *)baryV2)->pLevelVertex;
+	spsStruct->levVertHit[2] = ((struct BspSearchVertex *)baryV3)->pLevelVertex;
 	CollFixed_WriteS16(sps, 0x3e, CollFixed_ReadS16(sps, 0x3e) + 1);
-	CollFixed_WriteU32(sps, 0x68, CollFixed_ReadU32(sps, 0x4c));
-	CollFixed_WriteU32(sps, 0x1c, CollFixed_ReadU32(sps, 0x4c));
-	CollFixed_WriteS16(sps, 0x6c, CollFixed_ReadS16(sps, 0x50));
-	CollFixed_WriteS16(sps, 0x20, CollFixed_ReadS16(sps, 0x50));
-	CollFixed_WriteU32(sps, 0x70, CollFixed_ReadU32(sps, 0x54));
-	CollFixed_WriteU32(sps, 0x74, CollFixed_ReadU32(sps, 0x58));
+
+	spsStruct->Set2.hitPos[0] = spsStruct->Set1.hitPos[0];
+	spsStruct->Set2.hitPos[1] = spsStruct->Set1.hitPos[1];
+	spsStruct->Set2.hitPos[2] = spsStruct->Set1.hitPos[2];
+	spsStruct->Set2.BspSearchVertexFlags = spsStruct->Set1.BspSearchVertexFlags;
+	spsStruct->Set2.normalVec[0] = spsStruct->Set1.normalVec[0];
+	spsStruct->Set2.normalVec[1] = spsStruct->Set1.normalVec[1];
+	spsStruct->Set2.normalVec[2] = spsStruct->Set1.normalVec[2];
+	spsStruct->Set2.normalVec[3] = spsStruct->Set1.normalVec[3];
+
+	spsStruct->Union.QuadBlockColl.hitPos[0] = spsStruct->Set1.hitPos[0];
+	spsStruct->Union.QuadBlockColl.hitPos[1] = spsStruct->Set1.hitPos[1];
+	spsStruct->Union.QuadBlockColl.hitPos[2] = spsStruct->Set1.hitPos[2];
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8001ef50-0x8001f2dc
@@ -1038,7 +1127,7 @@ static void COLL_FIXED_QUADBLK_SetLoadScratchpadVertsContext(struct ScratchpadSt
 {
 	// NOTE(aalhendi): Retail passes these through implicit MIPS registers t8/t9.
 	// Native records that register state explicitly before calling the loader.
-	sCollFixedLoadScratchpadVertsVertexArray = sps->ptr_mesh_info->ptrVertexArray;
+	sCollFixedLoadScratchpadVertsVertexArray = SPS_GET_MESHINFO(sps)->ptrVertexArray;
 	sCollFixedLoadScratchpadVertsQuad = quad;
 }
 
@@ -1057,7 +1146,7 @@ void COLL_FIXED_QUADBLK_LoadScratchpadVerts(struct ScratchpadStruct *sps)
 	for (index = (u16 *)&ptrQuad->index[0]; index < (u16 *)&ptrQuad->index[9]; index++, bsv++)
 	{
 		vertCurr = &ptrVert[*index];
-		bsv->pLevelVertex = vertCurr;
+		BSV_SET_LEVVERT(bsv, vertCurr);
 		*(int *)&bsv->pos[0] = *(int *)&vertCurr->pos[0];
 		*(int *)&bsv->pos[2] = *(int *)&vertCurr->pos[2];
 	}
@@ -1144,7 +1233,7 @@ void COLL_FIXED_QUADBLK_TestTriangles(struct QuadBlock *quad, struct ScratchpadS
 {
 	struct BspSearchVertex *bsv = &sps->bspSearchVert[0];
 
-	sps->Set1.ptrQuadblock = quad;
+	SPS_SET_SET1_QUAD(sps, quad);
 
 	if (((sps->Union.QuadBlockColl.qbFlagsWanted & quad->quadFlags) == 0) || ((sps->Union.QuadBlockColl.qbFlagsIgnored & quad->quadFlags) != 0) ||
 	    (quad->bbox.min[0] > sps->bbox.max[0]) || (quad->bbox.min[1] > sps->bbox.max[1]) || (quad->bbox.min[2] > sps->bbox.max[2]) ||
@@ -1204,7 +1293,16 @@ void COLL_FIXED_BSPLEAF_TestQuadblocks(struct BSP *node, struct ScratchpadStruct
 	}
 
 	numQuads = node->data.leaf.numQuads;
-	ptrQuad = node->data.leaf.ptrQuadBlockArray;
+	ptrQuad = BSP_LEAF_QUADS(node);
+
+	if (ptrQuad == NULL || numQuads <= 0)
+	{
+		if ((sps->Union.QuadBlockColl.searchFlags & 1) != 0)
+		{
+			COLL_FIXED_BSPLEAF_TestInstance(node, sps);
+		}
+		return;
+	}
 
 	// loop through all quadblocks
 	do
@@ -1296,7 +1394,7 @@ static void COLL_FIXED_PlayerSearch_SetupSearch(struct ScratchpadStruct *sps, st
 	sps->Input1.pos[1] = bottomY;
 	sps->Input1.pos[2] = topZ;
 
-	sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 	sps->Union.QuadBlockColl.qbFlagsIgnored = 0x10;
 	sps->Union.QuadBlockColl.qbFlagsWanted = 0x3000;
 
@@ -1324,9 +1422,9 @@ static void COLL_FIXED_PlayerSearch_SetupSearch(struct ScratchpadStruct *sps, st
 
 static void COLL_FIXED_PlayerSearch_UpdateLighting(struct ScratchpadStruct *sps, struct Driver *d, struct Instance *inst)
 {
-	struct LevVertex *v0 = sps->levVertHit[0];
-	struct LevVertex *v1 = sps->levVertHit[1];
-	struct LevVertex *v2 = sps->levVertHit[2];
+	struct LevVertex *v0 = (struct LevVertex *)LEV_PTR64_RESOLVE(sps->levVertHit[0]);
+	struct LevVertex *v1 = (struct LevVertex *)LEV_PTR64_RESOLVE(sps->levVertHit[1]);
+	struct LevVertex *v2 = (struct LevVertex *)LEV_PTR64_RESOLVE(sps->levVertHit[2]);
 
 	if ((v0 == NULL) || (v1 == NULL) || (v2 == NULL))
 		return;
@@ -1458,9 +1556,9 @@ void COLL_FIXED_PlayerSearch(struct Thread *t, struct Driver *d)
 		COLL_FIXED_QUADBLK_TestTriangles(d->underDriver, sps);
 	}
 
-	if ((sps->boolDidTouchQuadblock == 0) && (sps->ptr_mesh_info != NULL) && (sps->ptr_mesh_info->bspRoot != NULL))
+	if ((sps->boolDidTouchQuadblock == 0) && (SPS_GET_MESHINFO(sps) != NULL) && (SPS_GET_MESHINFO(sps)->bspRoot != NULL))
 	{
-		COLL_SearchBSP_CallbackPARAM(sps->ptr_mesh_info->bspRoot, &sps->bbox, COLL_FIXED_BSPLEAF_TestQuadblocks, sps);
+		COLL_SearchBSP_CallbackPARAM(SPS_GET_MESHINFO(sps)->bspRoot, &sps->bbox, COLL_FIXED_BSPLEAF_TestQuadblocks, sps);
 	}
 
 	inst = t->inst;
@@ -1473,7 +1571,7 @@ void COLL_FIXED_PlayerSearch(struct Thread *t, struct Driver *d)
 	}
 	else
 	{
-		quad = sps->Set2.ptrQuadblock;
+		quad = SPS_GET_SET2_QUAD(sps);
 		inst->bitCompressed_NormalVector_AndDriverIndex =
 		    COLL_FIXED_PlayerSearch_CompressNormal(sps->Set2.normalVec[0], sps->Set2.normalVec[1], sps->Set2.normalVec[2], d->driverID);
 		d->quadBlockHeight = sps->Union.QuadBlockColl.hitPos[1] << 8;
@@ -2000,7 +2098,7 @@ void COLL_MOVED_TRIANGL_TestPoint(struct ScratchpadStruct *sps, struct BspSearch
 	CollFixed_WriteU32(spsBytes, 0x54, CollFixed_ReadU32(v1Bytes, 0xc));
 	CollFixed_WriteU32(spsBytes, 0x58, CollFixed_ReadU32(v1Bytes, 0x10));
 
-	quad = *(struct QuadBlock **)(spsBytes + 0x64);
+	quad = SPS_GET_SET1_QUAD(sps);
 
 	if (((quad->quadFlags & 0x400) != 0) && (((s32)(s8)quad->terrain_type & sdata->doorAccessFlags) != 0))
 		return;
@@ -2066,9 +2164,9 @@ KeepNormal:
 	CollFixed_WriteS16(spsBytes, 0x5e, CollFixed_ReadS16(spsBytes, 2) - hitY);
 	CollFixed_WriteS16(spsBytes, 0x60, CollFixed_ReadS16(spsBytes, 4) - hitZ);
 
-	*(struct BspSearchVertex **)(spsBytes + 0xd8) = v1;
-	*(struct BspSearchVertex **)(spsBytes + 0xdc) = v2;
-	*(struct BspSearchVertex **)(spsBytes + 0xe0) = v3;
+	sps->bspSearchVertHit[0] = (u32)(uintptr_t)v1;
+	sps->bspSearchVertHit[1] = (u32)(uintptr_t)v2;
+	sps->bspSearchVertHit[2] = (u32)(uintptr_t)v3;
 
 	reorderResult = COLL_MOVED_TRIANGL_ReorderNormals(spsBytes + 0x4c, v1, v2, v3);
 	if (reorderResult < 0)
@@ -2126,13 +2224,16 @@ KeepNormal:
 	sps->levVertHit[1] = v2->pLevelVertex;
 	sps->levVertHit[2] = v3->pLevelVertex;
 
-	CollFixed_WriteU32(spsBytes, 0x68, CollFixed_ReadU32(spsBytes, 0x4c));
-	CollFixed_WriteU32(spsBytes, 0x6c, CollFixed_ReadU32(spsBytes, 0x50));
-	CollFixed_WriteU32(spsBytes, 0x70, CollFixed_ReadU32(spsBytes, 0x54));
-	CollFixed_WriteU32(spsBytes, 0x74, CollFixed_ReadU32(spsBytes, 0x58));
-	CollFixed_WriteU32(spsBytes, 0x78, CollFixed_ReadU32(spsBytes, 0x5c));
-	CollFixed_WriteU32(spsBytes, 0x7c, CollFixed_ReadU32(spsBytes, 0x60));
-	*(struct QuadBlock **)(spsBytes + 0x80) = quad;
+	sps->Set2.hitPos[0] = sps->Set1.hitPos[0];
+	sps->Set2.hitPos[1] = sps->Set1.hitPos[1];
+	sps->Set2.hitPos[2] = sps->Set1.hitPos[2];
+	sps->Set2.BspSearchVertexFlags = sps->Set1.BspSearchVertexFlags;
+	sps->Set2.normalVec[0] = sps->Set1.normalVec[0];
+	sps->Set2.normalVec[1] = sps->Set1.normalVec[1];
+	sps->Set2.normalVec[2] = sps->Set1.normalVec[2];
+	sps->Set2.normalVec[3] = sps->Set1.normalVec[3];
+	memcpy(sps->Set2.unk, sps->Set1.unk, sizeof(sps->Set2.unk));
+	SPS_SET_SET2_QUAD(sps, quad);
 
 	*(u8 *)(spsBytes + 0x7f) = *(u8 *)(spsBytes + 0x63);
 	*(s8 *)(spsBytes + 0x7e) = (s8)reorderResult;
@@ -2164,7 +2265,7 @@ void COLL_MOVED_QUADBLK_TestTriangles(struct QuadBlock *quad, struct ScratchpadS
 {
 	struct BspSearchVertex *bsv = &sps->bspSearchVert[0];
 
-	sps->Set1.ptrQuadblock = quad;
+	SPS_SET_SET1_QUAD(sps, quad);
 
 	if (((sps->Union.QuadBlockColl.qbFlagsWanted & quad->quadFlags) == 0) || ((sps->Union.QuadBlockColl.qbFlagsIgnored & quad->quadFlags) != 0) ||
 	    (quad->bbox.min[0] > sps->bbox.max[0]) || (quad->bbox.min[1] > sps->bbox.max[1]) || (quad->bbox.min[2] > sps->bbox.max[2]) ||
@@ -2236,7 +2337,16 @@ void COLL_MOVED_BSPLEAF_TestQuadblocks(struct BSP *node, struct ScratchpadStruct
 	}
 
 	numQuads = node->data.leaf.numQuads;
-	ptrQuad = node->data.leaf.ptrQuadBlockArray;
+	ptrQuad = BSP_LEAF_QUADS(node);
+
+	if (ptrQuad == NULL || numQuads <= 0)
+	{
+		if ((sps->Union.QuadBlockColl.searchFlags & 1) != 0)
+		{
+			COLL_FIXED_BSPLEAF_TestInstance(node, sps);
+		}
+		return;
+	}
 
 	// loop through all quadblocks
 	do
@@ -2270,7 +2380,7 @@ void COLL_MOVED_FindScrub(struct QuadBlock *qb, int triangleID, struct Scratchpa
 	{
 		struct BspSearchTriangle *tri = &ext->bspSearchTriangle[i];
 
-		if ((tri->quadblock == qb) && (tri->triangleID == triangleID))
+		if ((tri->quadblock == (u32)(uintptr_t)qb) && (tri->triangleID == triangleID))
 		{
 			s32 numCollision = tri->numCollision;
 			s16 scrub = numCollision;
@@ -2291,7 +2401,7 @@ void COLL_MOVED_FindScrub(struct QuadBlock *qb, int triangleID, struct Scratchpa
 	{
 		struct BspSearchTriangle *tri = &ext->bspSearchTriangle[ext->numTriangles];
 
-		tri->quadblock = qb;
+		tri->quadblock = (u32)(uintptr_t)qb;
 		tri->triangleID = triangleID;
 		tri->numCollision = 0;
 	}
@@ -2327,7 +2437,7 @@ static void CollMoved_PlayerSearch_SetBBoxAxis(struct ScratchpadStruct *sps, int
 
 static int CollMoved_PlayerSearch_RunHitboxLInC(struct ScratchpadStruct *sps, struct Thread *t)
 {
-	struct BSP *bsp = sps->bspHitbox;
+	struct BSP *bsp = SPS_GET_BSPHITBOX(sps);
 	struct InstDef *instDef;
 	struct Instance *inst;
 	s16 modelID;
@@ -2335,7 +2445,7 @@ static int CollMoved_PlayerSearch_RunHitboxLInC(struct ScratchpadStruct *sps, st
 
 	if ((bsp->flag & 0x80) != 0)
 	{
-		instDef = bsp->data.hitbox.instDef;
+		instDef = BSP_HITBOX_INSTDEF(bsp);
 		if (instDef == NULL)
 			return 1;
 
@@ -2353,8 +2463,8 @@ static int CollMoved_PlayerSearch_RunHitboxLInC(struct ScratchpadStruct *sps, st
 		if ((bsp->flag & 0x10) == 0)
 			return 1;
 
-		instDef = bsp->data.hitbox.instDef;
-		if (instDef == NULL)
+		instDef = BSP_HITBOX_INSTDEF(bsp);
+		if (instDef == NULL || instDef->model == NULL)
 			return 1;
 
 		// Retail passes the InstDef pointer for 0x10 hitboxes, not ptrInstance.
@@ -2431,7 +2541,7 @@ void COLL_MOVED_PlayerSearch(struct Thread *t, struct Driver *d)
 	sps->Union.QuadBlockColl.qbFlagsWanted = 0x3000;
 	sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
 	sps->Union.QuadBlockColl.searchFlags = 1;
-	sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 
 	if (gGT->numPlyrCurrGame < 3)
 	{
@@ -2511,7 +2621,7 @@ void COLL_MOVED_PlayerSearch(struct Thread *t, struct Driver *d)
 
 		if (sps->boolDidTouchHitbox != 0)
 		{
-			struct BSP *bspHitbox = sps->bspHitbox;
+			struct BSP *bspHitbox = SPS_GET_BSPHITBOX(sps);
 			u8 hitboxId;
 			int hitboxResult;
 
@@ -2558,7 +2668,7 @@ void COLL_MOVED_PlayerSearch(struct Thread *t, struct Driver *d)
 				break;
 			}
 
-			quad = sps->Set2.ptrQuadblock;
+			quad = SPS_GET_SET2_QUAD(sps);
 
 			if ((quad->quadFlags & 0x200) != 0)
 			{
@@ -2699,8 +2809,8 @@ u32 COLL_MOVED_ScrubImpact(struct Driver *d, struct Thread *t, struct Scratchpad
 	s32 dot;
 	u32 ret;
 
-	if ((d->unknownTraction != 0) && (sps->boolDidTouchQuadblock != 0) && ((sps->Set2.ptrQuadblock->quadFlags & 0x1000) != 0) && (((u8 *)sps)[0x7e] != 6) &&
-	    (sps->Set2.ptrQuadblock != d->underDriver))
+	if ((d->unknownTraction != 0) && (sps->boolDidTouchQuadblock != 0) && ((SPS_GET_SET2_QUAD(sps)->quadFlags & 0x1000) != 0) && (((u8 *)sps)[0x7e] != 6) &&
+	    (SPS_GET_SET2_QUAD(sps) != d->underDriver))
 	{
 		if ((CollMoved_ScrubImpact_Abs(d->speedApprox) < 0x300) && (CollMoved_ScrubImpact_Abs(d->jumpHeightCurr) < 0x300) && (d->fireSpeed == 0))
 		{
@@ -2786,7 +2896,7 @@ u32 COLL_MOVED_ScrubImpact(struct Driver *d, struct Thread *t, struct Scratchpad
 			CollMoved_ScrubImpact_GteLLV0(impactX, impactY, impactZ, &impactX, &impactY, &impactZ);
 
 			if ((sps->boolDidTouchQuadblock != 0) && ((sps->Union.QuadBlockColl.searchFlags & 0x10) == 0) && ((d->actionsFlagSetPrevFrame & 1) == 0) &&
-			    ((sps->Set2.ptrQuadblock->quadFlags & 0x1000) != 0))
+			    ((SPS_GET_SET2_QUAD(sps)->quadFlags & 0x1000) != 0))
 			{
 				CollMoved_ScrubImpact_ProjectWallVelocity(normalX, normalY, normalZ, oldVelX, oldVelZ, &wallVelX, &wallVelY, &wallVelZ);
 

@@ -22,18 +22,7 @@ void howl_UnPauseAudio()
 		backupPrev = curr->prev;
 		backupNext = curr->next;
 
-		int *src = (int *)pausedStats++;
-		int *dest = (int *)curr;
-
-		// psx's kernel memcpy does NOT work inside "critical" sections
-		dest[0] = src[0];
-		dest[1] = src[1];
-		dest[2] = src[2];
-		dest[3] = src[3];
-		dest[4] = src[4];
-		dest[5] = src[5];
-		dest[6] = src[6];
-		dest[7] = src[7];
+		*curr = *pausedStats++;
 
 		curr->next = backupNext;
 		curr->prev = backupPrev;

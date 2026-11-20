@@ -7,7 +7,7 @@ void RB_Potion_OnShatter_TeethCallback(int unk, struct BSP *bspHitbox)
 	struct InstDef *instDef;
 	struct Instance *teethInst;
 
-	instDef = bspHitbox->data.hitbox.instDef;
+	instDef = BSP_HITBOX_INSTDEF(bspHitbox);
 	if (instDef != NULL)
 		if (teethInst = instDef->ptrInstance, teethInst != NULL)
 			if (instDef->modelID == STATIC_TEETH) // tiger temple door

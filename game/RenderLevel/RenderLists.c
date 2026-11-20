@@ -171,10 +171,14 @@ static void RenderLists_LinkBsp(struct BSP *bspRoot, struct BSP *bsp, struct Vis
 	if (head == NULL || bspList == NULL || bsp == NULL || bspRoot == NULL)
 		return;
 
+	int bspIndex = (int)(bsp - bspRoot);
+	if (bspIndex < 0 || bspIndex >= 2048)
+		return;
+
 	struct VisMemBspListNode *node;
-	int bspIndex = bsp - bspRoot;
 
 	node = &bspList[bspIndex];
+	node->bsp = bsp;
 
 	node->next = *head;
 	*head = node;

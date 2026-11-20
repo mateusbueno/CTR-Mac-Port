@@ -18,7 +18,8 @@ void RB_MakeInstanceReflective(struct ScratchpadStruct *sps, struct Instance *in
 		if (1 < gGT->numPlyrCurrGame)
 			return;
 
-		quadFlags = sps->Set2.ptrQuadblock->quadFlags;
+		struct QuadBlock *qb = SPS_GET_SET2_QUAD(sps);
+		quadFlags = qb ? qb->quadFlags : 0;
 
 		if ((quadFlags & 0x2000) == 0)
 		{

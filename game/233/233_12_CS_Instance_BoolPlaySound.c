@@ -21,6 +21,17 @@ char CS_Instance_BoolPlaySound(struct CutsceneObj *cs, struct Instance *desiredI
 #endif
 
 	// Same code as warppad_thtick
+#if defined(__LP64__)
+	const u32 *visInst32 = (const u32 *)visInstSrc;
+	for (; *visInst32 != 0; visInst32++)
+	{
+		if (LEV_ResolveVisInst(*visInst32) == desiredInst)
+		{
+			idpp = INST_GETIDPP(desiredInst);
+			return (idpp[0].instFlags & 0x40) != 0;
+		}
+	}
+#else
 	while (visInstSrc[0] != 0)
 	{
 		if (visInstSrc[0] == desiredInst)
@@ -31,6 +42,7 @@ char CS_Instance_BoolPlaySound(struct CutsceneObj *cs, struct Instance *desiredI
 
 		visInstSrc++;
 	}
+#endif
 
 	return 0;
 }

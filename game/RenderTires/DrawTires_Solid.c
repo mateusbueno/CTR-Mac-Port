@@ -512,22 +512,9 @@ static struct DrawTiresSolidProjectedWheel DrawTiresSolid_SelectProjectedWheel(s
 	struct Icon *ws = NULL;
 	if (scratch->wheelSprites != NULL)
 	{
-#if defined(__LP64__)
-		uintptr_t ptrVal = (uintptr_t)scratch->wheelSprites[spriteIndex];
-		if ((ptrVal >> 32) != 0 && (ptrVal >> 32) != 1)
-		{
-			uint32_t *raw32 = (uint32_t *)scratch->wheelSprites;
-			uintptr_t base_hi = (uintptr_t)raw32 & 0xFFFFFFFF00000000ULL;
-			if (base_hi == 0) base_hi = 0x100000000ULL;
-			ws = (struct Icon *)(base_hi | (uintptr_t)raw32[spriteIndex]);
-		}
-		else
-		{
-			ws = scratch->wheelSprites[spriteIndex];
-		}
-#else
 		ws = scratch->wheelSprites[spriteIndex];
-#endif
+		if (ws == NULL)
+			ws = scratch->wheelSprites[0];
 	}
 	selected.wheelSprite = ws;
 
@@ -539,12 +526,7 @@ static void DrawTiresSolid_CopyIconUV(POLY_FT4 *p, struct Icon *icon)
 	if (icon == NULL)
 		return;
 
-	u32 uv23 = *(u32 *)&icon->texLayout.u2;
-
-	*(u32 *)&p->u0 = *(u32 *)&icon->texLayout.u0;
-	*(u32 *)&p->u1 = *(u32 *)&icon->texLayout.u1;
-	*(u32 *)&p->u2 = uv23;
-	*(u32 *)&p->u3 = uv23 >> 16;
+	setIconUV(p, icon);
 }
 
 static int DrawTiresSolid_ApplyCornerOrder(struct DrawTiresSolidScratch *scratch, int jumpIndex, int *selectedOTSlot, int sxy[4])
@@ -637,7 +619,9 @@ static void DrawTiresSolid_LinkPrimitive(struct DrawTiresSolidScratch *scratch, 
 		selectedOTSlot = otRangeEnd;
 
 #if defined(__LP64__)
-	otSlot = (u_long *)(0x100000000ULL | (u32)selectedOTSlot);
+	uintptr_t base_hi = (uintptr_t)g_gpuArenaBase & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	otSlot = (u_long *)(base_hi | (u32)selectedOTSlot);
 #else
 	otSlot = (u_long *)(uintptr_t)selectedOTSlot;
 #endif
@@ -747,6 +731,11 @@ static int DrawTiresSolid_StagePlayer(struct DrawTiresSolidScratch *scratch, str
 		return 0;
 
 	scratch->wheelSprites = driver->wheelSprites;
+	if (scratch->wheelSprites == NULL && sdata->gGT != NULL && sdata->gGT->iconGroup[0] != NULL)
+	{
+		scratch->wheelSprites = ICONGROUP_GETICONS(sdata->gGT->iconGroup[0]);
+		driver->wheelSprites = scratch->wheelSprites;
+	}
 	scratch->tireColor = ((flags & PUSHBUFFER_EXISTS) != 0) ? 0x2e808080 : driver->tireColor;
 
 	if (pb == 0)

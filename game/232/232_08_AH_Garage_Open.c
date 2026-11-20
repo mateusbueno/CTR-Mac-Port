@@ -11,7 +11,7 @@ void AH_Garage_Open(struct ScratchpadStruct *sps, struct Thread *otherTh)
 	if (otherTh->modelIndex != DYNAMIC_PLAYER)
 		return;
 
-	garageThread = sps->Union.ThBuckColl.thread;
+	garageThread = SPS_GET_THBUCK_THREAD(sps);
 
 	garage = garageThread->object;
 	garageInst = garageThread->inst;

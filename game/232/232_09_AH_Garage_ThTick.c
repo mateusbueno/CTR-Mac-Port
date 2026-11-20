@@ -221,8 +221,8 @@ LAB_800aede8:
 	SPS->Input1.hitRadiusSquared = 0x90000;
 	SPS->Input1.modelID = STATIC_PINGARAGE;
 
-	SPS->Union.ThBuckColl.thread = t;
-	SPS->Union.ThBuckColl.funcCallback = AH_Garage_Open;
+	SPS_SET_THBUCK_THREAD(SPS, t);
+	SPS_SET_THBUCK_CALLBACK(SPS, AH_Garage_Open);
 
 	// Open garage door when player gets within radius of door
 	PROC_CollideHitboxWithBucket(gGT->threadBuckets[PLAYER].thread, SPS, 0);

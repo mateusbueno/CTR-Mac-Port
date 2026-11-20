@@ -382,17 +382,38 @@ static u32 DrawLevelOvr1P_GetGridFaceSlotWord(const struct DrawLevelOvr1PScratch
 
 static struct TextureLayout *DrawLevelOvr1P_ResolveTexturePointer(uintptr_t texturePtr)
 {
-	struct TextureLayout *texture;
-
 	if (texturePtr == 0)
 		return NULL;
 
-	if ((texturePtr & 1) != 0)
-		texture = *(struct TextureLayout **)(texturePtr - 1);
-	else
-		texture = (struct TextureLayout *)texturePtr;
+#if defined(__LP64__)
+	uintptr_t base_hi = 0;
+	if (sdata != NULL && sdata->ptrLevelFile != NULL)
+		base_hi = (uintptr_t)sdata->ptrLevelFile & 0xFFFFFFFF00000000ULL;
+	else if (sdata != NULL && sdata->mempack[0].start != NULL)
+		base_hi = (uintptr_t)sdata->mempack[0].start & 0xFFFFFFFF00000000ULL;
 
-	return texture;
+	if ((texturePtr & 0xFFFFFFFF00000000ULL) == 0)
+		texturePtr |= base_hi;
+
+	if ((texturePtr & 1) != 0)
+	{
+		u32 activeTex32 = *(const u32 *)(texturePtr - 1);
+		if (activeTex32 == 0) return NULL;
+		uintptr_t activeTexPtr = (uintptr_t)activeTex32;
+		if ((activeTexPtr & 0xFFFFFFFF00000000ULL) == 0)
+			activeTexPtr |= base_hi;
+		return (struct TextureLayout *)activeTexPtr;
+	}
+	else
+	{
+		return (struct TextureLayout *)texturePtr;
+	}
+#else
+	if ((texturePtr & 1) != 0)
+		return *(struct TextureLayout **)(texturePtr - 1);
+	else
+		return (struct TextureLayout *)texturePtr;
+#endif
 }
 
 static struct TextureLayout *DrawLevelOvr1P_ResolveMidTexture(const struct QuadBlock *block, int faceIndex)
@@ -429,15 +450,6 @@ static const struct Mempack *DrawLevelOvr1P_FindMempackContaining(uintptr_t ptr)
 {
 	const struct Mempack *bestPack = NULL;
 	uintptr_t bestSpan = UINTPTR_MAX;
-	struct GameTracker *gGT = sdata->gGT;
-
-	// PtrMempack can point at inactive mask/podium loads while level1 renders.
-	if ((gGT == NULL) || ((gGT->gameMode2 & LEV_SWAP) == 0))
-	{
-		const struct Mempack *mainPack = &sdata->mempack[0];
-
-		return DrawLevelOvr1P_MempackContains(mainPack, ptr, NULL) ? mainPack : NULL;
-	}
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -494,6 +506,13 @@ static int DrawLevelOvr1P_IsNativeLevelTexturePointer(u32 value)
 	// NOTE(aalhendi): Native classifies host-rebased level texture pointers at
 	// the data boundary; renderer control flow still follows retail sign tests.
 	uintptr_t ptr = (uintptr_t)value;
+#if defined(__LP64__)
+	if ((ptr & 0xFFFFFFFF00000000ULL) == 0 && ptr != 0)
+	{
+		uintptr_t base_hi = (sdata != NULL && sdata->ptrLevelFile != NULL) ? ((uintptr_t)sdata->ptrLevelFile & 0xFFFFFFFF00000000ULL) : 0;
+		ptr |= base_hi;
+	}
+#endif
 
 	if (!DrawLevelOvr1P_IsNativeLevelSpan(ptr, sizeof(struct TextureLayout)))
 		return 0;
@@ -536,6 +555,13 @@ static int DrawLevelOvr1P_TryConvertNativeMempackPointerToPsxWord(u32 hostWord, 
 	uintptr_t hostPtr;
 
 	hostPtr = (uintptr_t)hostWord;
+#if defined(__LP64__)
+	if ((hostPtr & 0xFFFFFFFF00000000ULL) == 0 && hostPtr != 0)
+	{
+		uintptr_t base_hi = (sdata != NULL && sdata->ptrLevelFile != NULL) ? ((uintptr_t)sdata->ptrLevelFile & 0xFFFFFFFF00000000ULL) : 0;
+		hostPtr |= base_hi;
+	}
+#endif
 	pack = DrawLevelOvr1P_FindMempackContaining(hostPtr);
 	if (pack == NULL || pack->endOfMemory == NULL)
 		return 0;
@@ -556,19 +582,39 @@ static int DrawLevelOvr1P_TryConvertNativeMempackPointerToPsxWord(u32 hostWord, 
 static struct TextureLayout *DrawLevelOvr1P_ResolveTexturePointerChecked(uintptr_t texturePtr)
 {
 #ifdef CTR_NATIVE
-	struct TextureLayout *texture;
-
 	if (texturePtr == 0)
 		return NULL;
+
+#if defined(__LP64__)
+	uintptr_t base_hi = 0;
+	if (sdata != NULL && sdata->ptrLevelFile != NULL)
+		base_hi = (uintptr_t)sdata->ptrLevelFile & 0xFFFFFFFF00000000ULL;
+	else if (sdata != NULL && sdata->mempack[0].start != NULL)
+		base_hi = (uintptr_t)sdata->mempack[0].start & 0xFFFFFFFF00000000ULL;
+
+	if ((texturePtr & 0xFFFFFFFF00000000ULL) == 0)
+		texturePtr |= base_hi;
+#endif
+
+	struct TextureLayout *texture;
 
 	if ((texturePtr & 1) != 0)
 	{
 		uintptr_t activePtrSlot = texturePtr - 1;
 
+#if defined(__LP64__)
+		u32 activeTex32 = *(const u32 *)activePtrSlot;
+		if (activeTex32 == 0) return NULL;
+		uintptr_t activeTexPtr = (uintptr_t)activeTex32;
+		if ((activeTexPtr & 0xFFFFFFFF00000000ULL) == 0)
+			activeTexPtr |= base_hi;
+		texture = (struct TextureLayout *)activeTexPtr;
+#else
 		if (!DrawLevelOvr1P_IsNativeLevelSpan(activePtrSlot, sizeof(texture)))
 			return NULL;
 
 		texture = *(struct TextureLayout **)activePtrSlot;
+#endif
 	}
 	else
 	{
@@ -616,12 +662,17 @@ static struct TextureLayout *DrawLevelOvr1P_ResolveProjectedMidTexture(const str
 
 	// NOTE(aalhendi): Retail selector bodies load raw `quad+0x1c+slot`.
 	// Native validates the host-rebased word before following it.
+#if defined(__LP64__)
+	u32 texWord32 = *(const u32 *)((const u8 *)block + 0x1c + slotWord);
+	return DrawLevelOvr1P_ResolveTexturePointerChecked((uintptr_t)texWord32);
+#else
 	return DrawLevelOvr1P_ResolveTexturePointerChecked((uintptr_t)*(void *const *)((const u8 *)block + 0x1c + slotWord));
+#endif
 }
 
 static struct TextureLayout *DrawLevelOvr1P_GetTexture(const struct QuadBlock *block, int faceIndex, int numFaces)
 {
-	struct TextureLayout *texture = block->ptr_texture_low;
+	struct TextureLayout *texture = DrawLevelOvr1P_ResolveTexturePointer((uintptr_t)block->ptr_texture_low);
 
 	if (numFaces == 4)
 	{
@@ -7614,18 +7665,21 @@ static void DrawLevelOvr1P_ClearProjectedUv(struct DrawLevelOvr1PScratchVertex *
 static struct TextureLayout *Ovr226_800a1058_PrepareFullDynamicLowUv(struct QuadBlock *block, struct DrawLevelOvr1PScratchVertex *projected)
 {
 	const int *indices = sDrawLevelOvr1PFullDynamicLowIndices;
-	struct TextureLayout *texture = block->ptr_texture_low;
-	u32 uv0;
-	u32 uv1;
-	u32 uv2;
+	struct TextureLayout *texture = DrawLevelOvr1P_ResolveTexturePointer((uintptr_t)block->ptr_texture_low);
+	u32 uv0 = 0;
+	u32 uv1 = 0;
+	u32 uv2 = 0;
 
 	// NOTE(aalhendi): Retail full-dynamic 0x800a0ef4 seeds low-LOD UVs before
 	// choosing either the direct low quad or the near/transition helper table.
 	*CTR_SCRATCHPAD_PTR(u32, 0x194) = 0;
 
-	uv0 = DrawLevelOvr1P_ReadWord(texture, 0);
-	uv1 = DrawLevelOvr1P_ReadWord(texture, 4);
-	uv2 = DrawLevelOvr1P_ReadWord(texture, 8);
+	if (texture != NULL)
+	{
+		uv0 = DrawLevelOvr1P_ReadWord(texture, 0);
+		uv1 = DrawLevelOvr1P_ReadWord(texture, 4);
+		uv2 = DrawLevelOvr1P_ReadWord(texture, 8);
+	}
 	*CTR_SCRATCHPAD_PTR(u32, 0x1a0) = uv0;
 	*CTR_SCRATCHPAD_PTR(u32, 0x1a4) = uv1;
 	*CTR_SCRATCHPAD_PTR(u32, 0x1a8) = uv2;
@@ -8255,7 +8309,7 @@ static int Ovr226_800a0ef4_DrawFullDynamicBspList(struct VisMemBspListNode *slot
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;
@@ -8353,7 +8407,7 @@ static int DrawLevelOvr1P_DrawSplitGroundListABspList(struct VisMemBspListNode *
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;
@@ -8411,7 +8465,7 @@ static int Ovr226_800a36a8_DrawGround4x1BspList(struct VisMemBspListNode *slot, 
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;
@@ -8593,7 +8647,7 @@ static int Ovr226_800a4fa0_DrawGround4x2BspList(struct VisMemBspListNode *slot, 
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;
@@ -8651,7 +8705,7 @@ static int Ovr226_800a6f40_DrawDynamicBspList(struct VisMemBspListNode *slot, st
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;
@@ -8709,7 +8763,7 @@ static int Ovr226_800a8b60_DrawWideDynamicBspList(struct VisMemBspListNode *slot
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;
@@ -9359,7 +9413,7 @@ static int Ovr226_800a1e30_DrawWaterBspList(struct VisMemBspListNode *slot, stru
 	while (slot != NULL)
 	{
 		struct BSP *bsp = slot->bsp;
-		struct QuadBlock *block = bsp->data.leaf.ptrQuadBlockArray;
+		struct QuadBlock *block = BSP_LEAF_QUADS(bsp);
 		s32 quadCount = bsp->data.leaf.numQuads;
 
 		*CTR_SCRATCHPAD_PTR(s32, 0x68) = quadCount;

@@ -13,7 +13,7 @@ void RB_Burst_CollThBucket(struct ScratchpadStruct *sps, struct Thread *t)
 
 	gGT = sdata->gGT;
 
-	weaponTh = sps->Union.ThBuckColl.thread;
+	weaponTh = SPS_GET_THBUCK_THREAD(sps);
 	tw = weaponTh->object;
 	void *weaponObj = weaponTh->object;
 

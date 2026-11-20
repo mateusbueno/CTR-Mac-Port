@@ -141,7 +141,7 @@ void VehBirth_TeleportSelf(struct Driver *d, u8 spawnFlag, int spawnPosY)
 	sps->Union.QuadBlockColl.searchFlags = 0;
 	if (gGT->numPlyrCurrGame < 3)
 		sps->Union.QuadBlockColl.searchFlags = 2;
-	sps->ptr_mesh_info = level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, level1->ptr_mesh_info);
 
 	gGT->gameMode2 &= ~VEH_FREEZE_DOOR;
 	spawnAtBoss = gGT->gameMode2 & SPAWN_AT_BOSS;
@@ -223,7 +223,7 @@ void VehBirth_TeleportSelf(struct Driver *d, u8 spawnFlag, int spawnPosY)
 			d->AxisAngle3_normalVec[0] = sps->Set2.normalVec[0];
 			d->AxisAngle3_normalVec[1] = sps->Set2.normalVec[1];
 			d->AxisAngle3_normalVec[2] = sps->Set2.normalVec[2];
-			d->lastValid = sps->Set2.ptrQuadblock;
+			d->lastValid = SPS_GET_SET2_QUAD(sps);
 		}
 
 		// set all normal vectors to spawn

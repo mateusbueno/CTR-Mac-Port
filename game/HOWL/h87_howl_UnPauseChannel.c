@@ -35,10 +35,5 @@ void howl_UnPauseChannel(struct ChannelStats *stats)
 	// enable all bits in ChannelUpdate flag
 	sdata->ChannelUpdateFlags[stats->channelID] |= 0x7e;
 
-	int *dest = (int *)&sdata->channelAttrNew[stats->channelID];
-	int *src = (int *)&attr;
-	dest[0] = src[0];
-	dest[1] = src[1];
-	dest[2] = src[2];
-	dest[3] = src[3];
+	sdata->channelAttrNew[stats->channelID] = attr;
 }

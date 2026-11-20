@@ -147,12 +147,17 @@ struct AnimTex
 
 struct PVS
 {
+#if defined(__LP64__)
+	u32 visLeafSrc;
+	u32 visFaceSrc;
+	u32 visInstSrc;
+	u32 visExtraSrc;
+#else
 	int *visLeafSrc;
 	int *visFaceSrc;
 	struct Instance **visInstSrc;
-
-	// either OVert or SCVert
 	int *visExtraSrc;
+#endif
 };
 
 struct QuadBlock
@@ -190,7 +195,11 @@ struct QuadBlock
 	// used for the textures of all 4 quads in a medium-level quadblock
 	// usually points to IconGroup4, but can also point to AnimTex structs
 	// member 0 is 0,0 in xy, 1 is 1,0, 2 is 0,1, 3 is 1,1
+#if defined(__LP64__)
+	u32 ptr_texture_mid[4];
+#else
 	void *ptr_texture_mid[4];
+#endif
 
 	// 0x2c
 	struct BoundingBox bbox;
@@ -214,10 +223,18 @@ struct QuadBlock
 	// 0x40
 	// used for the texture of a quad in low level of detail
 	// the same as ptr_texture_mid, just not as an array
+#if defined(__LP64__)
+	u32 ptr_texture_low;
+#else
 	void *ptr_texture_low;
+#endif
 
 	// 0x44
+#if defined(__LP64__)
+	u32 pvs;
+#else
 	struct PVS *pvs;
+#endif
 
 	// 0x48
 	// explained in FUN_8001f2dc
@@ -273,13 +290,21 @@ struct BSP
 			// the code keeps looping through the
 			// array until it finds a 4-byte 0x00000000
 			// to determine end of list
+#if defined(__LP64__)
+			u32 bspHitboxArray;
+#else
 			struct BSP *bspHitboxArray;
+#endif
 
 			// 0x18
 			int numQuads;
 
 			// 0x1C
+#if defined(__LP64__)
+			u32 ptrQuadBlockArray;
+#else
 			struct QuadBlock *ptrQuadBlockArray;
+#endif
 		} leaf;
 
 		// 0x10
@@ -291,13 +316,43 @@ struct BSP
 
 			// 0x1C
 			// These are always InstDef, not converted to Instance
+#if defined(__LP64__)
+			u32 instDef;
+#else
 			struct InstDef *instDef;
+#endif
 		} hitbox;
 
 	} data;
 
 	// 0x20 bytes large
 };
+
+_Static_assert(sizeof(struct BSP) == 0x20);
+_Static_assert(sizeof(struct PVS) == 0x10);
+
+typedef char check_quadblock_size_assert[(sizeof(struct QuadBlock) == 0x5c) ? 1 : -1];
+typedef char check_bsp_size_assert[(sizeof(struct BSP) == 0x20) ? 1 : -1];
+typedef char check_pvs_size_assert[(sizeof(struct PVS) == 0x10) ? 1 : -1];
+
+void *LEV_PTR64_RESOLVE(u32 x32);
+struct Instance *LEV_ResolveVisInst(u32 x32);
+
+#if defined(__LP64__)
+extern uintptr_t g_nativeRawInstDefsBase[2];
+extern u32 g_nativeRawInstDefsCount[2];
+extern struct InstDef *g_nativeInstDefsPtr[2];
+#endif
+
+#if defined(__LP64__)
+#define BSP_LEAF_QUADS(bsp) ((struct QuadBlock *)LEV_PTR64_RESOLVE((bsp)->data.leaf.ptrQuadBlockArray))
+#define BSP_LEAF_HITBOX(bsp) ((struct BSP *)LEV_PTR64_RESOLVE((bsp)->data.leaf.bspHitboxArray))
+#define QB_PVS(qb) ((struct PVS *)LEV_PTR64_RESOLVE((qb)->pvs))
+#else
+#define BSP_LEAF_QUADS(bsp) ((bsp)->data.leaf.ptrQuadBlockArray)
+#define BSP_LEAF_HITBOX(bsp) ((bsp)->data.leaf.bspHitboxArray)
+#define QB_PVS(qb) ((qb)->pvs)
+#endif
 
 struct VisMemBspListNode
 {

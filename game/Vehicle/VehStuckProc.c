@@ -38,7 +38,7 @@ static void VehStuckProc_MaskGrab_SearchBsp(struct Driver *d, struct ScratchpadS
 	sps->Union.QuadBlockColl.hitPos[1] = sps->Input1.pos[1];
 	sps->Union.QuadBlockColl.hitPos[2] = sps->Input1.pos[2];
 
-	COLL_SearchBSP_CallbackPARAM(sps->ptr_mesh_info->bspRoot, &sps->bbox, COLL_FIXED_BSPLEAF_TestQuadblocks, sps);
+	COLL_SearchBSP_CallbackPARAM(SPS_GET_MESHINFO(sps)->bspRoot, &sps->bbox, COLL_FIXED_BSPLEAF_TestQuadblocks, sps);
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8006677c-0x80066cb0.
@@ -69,7 +69,7 @@ void VehStuckProc_MaskGrab_FindDestPos(struct Driver *d, struct QuadBlock *quad)
 		sps->Input1.hitRadiusSquared = driverThread->driver_unk1;
 		sps->Union.QuadBlockColl.hitRadius = driverThread->driver_HitRadius;
 		sps->Union.QuadBlockColl.hitRadiusSquared = driverThread->driver_unk1;
-		sps->ptr_mesh_info = mesh;
+		SPS_SET_MESHINFO(sps, mesh);
 		sps->Union.QuadBlockColl.qbFlagsIgnored = 0x4010;
 		sps->Union.QuadBlockColl.qbFlagsWanted = 0x1000;
 		d->distanceDrivenBackwards = 0;

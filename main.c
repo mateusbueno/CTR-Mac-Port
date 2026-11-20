@@ -197,8 +197,40 @@ internal void NativeArg_DefaultNetplayArgs(struct NativeNetplayArgs *args)
         snprintf(args->playerName, sizeof(args->playerName) - 1, "Player");
 }
 
+#if !defined(_WIN32)
+#include <signal.h>
+#include <execinfo.h>
+
+static void ctr_crash_handler(int sig)
+{
+        void *callstack[128];
+        int frames = backtrace(callstack, 128);
+        char **strs = backtrace_symbols(callstack, frames);
+        FILE *f = fopen("/tmp/ctr_crash.log", "w");
+        if (!f) f = stderr;
+        fprintf(f, "CRASH SIGNAL %d (%s)\n", sig, strsignal(sig));
+        fprintf(stderr, "\n[CTR NATIVE CRASH] SIGNAL %d (%s)\n", sig, strsignal(sig));
+        for (int i = 0; i < frames; i++) {
+                fprintf(f, "%s\n", strs[i]);
+                fprintf(stderr, "  %s\n", strs[i]);
+        }
+        fflush(f);
+        fflush(stderr);
+        if (f != stderr) fclose(f);
+        signal(sig, SIG_DFL);
+        raise(sig);
+}
+#endif
+
 int main(int argc, char *argv[])
 {
+#if !defined(_WIN32)
+        signal(SIGSEGV, ctr_crash_handler);
+        signal(SIGBUS, ctr_crash_handler);
+        signal(SIGABRT, ctr_crash_handler);
+        signal(SIGILL, ctr_crash_handler);
+        signal(SIGFPE, ctr_crash_handler);
+#endif
         struct NativeNetplayArgs netplayArgs;
 
         NativeArg_DefaultNetplayArgs(&netplayArgs);

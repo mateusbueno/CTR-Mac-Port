@@ -10,6 +10,9 @@ void VehBirth_EngineAudio_AllPlayers(void)
 	struct GameTracker *gGT;
 	gGT = sdata->gGT;
 
+	if (gGT->levelID == MAIN_MENU_LEVEL || (gGT->gameMode1 & MAIN_MENU) != 0)
+		return;
+
 	for (th = gGT->threadBuckets[PLAYER].thread; th != 0; th = th->siblingThread)
 	{
 		struct Driver *d = th->object;

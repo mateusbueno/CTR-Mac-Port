@@ -36,6 +36,8 @@ enum NativeSTRFormat
 struct NativeSTRState
 {
 	FILE *file;
+	long fileStartOffset;
+	long fileEndOffset;
 	s32 active;
 	s32 format;
 	s32 loop;
@@ -527,7 +529,19 @@ internal s32 NativeSTR_ReadNextFrame(void)
 			if (s_str.loop == 0)
 				return 0;
 
-			rewind(s_str.file);
+			if (s_str.fileStartOffset > 0)
+				fseek(s_str.file, s_str.fileStartOffset, SEEK_SET);
+			else
+				rewind(s_str.file);
+			s_str.frameIndex = 0;
+		}
+
+		if ((s_str.fileEndOffset > 0) && (ftell(s_str.file) >= s_str.fileEndOffset))
+		{
+			if (s_str.loop == 0)
+				return 0;
+
+			fseek(s_str.file, s_str.fileStartOffset, SEEK_SET);
 			s_str.frameIndex = 0;
 		}
 
@@ -540,7 +554,10 @@ internal s32 NativeSTR_ReadNextFrame(void)
 		if (s_str.loop == 0)
 			return 0;
 
-		rewind(s_str.file);
+		if (s_str.fileStartOffset > 0)
+			fseek(s_str.file, s_str.fileStartOffset, SEEK_SET);
+		else
+			rewind(s_str.file);
 		s_str.frameIndex = 0;
 	}
 
@@ -598,20 +615,55 @@ s32 NativeSTR_StartTrackPreview(s32 bigfileIndex, s32 frameCount)
 
 	NativeSTR_Stop();
 
-	if (NativeSTR_ResolveBigfilePath(bigfileIndex, path, sizeof(path)) == 0)
-		return 0;
+	if (NativeSTR_ResolveBigfilePath(bigfileIndex, path, sizeof(path)) != 0)
+	{
+		s_str.file = fopen(path, "rb");
+		if (s_str.file != NULL)
+		{
+			s_str.fileStartOffset = 0;
+			s_str.fileEndOffset = 0;
+			s_str.active = 1;
+			s_str.format = NATIVE_STR_FORMAT_EXTRACTED;
+			s_str.loop = 1;
+			s_str.bigfileIndex = bigfileIndex;
+			s_str.frameIndex = 0;
+			s_str.frameLimit = frameCount;
+			return 1;
+		}
+	}
 
-	s_str.file = fopen(path, "rb");
-	if (s_str.file == NULL)
-		return 0;
+	// Fallback to packed BIGFILE.BIG
+	FILE *bf = NativeAssets_Open("BIGFILE.BIG", "rb");
+	if (bf != NULL)
+	{
+		int cdpos = 0, numEntry = 0;
+		if (fread(&cdpos, 4, 1, bf) == 1 && fread(&numEntry, 4, 1, bf) == 1)
+		{
+			if (bigfileIndex >= 0 && bigfileIndex < numEntry)
+			{
+				fseek(bf, 8 + bigfileIndex * 8, SEEK_SET);
+				int offsetSectors = 0, sizeBytes = 0;
+				if (fread(&offsetSectors, 4, 1, bf) == 1 && fread(&sizeBytes, 4, 1, bf) == 1 && sizeBytes > 0)
+				{
+					long startOff = (long)offsetSectors * 2048;
+					fseek(bf, startOff, SEEK_SET);
+					s_str.file = bf;
+					s_str.fileStartOffset = startOff;
+					s_str.fileEndOffset = startOff + sizeBytes;
+					s_str.active = 1;
+					s_str.format = NATIVE_STR_FORMAT_EXTRACTED;
+					s_str.loop = 1;
+					s_str.bigfileIndex = bigfileIndex;
+					s_str.frameIndex = 0;
+					s_str.frameLimit = frameCount;
+					return 1;
+				}
+			}
+		}
+		fclose(bf);
+	}
 
-	s_str.active = 1;
-	s_str.format = NATIVE_STR_FORMAT_EXTRACTED;
-	s_str.loop = 1;
-	s_str.bigfileIndex = bigfileIndex;
-	s_str.frameIndex = 0;
-	s_str.frameLimit = frameCount;
-	return 1;
+	return 0;
 }
 
 s32 NativeSTR_StartScrapbook(void)
@@ -642,6 +694,8 @@ void NativeSTR_Stop(void)
 		s_str.file = NULL;
 	}
 
+	s_str.fileStartOffset = 0;
+	s_str.fileEndOffset = 0;
 	s_str.active = 0;
 	s_str.format = NATIVE_STR_FORMAT_EXTRACTED;
 	s_str.loop = 0;

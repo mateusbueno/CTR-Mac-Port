@@ -315,7 +315,7 @@ void VehPickupItem_ShootNow(struct Driver *d, int weaponID, int flags)
 		if (gGT->numPlyrCurrGame < 3)
 			sps->Union.QuadBlockColl.searchFlags = 3;
 
-		sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+		SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 
 		COLL_SearchBSP_CallbackQUADBLK((u32 *)pos1, (u32 *)pos2, sps, 0x40);
 
@@ -325,14 +325,15 @@ void VehPickupItem_ShootNow(struct Driver *d, int weaponID, int flags)
 
 			RB_Hazard_CollLevInst(sps, weaponTh);
 
-			struct InstDef *instDef = sps->bspHitbox->data.hitbox.instDef;
+			struct BSP *bspHit = SPS_GET_BSPHITBOX(sps);
+			struct InstDef *instDef = BSP_HITBOX_INSTDEF(bspHit);
 
-			int modelTouched = instDef->modelID;
+			int modelTouched = (instDef != NULL) ? instDef->modelID : -1;
 
 			// fruit crate or weapon crate
 			if ((modelTouched == 7) || (modelTouched == 8))
 			{
-				mw->crateInst = instDef->ptrInstance;
+				mw->crateInst = (instDef != NULL) ? instDef->ptrInstance : NULL;
 			}
 
 			else

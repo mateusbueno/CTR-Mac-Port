@@ -8,6 +8,12 @@ void MainRaceTrack_StartLoad(s16 levelID)
 	// destroy "most" fx, let menu fx play to end
 	howl_StopAudio(1, 0, 0);
 
+	if (levelID == MAIN_MENU_LEVEL)
+	{
+		for (int i = 0; i < 24; i++)
+			EngineAudio_Stop(i);
+	}
+
 	ElimBG_Deactivate(sdata->gGT);
 
 	LOAD_LevelFile(levelID);

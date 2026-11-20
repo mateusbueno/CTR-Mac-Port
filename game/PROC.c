@@ -361,7 +361,7 @@ void PROC_PerBspLeaf_CheckInstances(struct BSP *bspLeaf, struct ScratchpadStruct
 	struct InstDef *instDef;
 	void (*callback)(struct ScratchpadStruct *, void *);
 
-	bspHitbox = bspLeaf->data.leaf.bspHitboxArray;
+	bspHitbox = BSP_LEAF_HITBOX(bspLeaf);
 	if (bspHitbox == NULL)
 		return;
 
@@ -373,8 +373,8 @@ void PROC_PerBspLeaf_CheckInstances(struct BSP *bspLeaf, struct ScratchpadStruct
 		if ((bspHitbox->flag & 0x80) == 0)
 			continue;
 
-		instDef = bspHitbox->data.hitbox.instDef;
-		if ((instDef != NULL) && ((instDef->ptrInstance->flags & 0xf) == 0))
+		instDef = BSP_HITBOX_INSTDEF(bspHitbox);
+		if ((instDef != NULL) && (instDef->ptrInstance != NULL) && ((instDef->ptrInstance->flags & 0xf) == 0))
 			continue;
 
 		distX = (int)sps->Input1.pos[0] - (int)bspHitbox->data.hitbox.unkShort[0];
@@ -402,7 +402,7 @@ void PROC_PerBspLeaf_CheckInstances(struct BSP *bspLeaf, struct ScratchpadStruct
 		sps->Union.ThBuckColl.distance[1] = distY;
 		sps->Union.ThBuckColl.distance[2] = distZ;
 
-		callback = (void (*)(struct ScratchpadStruct *, void *))sps->Union.ThBuckColl.funcCallback;
+		callback = (void (*)(struct ScratchpadStruct *, void *))SPS_GET_THBUCK_CALLBACK(sps);
 		callback(sps, bspHitbox);
 	}
 }
@@ -483,7 +483,7 @@ void PROC_CollideHitboxWithBucket(struct Thread *collThread, struct ScratchpadSt
 		sps->Union.ThBuckColl.distance[1] = distY;
 		sps->Union.ThBuckColl.distance[2] = distZ;
 
-		callback = (void (*)(struct ScratchpadStruct *, void *))sps->Union.ThBuckColl.funcCallback;
+		callback = (void (*)(struct ScratchpadStruct *, void *))SPS_GET_THBUCK_CALLBACK(sps);
 		callback(sps, collThread);
 	}
 }

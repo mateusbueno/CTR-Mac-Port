@@ -1099,14 +1099,14 @@ internal void NativeAudio_AdsrAdvance(struct NativeAudioVoice *voice)
 	{
 		int shift = voice->attr.rr & 0x1f;
 
-		if (voice->adsrLevel <= 0)
+		if (voice->adsrLevel <= 0 || shift == 0x1f)
 		{
 			NativeAudio_AdsrForceOff(voice);
 			break;
 		}
 
 		NativeAudio_AdsrRunEnvelopeStep(voice, shift, 0, NativeAudio_AdsrModeIsExponential(voice->attr.r_mode), 1,
-		                                NativeAudio_AdsrModeIsPhaseNegative(voice->attr.r_mode), shift == 0x1f);
+		                                NativeAudio_AdsrModeIsPhaseNegative(voice->attr.r_mode), 0);
 		if (voice->adsrLevel <= 0)
 			NativeAudio_AdsrForceOff(voice);
 		break;

@@ -34,11 +34,11 @@ static void LOAD_NativeAudio_SetStateAfterBankReload(u32 state)
 #endif
 
 #if defined(__LP64__)
-#define MAX_NATIVE_MODELS 256
-#define MAX_NATIVE_HEADERS 512
-#define MAX_NATIVE_ANIM_ARRAYS 512
-#define MAX_NATIVE_ANIM_OBJS 1024
-#define MAX_ANIMS_PER_HEADER 32
+#define MAX_NATIVE_MODELS 1024
+#define MAX_NATIVE_HEADERS 2048
+#define MAX_NATIVE_ANIM_ARRAYS 2048
+#define MAX_NATIVE_ANIM_OBJS 4096
+#define MAX_ANIMS_PER_HEADER 64
 
 static struct Model s_nativeModelPool[MAX_NATIVE_MODELS];
 static struct ModelHeader s_nativeHeaderPool[MAX_NATIVE_HEADERS];
@@ -174,7 +174,7 @@ static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
 static struct Level s_nativeLevel[2];
 static struct mesh_info s_nativeMeshInfo[2];
 static struct VisMem s_nativeVisMem[2];
-static struct Model *s_nativeLevModels[2][128];
+static struct Model *s_nativeLevModels[2][256];
 static struct InstDef s_nativeInstDefs[2][256];
 static struct InstDef *s_nativeInstDefPtrArray[2][256];
 static struct SpawnType1 s_nativeSpawnType1[2];
@@ -182,6 +182,9 @@ static struct SpawnType2 s_nativeSpawnType2[2][32];
 static struct SpawnType2 s_nativeSpawnType2_PosRot[2][32];
 static struct NavHeader s_nativeNavHeader[2][4];
 static struct NavHeader *s_nativeNavTable[2][4];
+#if defined(__LP64__)
+static struct VisMemBspListNode s_nativeBspList[2][4][2048];
+#endif
 
 struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
 {
@@ -202,6 +205,9 @@ struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
         #define LEV_PTR64(x32) ((x32) ? (void *)(base_hi | (uintptr_t)(uint32_t)(x32)) : NULL)
 
         memset(&s_nativeLevel[s], 0, sizeof(s_nativeLevel[s]));
+        g_nativeRawInstDefsBase[s] = 0;
+        g_nativeRawInstDefsCount[s] = 0;
+        g_nativeInstDefsPtr[s] = NULL;
 
         // 0x00: ptr_mesh_info
         uint32_t pMesh32 = raw32[0];
@@ -237,6 +243,9 @@ struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
         {
                 const uint32_t *instRaw = (const uint32_t *)LEV_PTR64(pInstDefs32);
                 uint32_t maxInst = (numInst < 256) ? numInst : 256;
+                g_nativeRawInstDefsBase[s] = (uintptr_t)instRaw;
+                g_nativeRawInstDefsCount[s] = maxInst;
+                g_nativeInstDefsPtr[s] = s_nativeInstDefs[s];
                 for (uint32_t i = 0; i < maxInst; i++)
                 {
                         const uint32_t *oneRaw = &instRaw[i * 16];
@@ -271,7 +280,7 @@ struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
         if (pModelArr32 != 0)
         {
                 const uint32_t *mPtrs32 = (const uint32_t *)LEV_PTR64(pModelArr32);
-                uint32_t count = (numModels < 127) ? numModels : 127;
+                uint32_t count = (numModels < 255) ? numModels : 255;
                 for (uint32_t i = 0; i < count; i++)
                 {
                         s_nativeLevModels[s][i] = LOAD_NativeModel_Convert(LEV_PTR64(mPtrs32[i]));
@@ -513,7 +522,11 @@ struct Level *LOAD_NativeLevel_Build(void *rawFile, int slot)
                         s_nativeVisMem[s].visFaceSrc[p] = LEV_PTR64(vm32[20 + p]);
                         s_nativeVisMem[s].visOVertSrc[p] = LEV_PTR64(vm32[24 + p]);
                         s_nativeVisMem[s].visSCVertSrc[p] = LEV_PTR64(vm32[28 + p]);
+#if defined(__LP64__)
+                        s_nativeVisMem[s].bspList[p] = s_nativeBspList[s][p];
+#else
                         s_nativeVisMem[s].bspList[p] = (struct VisMemBspListNode *)LEV_PTR64(vm32[32 + p]);
+#endif
                 }
                 s_nativeLevel[s].visMem = &s_nativeVisMem[s];
         }
@@ -550,6 +563,9 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
         {
         case 0:
         {
+#if defined(__LP64__)
+                LOAD_NativeModelPool_Reset();
+#endif
                 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8003368c-0x80033698 for loading-start volume backup/XA pause.
                 if (!boolPlayMusicDuringLoading)
                 {
@@ -841,10 +857,6 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
         {
                 // clear and reset
                 LibraryOfModels_Clear(gGT);
-
-#if defined(__LP64__)
-                LOAD_NativeModelPool_Reset();
-#endif
 
                 static struct Model *s_nativePlyrModels[128];
                 if (sdata->ptrMPK != 0)

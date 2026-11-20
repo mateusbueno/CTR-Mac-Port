@@ -60,6 +60,17 @@ void AH_WarpPad_ThTick(struct Thread *t)
 	if (visInstSrc != NULL)
 #endif
 	{
+#if defined(__LP64__)
+		const u32 *visInst32 = (const u32 *)visInstSrc;
+		for (; *visInst32 != 0; visInst32++)
+		{
+			if (LEV_ResolveVisInst(*visInst32) == warppadInst)
+			{
+				boolOpen = 1;
+				break;
+			}
+		}
+#else
 		while (visInstSrc[0] != 0)
 		{
 			if (visInstSrc[0] == warppadInst)
@@ -70,6 +81,7 @@ void AH_WarpPad_ThTick(struct Thread *t)
 
 			visInstSrc++;
 		}
+#endif
 	}
 
 	// array of instances in warppad object

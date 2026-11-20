@@ -15,7 +15,11 @@ struct BspSearchVertex
 	u16 flags;
 
 	// 0x8
+#if defined(__LP64__)
+	u32 pLevelVertex;
+#else
 	struct LevVertex *pLevelVertex;
+#endif
 
 	// 0xC
 	s16 normalVec[4];
@@ -25,7 +29,11 @@ struct BspSearchVertex
 
 struct BspSearchTriangle
 {
+#if defined(__LP64__)
+	u32 quadblock;
+#else
 	struct QuadBlock *quadblock;
+#endif
 	int triangleID;
 	int numCollision;
 };
@@ -89,7 +97,11 @@ struct ScratchpadStruct
 			s16 unk;
 
 			// 0x18
+#if defined(__LP64__)
+			u32 thread;
+#else
 			struct Thread *thread;
+#endif
 
 			// 0x1c
 			s16 min[3];
@@ -97,13 +109,21 @@ struct ScratchpadStruct
 
 			// 0x28
 			// could be non-union 0x28
+#if defined(__LP64__)
+			u32 funcCallback;
+#else
 			void *funcCallback;
+#endif
 
 		} ThBuckColl;
 	} Union;
 
 	// 0x2C
+#if defined(__LP64__)
+	u32 ptr_mesh_info;
+#else
 	struct mesh_info *ptr_mesh_info;
+#endif
 
 	// 0x30
 	struct BoundingBox bbox;
@@ -123,10 +143,18 @@ struct ScratchpadStruct
 	s16 boolDidTouchHitbox;
 
 	// 0x44
+#if defined(__LP64__)
+	u32 ptr_mesh_info_2;
+#else
 	struct mesh_info *ptr_mesh_info_2;
+#endif
 
 	// 0x48
+#if defined(__LP64__)
+	u32 bspHitbox;
+#else
 	struct BSP *bspHitbox;
+#endif
 
 	// 0x4c
 	struct
@@ -150,7 +178,11 @@ struct ScratchpadStruct
 		char unk63_someIndex;
 
 		// 0x64
+#if defined(__LP64__)
+		u32 ptrQuadblock;
+#else
 		void *ptrQuadblock;
+#endif
 
 	} Set1;
 
@@ -172,7 +204,11 @@ struct ScratchpadStruct
 		char unk[8];
 
 		// 0x80
+#if defined(__LP64__)
+		u32 ptrQuadblock;
+#else
 		struct QuadBlock *ptrQuadblock;
+#endif
 
 	} Set2;
 
@@ -182,7 +218,11 @@ struct ScratchpadStruct
 	// 0x88
 	// This can happen 15 times cause of FUN_80020410,
 	// so this prevents any duplicate collisions
+#if defined(__LP64__)
+	u32 bspInstHitboxArr[15];
+#else
 	struct BSP *bspInstHitboxArr[15];
+#endif
 
 	// 0xc4
 	int numInstHitboxesHit;
@@ -191,10 +231,18 @@ struct ScratchpadStruct
 	s16 barycentrics[2];
 
 	// 0xcc, 0xd0, 0xd4
+#if defined(__LP64__)
+	u32 levVertHit[3];
+#else
 	struct LevVertex *levVertHit[3];
+#endif
 
 	// 0xd8, 0xdc, 0xe0
+#if defined(__LP64__)
+	u32 bspSearchVertHit[3];
+#else
 	struct BspSearchVertex *bspSearchVertHit[3];
+#endif
 
 	// 0xe4
 	int unkE4;
@@ -256,3 +304,40 @@ _Static_assert(sizeof(struct BoundingBox) == 0xC);
 _Static_assert(sizeof(struct BspSearchVertex) == 0x14);
 _Static_assert(sizeof(struct BspSearchTriangle) == 0xC);
 _Static_assert(sizeof(struct ScratchpadStruct) == 0x20C);
+
+#if defined(__LP64__)
+void *LEV_PTR64_RESOLVE(u32 x32);
+#define SPS_GET_QUADBLOCK(val) ((struct QuadBlock *)LEV_PTR64_RESOLVE((u32)(val)))
+#define SPS_SET_QUADBLOCK(dest, qb) ((dest) = (u32)(uintptr_t)(qb))
+#define SPS_GET_SET1_QUAD(sps) SPS_GET_QUADBLOCK((sps)->Set1.ptrQuadblock)
+#define SPS_SET_SET1_QUAD(sps, qb) SPS_SET_QUADBLOCK((sps)->Set1.ptrQuadblock, (qb))
+#define SPS_GET_SET2_QUAD(sps) SPS_GET_QUADBLOCK((sps)->Set2.ptrQuadblock)
+#define SPS_SET_SET2_QUAD(sps, qb) SPS_SET_QUADBLOCK((sps)->Set2.ptrQuadblock, (qb))
+#define SPS_GET_MESHINFO(sps) ((struct mesh_info *)LEV_PTR64_RESOLVE((u32)(sps)->ptr_mesh_info))
+#define SPS_SET_MESHINFO(sps, m) ((sps)->ptr_mesh_info = (u32)(uintptr_t)(m))
+#define SPS_GET_BSPHITBOX(sps) ((struct BSP *)LEV_PTR64_RESOLVE((u32)(sps)->bspHitbox))
+#define SPS_SET_BSPHITBOX(sps, b) ((sps)->bspHitbox = (u32)(uintptr_t)(b))
+#define BSV_GET_LEVVERT(bsv) ((struct LevVertex *)LEV_PTR64_RESOLVE((u32)(bsv)->pLevelVertex))
+#define BSV_SET_LEVVERT(bsv, ptr) ((bsv)->pLevelVertex = (u32)(uintptr_t)(ptr))
+#define SPS_GET_THBUCK_THREAD(sps) ((struct Thread *)LEV_PTR64_RESOLVE((u32)(sps)->Union.ThBuckColl.thread))
+#define SPS_SET_THBUCK_THREAD(sps, t) ((sps)->Union.ThBuckColl.thread = (u32)(uintptr_t)(t))
+#define SPS_GET_THBUCK_CALLBACK(sps) ((void *)(((uintptr_t)&sdata & 0xFFFFFFFF00000000ULL) | (uintptr_t)(u32)(sps)->Union.ThBuckColl.funcCallback))
+#define SPS_SET_THBUCK_CALLBACK(sps, cb) ((sps)->Union.ThBuckColl.funcCallback = (u32)(uintptr_t)(cb))
+#else
+#define SPS_GET_QUADBLOCK(val) ((struct QuadBlock *)(val))
+#define SPS_SET_QUADBLOCK(dest, qb) ((dest) = (qb))
+#define SPS_GET_SET1_QUAD(sps) ((struct QuadBlock *)(sps)->Set1.ptrQuadblock)
+#define SPS_SET_SET1_QUAD(sps, qb) ((sps)->Set1.ptrQuadblock = (qb))
+#define SPS_GET_SET2_QUAD(sps) ((sps)->Set2.ptrQuadblock)
+#define SPS_SET_SET2_QUAD(sps, qb) ((sps)->Set2.ptrQuadblock = (qb))
+#define SPS_GET_MESHINFO(sps) ((sps)->ptr_mesh_info)
+#define SPS_SET_MESHINFO(sps, m) ((sps)->ptr_mesh_info = (m))
+#define SPS_GET_BSPHITBOX(sps) ((sps)->bspHitbox)
+#define SPS_SET_BSPHITBOX(sps, b) ((sps)->bspHitbox = (b))
+#define BSV_GET_LEVVERT(bsv) ((bsv)->pLevelVertex)
+#define BSV_SET_LEVVERT(bsv, ptr) ((bsv)->pLevelVertex = (ptr))
+#define SPS_GET_THBUCK_THREAD(sps) ((sps)->Union.ThBuckColl.thread)
+#define SPS_SET_THBUCK_THREAD(sps, t) ((sps)->Union.ThBuckColl.thread = (t))
+#define SPS_GET_THBUCK_CALLBACK(sps) ((sps)->Union.ThBuckColl.funcCallback)
+#define SPS_SET_THBUCK_CALLBACK(sps, cb) ((sps)->Union.ThBuckColl.funcCallback = (cb))
+#endif

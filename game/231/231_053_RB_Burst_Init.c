@@ -157,8 +157,8 @@ void RB_Burst_Init(struct Instance *weaponInst)
 
 	sps->Input1.modelID = modelID;
 
-	sps->Union.ThBuckColl.thread = weaponInst->thread;
-	sps->Union.ThBuckColl.funcCallback = RB_Burst_CollThBucket;
+	SPS_SET_THBUCK_THREAD(sps, weaponInst->thread);
+	SPS_SET_THBUCK_CALLBACK(sps, RB_Burst_CollThBucket);
 
 	struct Thread *driverTh = tw->driverParent->instSelf->thread;
 
@@ -174,7 +174,7 @@ void RB_Burst_Init(struct Instance *weaponInst)
 	// check collision with all Tracking thread
 	PROC_CollideHitboxWithBucket(gGT->threadBuckets[TRACKING].thread, sps, 0);
 
-	sps->Union.ThBuckColl.funcCallback = RB_Burst_CollLevInst;
+	SPS_SET_THBUCK_CALLBACK(sps, RB_Burst_CollLevInst);
 
 	PROC_StartSearch_Self(sps);
 	return;

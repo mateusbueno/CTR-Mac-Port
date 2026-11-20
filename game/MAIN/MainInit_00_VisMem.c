@@ -9,6 +9,10 @@ static void MainInit_InitVisMemBspListNodes(struct VisMem *visMem, struct mesh_i
         if (mesh == NULL || mesh->bspRoot == NULL)
                 return;
 
+        int numNodes = mesh->numBspNodes;
+        if (numNodes > 2048)
+                numNodes = 2048;
+
         for (int playerIndex = 0; playerIndex < 4; playerIndex++)
         {
                 struct VisMemBspListNode *bspList = visMem->bspList[playerIndex];
@@ -16,7 +20,7 @@ static void MainInit_InitVisMemBspListNodes(struct VisMem *visMem, struct mesh_i
                 if (bspList == NULL)
                         continue;
 
-                for (int bspIndex = 0; bspIndex < mesh->numBspNodes; bspIndex++)
+                for (int bspIndex = 0; bspIndex < numNodes; bspIndex++)
                 {
                         // NOTE(aalhendi): Native 226 reads the retained BSP pointer; RenderLists only rewrites the link word.
                         bspList[bspIndex].next = NULL;

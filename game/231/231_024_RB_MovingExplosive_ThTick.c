@@ -286,7 +286,7 @@ tw->framesSeekMine--;
                 sps->Union.QuadBlockColl.searchFlags = 0x43;
         }
 
-        sps->ptr_mesh_info = gGT->level1->ptr_mesh_info;
+        SPS_SET_MESHINFO(sps, gGT->level1->ptr_mesh_info);
 
         COLL_SearchBSP_CallbackQUADBLK((u32 *)&posA, (u32 *)&posB, sps, 0);
 
@@ -372,10 +372,10 @@ tw->framesSeekMine--;
                 if (ret == 1)
                 {
                         struct InstDef *instDef;
-                        struct BSP *bspHitbox = sps->bspHitbox;
+                        struct BSP *bspHitbox = SPS_GET_BSPHITBOX(sps);
 
                         // copy/paste from Potion_InAir
-                        if ((((bspHitbox->flag & 0x80) != 0) && (instDef = bspHitbox->data.hitbox.instDef, instDef != 0)) &&
+                        if (((bspHitbox != NULL && (bspHitbox->flag & 0x80) != 0) && (instDef = BSP_HITBOX_INSTDEF(bspHitbox), instDef != 0)) &&
 
                             (((instDef->ptrInstance != 0) && (instDef->modelID == STATIC_TEETH))))
                         {

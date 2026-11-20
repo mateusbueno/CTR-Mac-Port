@@ -13,7 +13,7 @@ void RB_Default_LInB(struct Instance *inst)
 	sps->Union.QuadBlockColl.searchFlags = 2;
 	sps->Union.QuadBlockColl.qbFlagsWanted = 0x3000;
 	sps->Union.QuadBlockColl.qbFlagsIgnored = 0;
-	sps->ptr_mesh_info = sdata->gGT->level1->ptr_mesh_info;
+	SPS_SET_MESHINFO(sps, sdata->gGT->level1->ptr_mesh_info);
 
 	// Make a hitbox
 	var = inst->matrix.t[0];

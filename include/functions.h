@@ -296,6 +296,8 @@ void JitPool_Remove(struct JitPool *AP, struct Item *item);
 // LevInstDef
 void LevInstDef_UnPack(struct mesh_info *ptr_mesh_info);
 void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub);
+struct InstDef *BSP_HitboxInstDef(const struct BSP *bsp);
+#define BSP_HITBOX_INSTDEF(bsp) BSP_HitboxInstDef(bsp)
 
 struct Instance *LinkedCollide_Hitbox_Desc(struct HitboxDesc *objBoxDesc);
 struct Instance *LinkedCollide_Hitbox(struct Instance *objInst, struct Thread *_objTh, struct Thread *thBucket, struct BoundingBox bbox);

@@ -24,11 +24,8 @@ struct ChannelStats *Channel_AllocSlot(int flags, struct ChannelAttr *attr)
 	// make new ChanenlAttr
 	newAttr = &sdata->channelAttrNew[stats->channelID];
 
-	// copy all 0x10 bytes in ChannelAttr
-	for (i = 0; i < 4; i++)
-	{
-		((int *)newAttr)[i] = ((int *)attr)[i];
-	}
+	// copy all fields in ChannelAttr
+	*newAttr = *attr;
 
 	stats->flags = 1;
 

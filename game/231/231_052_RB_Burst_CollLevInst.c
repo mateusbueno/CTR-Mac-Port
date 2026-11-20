@@ -8,7 +8,7 @@ void RB_Burst_CollLevInst(struct ScratchpadStruct *sps, struct BSP *bspHitbox)
 	struct InstDef *instdef;
 	struct MetaDataMODEL *meta;
 
-	instdef = bspHitbox->data.hitbox.instDef;
+	instdef = BSP_HITBOX_INSTDEF(bspHitbox);
 	if (instdef == NULL)
 		return;
 
@@ -32,7 +32,7 @@ void RB_Burst_CollLevInst(struct ScratchpadStruct *sps, struct BSP *bspHitbox)
 		if (meta->LInC == NULL)
 			return;
 
-		meta->LInC(inst, sps->Union.ThBuckColl.thread, sps);
+		meta->LInC(inst, SPS_GET_THBUCK_THREAD(sps), sps);
 		return;
 	}
 

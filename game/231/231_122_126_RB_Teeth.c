@@ -50,7 +50,7 @@ void RB_Teeth_BSP_Callback(struct ScratchpadStruct *sps, struct Thread *weaponTh
 		}
 	}
 
-	teethTh = sps->Union.ThBuckColl.thread;
+	teethTh = SPS_GET_THBUCK_THREAD(sps);
 
 	weaponInst = weaponThread->inst;
 
@@ -186,8 +186,8 @@ void RB_Teeth_ThTick(struct Thread *t)
 
 	SPS->Input1.modelID = STATIC_TEETH;
 
-	SPS->Union.ThBuckColl.thread = t;
-	SPS->Union.ThBuckColl.funcCallback = RB_Teeth_BSP_Callback;
+	SPS_SET_THBUCK_THREAD(SPS, t);
+	SPS_SET_THBUCK_CALLBACK(SPS, RB_Teeth_BSP_Callback);
 
 	// If door wants to close, but Player or Mine
 	// is in the way, then do not force the doors to close

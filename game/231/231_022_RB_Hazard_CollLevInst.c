@@ -10,10 +10,11 @@ u16 RB_Hazard_CollLevInst(struct ScratchpadStruct *sps, struct Thread *th)
 	struct MetaDataMODEL *meta;
 
 	// Check if the hitbox flag has the collision bit set and if InstDef is not NULL
-	if ((sps->bspHitbox->flag & 0x80) && (instdef = sps->bspHitbox->data.hitbox.instDef) != NULL)
+	struct BSP *bspHit = SPS_GET_BSPHITBOX(sps);
+	if (bspHit != NULL && (bspHit->flag & 0x80) && (instdef = BSP_HITBOX_INSTDEF(bspHit)) != NULL)
 	{
 		inst = instdef->ptrInstance;
-		if (inst == NULL)
+		if (inst == NULL || inst->model == NULL)
 			return 1;
 
 		model = inst->model->id;

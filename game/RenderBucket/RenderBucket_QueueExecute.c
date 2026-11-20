@@ -1850,10 +1850,22 @@ void *RenderBucket_QueueLevInstances(struct CameraDC *cDC, u_long *otMem, void *
 		if (visInstSrc == 0)
 			continue;
 
+#if defined(__LP64__)
+		const u32 *visInst32 = (const u32 *)visInstSrc;
+		for (; *visInst32 != 0; visInst32++)
+		{
+			struct Instance *inst = LEV_ResolveVisInst(*visInst32);
+			if (inst != NULL)
+			{
+				entry = RenderBucket_QueueDraw(inst, entry, player, lodMask, gameMode1, &queueState);
+			}
+		}
+#else
 		for (; *visInstSrc != 0; visInstSrc++)
 		{
 			entry = RenderBucket_QueueDraw(*visInstSrc, entry, player, lodMask, gameMode1, &queueState);
 		}
+#endif
 	}
 
 #ifdef CTR_NATIVE
@@ -2237,8 +2249,10 @@ static u_long *RenderBucket_GetNormalOTEntry(int activeRange, int depthMac0)
 	// range producer here; native intentionally does not clamp to depthOffset
 	// because that would mask producer/consumer depth mismatches.
 #if defined(__LP64__)
-	uintptr_t fullRange = 0x100000000ULL | (u32)activeRange;
-	return (u_long *)fullRange + depthBin;
+	uintptr_t base_hi = (uintptr_t)g_gpuArenaBase & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	uintptr_t fullRange = base_hi | (u32)(activeRange + (depthBin << 2));
+	return (u_long *)fullRange;
 #else
 	return (u_long *)activeRange + depthBin;
 #endif
@@ -2257,8 +2271,10 @@ static u_long *RenderBucket_GetClampedOTEntry(struct RenderBucketDrawContext *ct
 		depthBin = ctx->idpp->depthOffset[1];
 
 #if defined(__LP64__)
-	uintptr_t fullRange = 0x100000000ULL | (u32)activeRange;
-	return (u_long *)fullRange + depthBin;
+	uintptr_t base_hi = (uintptr_t)g_gpuArenaBase & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = 0x100000000ULL;
+	uintptr_t fullRange = base_hi | (u32)(activeRange + (depthBin << 2));
+	return (u_long *)fullRange;
 #else
 	return (u_long *)activeRange + depthBin;
 #endif
@@ -2460,6 +2476,7 @@ static struct TextureLayout *RenderBucket_GetCommandTexture(struct RenderBucketD
 	if (texRel == 0)
 		return 0;
 	uintptr_t base_hi = (uintptr_t)rawTexArr & 0xFFFFFFFF00000000ULL;
+	if (base_hi == 0) base_hi = (uintptr_t)g_gpuArenaBase & 0xFFFFFFFF00000000ULL;
 	return (struct TextureLayout *)(base_hi | (uintptr_t)texRel);
 #else
 	return ctx->idpp->ptrTexLayout[texIndex - 1];
