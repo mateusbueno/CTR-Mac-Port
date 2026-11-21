@@ -65,7 +65,7 @@ s16 SubmitName_DrawMenu(u16 string)
 	}
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsTypeTimer = 0; if (!IS_NATIVE_60FPS || (s_60fpsTypeTimer ^= 1)) sdata->typeTimer++; }
+{ if FRAME_GATE_TICK() sdata->typeTimer++; }
 #else
 sdata->typeTimer++;
 #endif

@@ -65,7 +65,7 @@ void AH_HintMenu_MenuProc(struct RectMenu *menu)
 
 		if (D232.maskCooldown > 0)
 #ifdef CTR_NATIVE
-			{ static int s_60fpsHintCooldownToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsHintCooldownToggle ^= 1)) D232.maskCooldown--; }
+			{ if FRAME_GATE_TICK() D232.maskCooldown--; }
 #else
 			D232.maskCooldown--;
 #endif

@@ -223,7 +223,7 @@ void RB_Fireball_ThTick(struct Thread *t)
 	{
 		// increment frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsFireballToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsFireballToggle ^= 1)) fireInst->animFrame = fireInst->animFrame + 1; }
+		{ if FRAME_GATE_TICK() fireInst->animFrame = fireInst->animFrame + 1; }
 #else
 		fireInst->animFrame = fireInst->animFrame + 1;
 #endif

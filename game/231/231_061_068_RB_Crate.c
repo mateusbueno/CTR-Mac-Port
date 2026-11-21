@@ -84,7 +84,7 @@ void RB_CrateAny_ThTick_Explode(struct Thread *t)
         {
                 // increment frame
 #ifdef CTR_NATIVE
-                { static int s_60fpsCrateExplodeToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsCrateExplodeToggle ^= 1)) crateExplodeInst->animFrame = crateExplodeInst->animFrame + 1; }
+                { if FRAME_GATE_TICK() crateExplodeInst->animFrame = crateExplodeInst->animFrame + 1; }
 #else
                 crateExplodeInst->animFrame = crateExplodeInst->animFrame + 1;
 #endif
@@ -197,7 +197,7 @@ void RB_CrateAny_ThTick_Grow(struct Thread *t)
                 {
                         // reduce cooldown
 #ifdef CTR_NATIVE
-{ static int s_60fpsCrateCooldown = 0; if (!IS_NATIVE_60FPS || (s_60fpsCrateCooldown ^= 1)) crateObj->cooldown--; }
+{ if FRAME_GATE_TICK() crateObj->cooldown--; }
 #else
 crateObj->cooldown--;
 #endif
@@ -224,7 +224,7 @@ crateObj->cooldown--;
                 // kill thread
                 crateInst->thread = 0;
 #ifdef CTR_NATIVE
-                { static int s_60fpsCrateGrowToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsCrateGrowToggle ^= 1)) crateInst->animFrame++; }
+                { if FRAME_GATE_TICK() crateInst->animFrame++; }
 #else
                 crateInst->animFrame++;
 #endif

@@ -28,7 +28,7 @@ int DriverIndex_GetDamageColor(int iVar14)
 
 		// one frame closer to zero
 #ifdef CTR_NATIVE
-{ static int s_60fpsDamageColorInc = 0; if (!IS_NATIVE_60FPS || (s_60fpsDamageColorInc ^= 1)) d->damageColorTimer += 1; }
+{ if FRAME_GATE_TICK() d->damageColorTimer += 1; }
 #else
 d->damageColorTimer += 1;
 #endif
@@ -45,7 +45,7 @@ d->damageColorTimer += 1;
 
 		// one frame closer to zero
 #ifdef CTR_NATIVE
-{ static int s_60fpsDamageColorDec = 0; if (!IS_NATIVE_60FPS || (s_60fpsDamageColorDec ^= 1)) d->damageColorTimer -= 1; }
+{ if FRAME_GATE_TICK() d->damageColorTimer -= 1; }
 #else
 d->damageColorTimer -= 1;
 #endif

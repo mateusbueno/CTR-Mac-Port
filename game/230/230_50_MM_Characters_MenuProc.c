@@ -79,7 +79,7 @@ void MM_Characters_MenuProc(struct RectMenu *unused)
 		else
 		{
 #ifdef CTR_NATIVE
-			{ static int s_60fpsCharTransToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsCharTransToggle ^= 1)) D230.transitionFrames--; }
+			{ if FRAME_GATE_TICK() D230.transitionFrames--; }
 #else
 			D230.transitionFrames--;
 #endif

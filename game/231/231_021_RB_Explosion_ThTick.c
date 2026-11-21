@@ -11,7 +11,7 @@ void RB_Explosion_ThTick(struct Thread *t)
 	if ((frame + 1) < total)
 	{
 #ifdef CTR_NATIVE
-		{ static int s_60fpsExplosionToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsExplosionToggle ^= 1)) inst->animFrame++; }
+		{ if FRAME_GATE_TICK() inst->animFrame++; }
 #else
 		inst->animFrame++;
 #endif

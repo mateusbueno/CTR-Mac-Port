@@ -364,7 +364,7 @@ void DrawFinalLap(struct GameTracker *gGT)
                 DecalFont_DrawLineOT(sdata->lngStrings[LNG_FINAL_LAP], resultPos[0], resultPos[1], FONT_BIG, (JUSTIFY_CENTER | ORANGE), pb->ptrOT);
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsFinalLap = 0; if (!IS_NATIVE_60FPS || (s_60fpsFinalLap ^= 1)) sdata->finalLapTextTimer[i]--; }
+{ if FRAME_GATE_TICK() sdata->finalLapTextTimer[i]--; }
 #else
 sdata->finalLapTextTimer[i]--;
 #endif
@@ -562,7 +562,7 @@ void RenderAllHUD(struct GameTracker *gGT)
                                 if (gGT->overlayTransition > 1)
                                 {
 #ifdef CTR_NATIVE
-{ static int s_60fpsOverlayTrans = 0; if (!IS_NATIVE_60FPS || (s_60fpsOverlayTrans ^= 1)) gGT->overlayTransition--; }
+{ if FRAME_GATE_TICK() gGT->overlayTransition--; }
 #else
 gGT->overlayTransition--;
 #endif

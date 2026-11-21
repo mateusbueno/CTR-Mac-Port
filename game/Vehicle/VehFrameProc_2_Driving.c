@@ -129,7 +129,7 @@ void VehFrameProc_Driving(struct Thread *t, struct Driver *d)
 			}
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsAnimDrive1 = 0; if (!IS_NATIVE_60FPS || (s_60fpsAnimDrive1 ^= 1)) inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, speed, startFrame); }
+{ if FRAME_GATE_TICK() inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, speed, startFrame); }
 #else
 inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, speed, startFrame);
 #endif
@@ -180,7 +180,7 @@ inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, speed, startFrame);
 		}
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsAnimDrive2 = 0; if (!IS_NATIVE_60FPS || (s_60fpsAnimDrive2 ^= 1)) inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, targetFrame); }
+{ if FRAME_GATE_TICK() inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, targetFrame); }
 #else
 inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, targetFrame);
 #endif
@@ -193,7 +193,7 @@ inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, targetFrame);
 		u8 matrixArray;
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsAnimDrive3 = 0; if (!IS_NATIVE_60FPS || (s_60fpsAnimDrive3 ^= 1)) inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1); }
+{ if FRAME_GATE_TICK() inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1); }
 #else
 inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1);
 #endif
@@ -225,7 +225,7 @@ inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1);
 	}
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsAnimDrive4 = 0; if (!IS_NATIVE_60FPS || (s_60fpsAnimDrive4 ^= 1)) inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1); }
+{ if FRAME_GATE_TICK() inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1); }
 #else
 inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 1, numFrames - 1);
 #endif

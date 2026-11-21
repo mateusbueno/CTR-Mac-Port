@@ -128,7 +128,7 @@ void RB_Teeth_ThTick(struct Thread *t)
 	{
 		// modify animation index by direction
 #ifdef CTR_NATIVE
-		{ static int s_60fpsTeethToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsTeethToggle ^= 1)) inst->animFrame = inst->animFrame + teeth->direction; }
+		{ if FRAME_GATE_TICK() inst->animFrame = inst->animFrame + teeth->direction; }
 #else
 		inst->animFrame = inst->animFrame + teeth->direction;
 #endif

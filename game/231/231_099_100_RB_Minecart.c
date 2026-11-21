@@ -72,7 +72,7 @@ void RB_Minecart_ThTick(struct Thread *t)
 	{
 		// increment frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsMinecartToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsMinecartToggle ^= 1)) minecartInst->animFrame = minecartInst->animFrame + 1; }
+		{ if FRAME_GATE_TICK() minecartInst->animFrame = minecartInst->animFrame + 1; }
 #else
 		minecartInst->animFrame = minecartInst->animFrame + 1;
 #endif
@@ -96,7 +96,7 @@ void RB_Minecart_ThTick(struct Thread *t)
 	if (minecartObj->betweenPoints_currFrame < minecartObj->betweenPoints_numFrames)
 	{
 #ifdef CTR_NATIVE
-		{ static int s_60fpsMinecartMove = 0; if (!IS_NATIVE_60FPS || (s_60fpsMinecartMove ^= 1)) minecartObj->betweenPoints_currFrame++; }
+		{ if FRAME_GATE_TICK() minecartObj->betweenPoints_currFrame++; }
 #else
 		minecartObj->betweenPoints_currFrame++;
 #endif

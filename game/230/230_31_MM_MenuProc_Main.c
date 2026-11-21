@@ -36,7 +36,7 @@ void MM_MenuProc_Main(struct RectMenu *mainMenu)
 			if (sdata->gGamepads->anyoneHeldCurr == 0)
 			{
 #ifdef CTR_NATIVE
-			{ static int s_60fpsDemoToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsDemoToggle ^= 1)) gGT->demoCountdownTimer--; }
+			{ if FRAME_GATE_TICK() gGT->demoCountdownTimer--; }
 #else
 			gGT->demoCountdownTimer--;
 #endif

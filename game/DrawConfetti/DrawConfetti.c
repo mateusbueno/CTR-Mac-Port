@@ -253,7 +253,7 @@ void DrawConfetti(struct PushBuffer *pb, struct PrimMem *primMem, void *confetti
 		u32 angleWord;
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsConfettiCycle = 0; if (!IS_NATIVE_60FPS || (s_60fpsConfettiCycle ^= 1)) cycle--; }
+{ if FRAME_GATE_TICK() cycle--; }
 #else
 cycle--;
 #endif

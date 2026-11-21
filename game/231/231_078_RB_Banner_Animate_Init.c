@@ -67,7 +67,7 @@ int RB_Banner_Animate_Init(struct ModelHeader *mh)
 				xQuarter = vertex[0] >> 2;
 				vertex += 3;
 #ifdef CTR_NATIVE
-				{ static int s_60fpsBannerToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsBannerToggle ^= 1)) count++; }
+				{ if FRAME_GATE_TICK() count++; }
 #else
 				count++;
 #endif
@@ -95,7 +95,7 @@ int RB_Banner_Animate_Init(struct ModelHeader *mh)
 				xQuarter = vertex[0] >> 2;
 				vertex += 3;
 #ifdef CTR_NATIVE
-				{ static int s_60fpsBannerToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsBannerToggle ^= 1)) count++; }
+				{ if FRAME_GATE_TICK() count++; }
 #else
 				count++;
 #endif

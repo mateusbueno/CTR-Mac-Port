@@ -96,6 +96,14 @@ void AH_MaskHint_Update()
 		struct Instance *dInst = d->instSelf;
 		sdata->instMaskHints3D = VehTalkMask_Init();
 		struct Instance *mhInst = sdata->instMaskHints3D;
+#ifdef CTR_NATIVE
+		if (mhInst == NULL)
+		{
+			/* instance pool exhausted: skip this hint instead of crashing */
+			sdata->AkuAkuHintState = 0;
+			return;
+		}
+#endif
 
 		CTR_MatrixToRot((SVECTOR *)rot, &dInst->matrix, 0x11);
 
@@ -255,7 +263,7 @@ void AH_MaskHint_Update()
 		AH_MaskHint_LerpVol(0);
 
 #ifdef CTR_NATIVE
-		{ static int s_60fpsMaskWarppadToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsMaskWarppadToggle ^= 1)) D232.maskWarppadDelayFrames--; }
+		{ if FRAME_GATE_TICK() D232.maskWarppadDelayFrames--; }
 #else
 		D232.maskWarppadDelayFrames--;
 #endif

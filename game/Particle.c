@@ -336,7 +336,7 @@ void Particle_UpdateList(struct Particle **listHead, struct Particle *p)
 		struct ParticleOscillator *osc;
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsParticleLife = 0; if (!IS_NATIVE_60FPS || (s_60fpsParticleLife ^= 1)) p->framesLeftInLife = (s16)(p->framesLeftInLife - 1); }
+{ if FRAME_GATE_TICK() p->framesLeftInLife = (s16)(p->framesLeftInLife - 1); }
 #else
 p->framesLeftInLife = (s16)(p->framesLeftInLife - 1);
 #endif
@@ -379,11 +379,15 @@ p->framesLeftInLife = (s16)(p->framesLeftInLife - 1);
 			axisFlags = (axisFlags & 0xfffeffffu) >> 1;
 		}
 
+#if !defined(__LP64__)
+		/* On LP64 retail code addresses are unusable, Particle_Init always leaves
+		   funcPtr NULL; a non-NULL value means the particle was corrupted. */
 		if (p->funcPtr != NULL)
 		{
 			void (*funcPtr)(struct Particle *) = (void (*)(struct Particle *))p->funcPtr;
 			funcPtr(p);
 		}
+#endif
 
 		activeFlags = p->flagsAxis;
 
@@ -413,6 +417,29 @@ p->framesLeftInLife = (s16)(p->framesLeftInLife - 1);
 	}
 }
 
+
+#ifdef CTR_NATIVE
+/* Drop every live particle (used on adventure hub swap: they reference the old hub's icons). */
+void Particle_NativeClearAll(void)
+{
+	struct GameTracker *gGT = sdata->gGT;
+	struct Particle **lists[2] = {(struct Particle **)&gGT->particleList_ordinary, (struct Particle **)&gGT->particleList_heatWarp};
+
+	for (int i = 0; i < 2; i++)
+	{
+		struct Particle *p = *lists[i];
+		while (p != NULL)
+		{
+			struct Particle *next = p->next;
+			Particle_OnDestroy(p);
+			LIST_AddFront(&gGT->JitPools.particle.free, (struct Item *)p);
+			gGT->numParticles--;
+			p = next;
+		}
+		*lists[i] = NULL;
+	}
+}
+#endif
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8003f434-0x8003f48c.
 void Particle_UpdateAllParticles(void)

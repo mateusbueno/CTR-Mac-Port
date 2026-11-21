@@ -19,7 +19,62 @@ void LOAD_Hub_SwapNow()
 	// ptrintf("gGT->level2 = 0x%08x\n",gGT->level2);
 	// ptrintf("SWAPPING 1...\n");
 
+#ifdef CTR_NATIVE
+	{
+		extern void Particle_NativeClearAll(void);
+		Particle_NativeClearAll();
+	}
+	/* Instances still alive that use a model of the hub we are leaving would draw freed
+	 * model data after the swap (stray dots / render crash). Kill them with the old hub. */
+	{
+		struct Level *oldLev = gGT->level1;
+		struct JitPool *ip = &gGT->JitPools.instance;
+		int killedThreads = 0, killedBare = 0;
+
+		if (oldLev != NULL && oldLev->ptrModelsPtrArray != NULL)
+		{
+			struct Item *it = ip->taken.first;
+			while (it != NULL && !CTR_BAD_PTR(it))
+			{
+				struct Item *next = it->next;
+				struct Instance *ti = (struct Instance *)it;
+				int isOld = 0;
+
+				for (int m = 0; m < oldLev->numModels; m++)
+				{
+					if (oldLev->ptrModelsPtrArray[m] != NULL && oldLev->ptrModelsPtrArray[m] == ti->model)
+					{
+						isOld = 1;
+						break;
+					}
+				}
+
+				if (isOld)
+				{
+					if (!CTR_BAD_PTR(ti->thread) && (((uintptr_t)ti->thread & 3) == 0))
+					{
+						ti->thread->flags |= 0x800;
+						killedThreads++;
+					}
+					else
+					{
+						INSTANCE_Death(ti);
+						killedBare++;
+					}
+				}
+				it = next;
+			}
+		}
+		fprintf(stderr, "[CTR Native] HubSwap: killed %d threaded + %d bare old-hub instances\n", killedThreads, killedBare);
+	}
+	fprintf(stderr, "[CTR Native] HubSwap: before RePack instance pool free=%d taken=%d max=%d\n",
+	        (int)gGT->JitPools.instance.free.count, (int)gGT->JitPools.instance.taken.count, gGT->JitPools.instance.maxItems);
+#endif
 	LevInstDef_RePack(gGT->level1->ptr_mesh_info, 1);
+#ifdef CTR_NATIVE
+	fprintf(stderr, "[CTR Native] HubSwap: after RePack free=%d taken=%d\n",
+	        (int)gGT->JitPools.instance.free.count, (int)gGT->JitPools.instance.taken.count);
+#endif
 
 	// Aug 5
 	// ptrintf("SWAPPING 2...\n");
@@ -67,6 +122,10 @@ void LOAD_Hub_SwapNow()
 		LibraryOfModels_Store(gGT, level1->numModels, level1->ptrModelsPtrArray);
 
 		INSTANCE_LevInitAll(level1->ptrInstDefs, level1->numInstances);
+#ifdef CTR_NATIVE
+		fprintf(stderr, "[CTR Native] HubSwap: after LevInitAll(%d) free=%d taken=%d\n", (int)level1->numInstances,
+		        (int)gGT->JitPools.instance.free.count, (int)gGT->JitPools.instance.taken.count);
+#endif
 
 		LevInstDef_UnPack(level1->ptr_mesh_info);
 

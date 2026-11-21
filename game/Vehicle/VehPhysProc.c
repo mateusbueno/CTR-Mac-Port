@@ -137,7 +137,7 @@ void VehPhysProc_Driving_PhysLinear(struct Thread *thread, struct Driver *driver
 
 	if (0 < driver->jump_TenBuffer)
 #ifdef CTR_NATIVE
-	{ static int s_60fpsJumpBuffer = 0; if (!IS_NATIVE_60FPS || (s_60fpsJumpBuffer ^= 1)) driver->jump_TenBuffer--; }
+	{ if FRAME_GATE_TICK() driver->jump_TenBuffer--; }
 #else
 		driver->jump_TenBuffer--;
 #endif
@@ -329,7 +329,7 @@ void VehPhysProc_Driving_PhysLinear(struct Thread *thread, struct Driver *driver
 		// if Item roll is not done
 		else
 #ifdef CTR_NATIVE
-		{ static int s_60fpsItemRollTimer = 0; if (!IS_NATIVE_60FPS || (s_60fpsItemRollTimer ^= 1)) driver->itemRollTimer--; }
+		{ if FRAME_GATE_TICK() driver->itemRollTimer--; }
 #else
 			driver->itemRollTimer--;
 #endif
@@ -358,7 +358,7 @@ void VehPhysProc_Driving_PhysLinear(struct Thread *thread, struct Driver *driver
 		}
 
 #ifdef CTR_NATIVE
-	{ static int s_60fpsNoItemTimer = 0; if (!IS_NATIVE_60FPS || (s_60fpsNoItemTimer ^= 1)) driver->noItemTimer = noItemTimer - 1; }
+	{ if FRAME_GATE_TICK() driver->noItemTimer = noItemTimer - 1; }
 #else
 		driver->noItemTimer = noItemTimer - 1;
 #endif
@@ -1551,7 +1551,7 @@ void VehPhysProc_PowerSlide_PhysAngular(struct Thread *th, struct Driver *driver
 		if (iVar15 < 1)
 		{
 #ifdef CTR_NATIVE
-			{ static int s_60fpsNumFramesDriftingDec = 0; if (!IS_NATIVE_60FPS || (s_60fpsNumFramesDriftingDec ^= 1)) driver->KartStates.Drifting.numFramesDrifting--; }
+			{ if FRAME_GATE_TICK() driver->KartStates.Drifting.numFramesDrifting--; }
 #else
 			driver->KartStates.Drifting.numFramesDrifting--;
 #endif
@@ -1564,7 +1564,7 @@ void VehPhysProc_PowerSlide_PhysAngular(struct Thread *th, struct Driver *driver
 		else
 		{
 #ifdef CTR_NATIVE
-			{ static int s_60fpsNumFramesDriftingInc = 0; if (!IS_NATIVE_60FPS || (s_60fpsNumFramesDriftingInc ^= 1)) driver->KartStates.Drifting.numFramesDrifting++; }
+			{ if FRAME_GATE_TICK() driver->KartStates.Drifting.numFramesDrifting++; }
 #else
 			driver->KartStates.Drifting.numFramesDrifting++;
 #endif
@@ -1727,7 +1727,7 @@ LAB_800632cc:
 	else
 	{
 #ifdef CTR_NATIVE
-		{ static int s_60fpsUnk3D4 = 0; if (!IS_NATIVE_60FPS || (s_60fpsUnk3D4 ^= 1)) driver->unk3D4[2]--; }
+		{ if FRAME_GATE_TICK() driver->unk3D4[2]--; }
 #else
 		driver->unk3D4[2]--;
 #endif
@@ -2099,7 +2099,7 @@ void VehPhysProc_SlamWall_Animate(struct Thread *t, struct Driver *d)
 	struct Instance *inst = t->inst;
 
 #ifdef CTR_NATIVE
-	{ static int s_60fpsAnimFrameVeh = 0; if (!IS_NATIVE_60FPS || (s_60fpsAnimFrameVeh ^= 1)) inst->animFrame++; }
+	{ if FRAME_GATE_TICK() inst->animFrame++; }
 #else
 	inst->animFrame++;
 #endif
@@ -2502,7 +2502,7 @@ void VehPhysProc_SpinStop_Animate(struct Thread *t, struct Driver *d)
 		if (d->KartStates.Spinning.spinDir == -1)
 		{
 #ifdef CTR_NATIVE
-			{ static int s_60fpsAnimFrame5 = 0; if (!IS_NATIVE_60FPS || (s_60fpsAnimFrame5 ^= 1)) inst->animFrame += 5; }
+			{ if FRAME_GATE_TICK() inst->animFrame += 5; }
 #else
 			inst->animFrame += 5;
 #endif
@@ -2530,7 +2530,7 @@ void VehPhysProc_SpinStop_Animate(struct Thread *t, struct Driver *d)
 
 		int targetFrame = VehFrameInst_GetStartFrame(0, numFrames);
 #ifdef CTR_NATIVE
-	{ static int s_60fpsInterpBySpeed = 0; if (!IS_NATIVE_60FPS || (s_60fpsInterpBySpeed ^= 1)) inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 2, targetFrame); }
+	{ if FRAME_GATE_TICK() inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 2, targetFrame); }
 #else
 		inst->animFrame = VehCalc_InterpBySpeed(inst->animFrame, 2, targetFrame);
 #endif

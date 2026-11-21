@@ -55,7 +55,7 @@ void RB_ShieldDark_ThTick_Pop(struct Thread *t)
 
 		// next frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsShieldPopToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsShieldPopToggle ^= 1)) sh->animFrame += 1; }
+		{ if FRAME_GATE_TICK() sh->animFrame += 1; }
 #else
 		sh->animFrame += 1;
 #endif

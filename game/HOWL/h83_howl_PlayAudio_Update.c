@@ -32,7 +32,7 @@ void howl_PlayAudio_Update()
 
 			// play sound until timer runs out
 #ifdef CTR_NATIVE
-{ static int s_60fpsAudioTimeLeft = 0; if (!IS_NATIVE_60FPS || (s_60fpsAudioTimeLeft ^= 1)) curr->timeLeft -= 5; }
+{ if FRAME_GATE_TICK() curr->timeLeft -= 5; }
 #else
 curr->timeLeft -= 5;
 #endif

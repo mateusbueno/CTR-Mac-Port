@@ -69,6 +69,29 @@ struct Instance *INSTANCE_Birth3D(struct Model *model, const char *name, struct 
 	{
 		INSTANCE_Birth(inst, model, name, th, 0xf);
 	}
+#ifdef CTR_NATIVE
+	else
+	{
+		struct JitPool *ip = &sdata->gGT->JitPools.instance;
+		fprintf(stderr, "[CTR Native] INSTANCE_Birth3D: instance pool exhausted (%s) max=%d free=%d taken=%d level=%d\n",
+		        name ? name : "?", ip->maxItems, (int)ip->free.count, (int)ip->taken.count, (int)sdata->gGT->levelID);
+		{
+			/* histogram of instance names still taken, to spot what leaks */
+			char names[24][16]; int counts[24]; int n = 0;
+			for (struct Item *it = ip->taken.first; it != NULL && !CTR_BAD_PTR(it); it = it->next)
+			{
+				struct Instance *ti = (struct Instance *)it;
+				int k;
+				for (k = 0; k < n; k++)
+					if (strncmp(names[k], ti->name, 15) == 0) break;
+				if (k == n && n < 24) { strncpy(names[n], ti->name, 15); names[n][15] = 0; counts[n] = 0; n++; }
+				if (k < n) counts[k]++;
+			}
+			for (int k = 0; k < n; k++)
+				fprintf(stderr, "[CTR Native]   taken: %-15s x%d\n", names[k], counts[k]);
+		}
+	}
+#endif
 
 	return inst;
 }

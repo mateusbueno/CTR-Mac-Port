@@ -541,7 +541,7 @@ void ThTick_RunBucket(struct Thread *thread)
 		if (t->cooldownFrameCount != 0)
 		{
 #ifdef CTR_NATIVE
-{ static int s_60fpsProcCooldown = 0; if (!IS_NATIVE_60FPS || (s_60fpsProcCooldown ^= 1)) t->cooldownFrameCount--; }
+{ if FRAME_GATE_TICK() t->cooldownFrameCount--; }
 #else
 t->cooldownFrameCount--;
 #endif

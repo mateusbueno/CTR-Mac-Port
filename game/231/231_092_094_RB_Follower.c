@@ -56,7 +56,7 @@ void RB_Follower_ThTick(struct Thread *t)
 	kartState = d->kartState;
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsFollowerFrame = 0; if (!IS_NATIVE_60FPS || (s_60fpsFollowerFrame ^= 1)) fObj->frameCount--; }
+{ if FRAME_GATE_TICK() fObj->frameCount--; }
 #else
 fObj->frameCount--;
 #endif

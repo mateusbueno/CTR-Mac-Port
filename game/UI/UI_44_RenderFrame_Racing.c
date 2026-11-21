@@ -359,7 +359,7 @@ void UI_RenderFrame_Racing()
 
                                         // reduce frame counter
 #ifdef CTR_NATIVE
-{ static int s_60fpsLetterHUD = 0; if (!IS_NATIVE_60FPS || (s_60fpsLetterHUD ^= 1)) playerStruct->PickupLetterHUD.cooldown--; }
+{ if FRAME_GATE_TICK() playerStruct->PickupLetterHUD.cooldown--; }
 #else
 playerStruct->PickupLetterHUD.cooldown--;
 #endif
@@ -406,7 +406,7 @@ playerStruct->PickupLetterHUD.cooldown--;
 
                                         // Decrease remaining number of frames for this to be on screen
 #ifdef CTR_NATIVE
-{ static int s_60fpsTimeboxHUD = 0; if (!IS_NATIVE_60FPS || (s_60fpsTimeboxHUD ^= 1)) playerStruct->PickupTimeboxHUD.cooldown--; }
+{ if FRAME_GATE_TICK() playerStruct->PickupTimeboxHUD.cooldown--; }
 #else
 playerStruct->PickupTimeboxHUD.cooldown--;
 #endif
@@ -467,7 +467,7 @@ playerStruct->PickupTimeboxHUD.cooldown--;
 
                                         // subtract one from the number of frames that the animation lasts
 #ifdef CTR_NATIVE
-{ static int s_60fpsBattleHUD = 0; if (!IS_NATIVE_60FPS || (s_60fpsBattleHUD ^= 1)) playerStruct->BattleHUD.cooldown--; }
+{ if FRAME_GATE_TICK() playerStruct->BattleHUD.cooldown--; }
 #else
 playerStruct->BattleHUD.cooldown--;
 #endif

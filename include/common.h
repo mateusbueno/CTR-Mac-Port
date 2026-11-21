@@ -115,12 +115,17 @@ static inline void *CTR_PsyqMemmove(void *dest, const void *src, s32 count)
 #define FPS_HALF(x) (IS_NATIVE_60FPS ? ((x) >> 1) : (x))
 #define FPS_DOUBLE(x) (IS_NATIVE_60FPS ? ((x) << 1) : (x))
 #define FRAME_GATE(s_toggle) (!IS_NATIVE_60FPS || ((s_toggle) ^= 1))
+/* Per-tick gate shared by ALL entities: true on every other game-logic tick in native 60fps.
+   (A per-call toggle shared between entities desyncs with an even entity count.) */
+extern unsigned int g_nativeLogicTick;
+#define FRAME_GATE_TICK() (!IS_NATIVE_60FPS || ((g_nativeLogicTick & 1u) != 0))
 #else
 #define IS_NATIVE_60FPS (0)
 #define IS_INTERP_60FPS (0)
 #define FPS_HALF(x) (x)
 #define FPS_DOUBLE(x) (x)
 #define FRAME_GATE(s_toggle) (1)
+#define FRAME_GATE_TICK() (1)
 #endif
 
 #endif

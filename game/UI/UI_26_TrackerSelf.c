@@ -110,7 +110,7 @@ LAB_8004fe8c:
 	if (timer != 0)
 	{
 #ifdef CTR_NATIVE
-{ static int s_60fpsTrackerTimer = 0; if (!IS_NATIVE_60FPS || (s_60fpsTrackerTimer ^= 1)) data.trackerTimer[driverid]--; }
+{ if FRAME_GATE_TICK() data.trackerTimer[driverid]--; }
 #else
 data.trackerTimer[driverid]--;
 #endif

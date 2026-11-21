@@ -17,7 +17,7 @@ void RB_Blade_ThTick(struct Thread *t)
 	// 60fps: gate rotation to maintain 30fps rotation speed
 #ifdef CTR_NATIVE
 	static int s_60fpsBladeRotToggle = 0;
-	if (!IS_NATIVE_60FPS || (s_60fpsBladeRotToggle ^= 1))
+	if FRAME_GATE_TICK()
 		bladeObj->angle += 0x100;
 #else
 	bladeObj->angle += 0x100;

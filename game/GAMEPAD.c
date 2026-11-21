@@ -792,19 +792,19 @@ void GAMEPAD_ProcessMotors(struct GamepadSystem *gGS)
 
 			if (pad->shockFrameFreq != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsShockFreq = 0; if (!IS_NATIVE_60FPS || (s_60fpsShockFreq ^= 1)) pad->shockFrameFreq--; }
+{ if FRAME_GATE_TICK() pad->shockFrameFreq--; }
 #else
 pad->shockFrameFreq--;
 #endif
 			if (pad->shockFrameForce1 != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsShockForce1 = 0; if (!IS_NATIVE_60FPS || (s_60fpsShockForce1 ^= 1)) pad->shockFrameForce1--; }
+{ if FRAME_GATE_TICK() pad->shockFrameForce1--; }
 #else
 pad->shockFrameForce1--;
 #endif
 			if (pad->shockFrameForce2 != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsShockForce2 = 0; if (!IS_NATIVE_60FPS || (s_60fpsShockForce2 ^= 1)) pad->shockFrameForce2--; }
+{ if FRAME_GATE_TICK() pad->shockFrameForce2--; }
 #else
 pad->shockFrameForce2--;
 #endif
@@ -834,7 +834,7 @@ pad->shockFrameForce2--;
 
 		if (pad->unk44 != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsPadUnk44 = 0; if (!IS_NATIVE_60FPS || (s_60fpsPadUnk44 ^= 1)) pad->unk44--; }
+{ if FRAME_GATE_TICK() pad->unk44--; }
 #else
 pad->unk44--;
 #endif

@@ -226,7 +226,7 @@ void VehPhysGeneral_PhysAngular(struct Thread *thread, struct Driver *driver)
 		turnResistMinBitshift = driver->unk44e * turnResistMinBitshift >> 8;
 
 #ifdef CTR_NATIVE
-		{ static int s_60fpsNumFramesSteering = 0; if (!IS_NATIVE_60FPS || (s_60fpsNumFramesSteering ^= 1)) driver->numFramesSpentSteering++; }
+		{ if FRAME_GATE_TICK() driver->numFramesSpentSteering++; }
 #else
 		driver->numFramesSpentSteering++;
 #endif

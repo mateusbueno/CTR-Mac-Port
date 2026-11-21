@@ -38,7 +38,7 @@ void MainFrame_GameLogic(struct GameTracker *gGT, struct GamepadSystem *gGamepad
 			if (psVar9->clockSend)
 			{
 #ifdef CTR_NATIVE
-{ static int s_60fpsClockSend = 0; if (!IS_NATIVE_60FPS || (s_60fpsClockSend ^= 1)) psVar9->clockSend--; }
+{ if FRAME_GATE_TICK() psVar9->clockSend--; }
 #else
 psVar9->clockSend--;
 #endif
@@ -75,7 +75,7 @@ psVar9->clockSend--;
 				DISPLAY_Blur_Main(pushBuffer, -uVar3);
 #endif
 #ifdef CTR_NATIVE
-{ static int s_60fpsClockFlash = 0; if (!IS_NATIVE_60FPS || (s_60fpsClockFlash ^= 1)) psVar9->clockFlash--; }
+{ if FRAME_GATE_TICK() psVar9->clockFlash--; }
 #else
 psVar9->clockFlash--;
 #endif
@@ -88,7 +88,7 @@ psVar9->clockFlash--;
 		// Native 60fps: timer increments every other frame (30fps rate)
 		// Interpolated 60fps: GameLogic runs every other frame (handled in MainMain),
 		//   so timer already runs at 30fps naturally
-		if (!IS_NATIVE_60FPS || (s_60fpsTimerHalf ^= 1))
+		if FRAME_GATE_TICK()
 		{
 			gGT->timer = gGT->timer + 1;
 			gGT->framesInThisLEV = gGT->framesInThisLEV + 1;
@@ -426,7 +426,7 @@ psVar9->clockFlash--;
 			else
 			{
 #ifdef CTR_NATIVE
-{ static int s_60fpsCooldownPause = 0; if (!IS_NATIVE_60FPS || (s_60fpsCooldownPause ^= 1)) gGT->cooldownfromPauseUntilUnpause--; }
+{ if FRAME_GATE_TICK() gGT->cooldownfromPauseUntilUnpause--; }
 #else
 gGT->cooldownfromPauseUntilUnpause--;
 #endif
@@ -478,7 +478,7 @@ gGT->cooldownfromPauseUntilUnpause--;
 		else
 		{
 #ifdef CTR_NATIVE
-{ static int s_60fpsCooldownUnpause = 0; if (!IS_NATIVE_60FPS || (s_60fpsCooldownUnpause ^= 1)) gGT->cooldownFromUnpauseUntilPause--; }
+{ if FRAME_GATE_TICK() gGT->cooldownFromUnpauseUntilPause--; }
 #else
 gGT->cooldownFromUnpauseUntilPause--;
 #endif
@@ -534,7 +534,7 @@ gGT->cooldownFromUnpauseUntilPause--;
 				return;
 			}
 #ifdef CTR_NATIVE
-{ static int s_60fpsTimerCooldown = 0; if (!IS_NATIVE_60FPS || (s_60fpsTimerCooldown ^= 1)) gGT->unk_timerCooldown_similarTo_1d36--; }
+{ if FRAME_GATE_TICK() gGT->unk_timerCooldown_similarTo_1d36--; }
 #else
 gGT->unk_timerCooldown_similarTo_1d36--;
 #endif
@@ -552,7 +552,7 @@ gGT->unk_timerCooldown_similarTo_1d36--;
 		if (0x1e < gGT->timerEndOfRaceVS)
 		{
 #ifdef CTR_NATIVE
-{ static int s_60fpsTimerEndRace = 0; if (!IS_NATIVE_60FPS || (s_60fpsTimerEndRace ^= 1)) gGT->timerEndOfRaceVS--; }
+{ if FRAME_GATE_TICK() gGT->timerEndOfRaceVS--; }
 #else
 gGT->timerEndOfRaceVS--;
 #endif

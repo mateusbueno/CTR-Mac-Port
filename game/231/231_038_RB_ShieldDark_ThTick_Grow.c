@@ -61,7 +61,7 @@ void RB_ShieldDark_ThTick_Grow(struct Thread *th)
 	{
 		// decrease counter, make invisible when this is zero
 #ifdef CTR_NATIVE
-{ static int s_60fpsHighlightTimer = 0; if (!IS_NATIVE_60FPS || (s_60fpsHighlightTimer ^= 1)) shield->highlightTimer--; }
+{ if FRAME_GATE_TICK() shield->highlightTimer--; }
 #else
 shield->highlightTimer--;
 #endif
@@ -157,7 +157,7 @@ shield->highlightTimer--;
 
 		// next frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsShieldGrowToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsShieldGrowToggle ^= 1)) shield->animFrame++; }
+		{ if FRAME_GATE_TICK() shield->animFrame++; }
 #else
 		shield->animFrame++;
 #endif

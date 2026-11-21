@@ -105,7 +105,7 @@ LAB_800adc08:;
         {
                 if (tw->frameCount_Blind != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsFrameBlind = 0; if (!IS_NATIVE_60FPS || (s_60fpsFrameBlind ^= 1)) tw->frameCount_Blind--; }
+{ if FRAME_GATE_TICK() tw->frameCount_Blind--; }
 #else
 tw->frameCount_Blind--;
 #endif
@@ -129,7 +129,7 @@ tw->frameCount_Blind--;
                 else
                 {
 #ifdef CTR_NATIVE
-{ static int s_60fpsSeekMine = 0; if (!IS_NATIVE_60FPS || (s_60fpsSeekMine ^= 1)) tw->framesSeekMine--; }
+{ if FRAME_GATE_TICK() tw->framesSeekMine--; }
 #else
 tw->framesSeekMine--;
 #endif
@@ -203,7 +203,7 @@ tw->framesSeekMine--;
         {
                 // increment animation frame
 #ifdef CTR_NATIVE
-                { static int s_60fpsMovingExplosiveToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsMovingExplosiveToggle ^= 1)) inst->animFrame += 1; }
+                { if FRAME_GATE_TICK() inst->animFrame += 1; }
 #else
                 inst->animFrame += 1;
 #endif
@@ -406,7 +406,7 @@ tw->framesSeekMine--;
                         LAB_800ae440:
                                 if (tw->frameCount_DontHurtParent != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsDontHurtParent = 0; if (!IS_NATIVE_60FPS || (s_60fpsDontHurtParent ^= 1)) tw->frameCount_DontHurtParent--; }
+{ if FRAME_GATE_TICK() tw->frameCount_DontHurtParent--; }
 #else
 tw->frameCount_DontHurtParent--;
 #endif

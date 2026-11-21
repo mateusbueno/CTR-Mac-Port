@@ -918,7 +918,7 @@ void RECTMENU_ProcessState()
 	// unused
 	if (sdata->framesRemainingInMenu != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsFramesMenu = 0; if (!IS_NATIVE_60FPS || (s_60fpsFramesMenu ^= 1)) sdata->framesRemainingInMenu--; }
+{ if FRAME_GATE_TICK() sdata->framesRemainingInMenu--; }
 #else
 sdata->framesRemainingInMenu--;
 #endif

@@ -114,7 +114,7 @@ void GhostTape_WriteMoves(s16 raceFinished)
 	if (sdata->GhostRecording.boostCooldown1E != 0)
 	{
 #ifdef CTR_NATIVE
-{ static int s_60fpsBoostCooldown = 0; if (!IS_NATIVE_60FPS || (s_60fpsBoostCooldown ^= 1)) sdata->GhostRecording.boostCooldown1E--; }
+{ if FRAME_GATE_TICK() sdata->GhostRecording.boostCooldown1E--; }
 #else
 sdata->GhostRecording.boostCooldown1E--;
 #endif

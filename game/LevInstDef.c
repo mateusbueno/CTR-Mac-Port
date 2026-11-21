@@ -86,8 +86,18 @@ void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub)
 			struct Instance *inst = visInstSrc[0];
 			if (inst == NULL) continue;
 #if defined(__LP64__)
-			if ((uintptr_t)inst < 0x10000 || ((uintptr_t)inst & 7) != 0)
-				continue;
+			{
+				struct JitPool *ip = &sdata->gGT->JitPools.instance;
+				uintptr_t lo = (uintptr_t)ip->ptrPoolData;
+				uintptr_t hi = lo + (uintptr_t)ip->poolSize;
+				if ((uintptr_t)inst < lo || (uintptr_t)inst >= hi || ((uintptr_t)inst & 7) != 0)
+				{
+					/* Not an Instance from the pool: array slot was never unpacked or is corrupt. */
+					fprintf(stderr, "[CTR Native] LevInstDef_RePack: slot %d has non-pool pointer %p (pool %p..%p), skipping\n",
+					        (int)(visInstSrc - (struct Instance **)level1->ptrInstDefPtrArray), (void *)inst, (void *)lo, (void *)hi);
+					continue;
+				}
+			}
 #endif
 			struct InstDef *instDef = inst->instDef;
 

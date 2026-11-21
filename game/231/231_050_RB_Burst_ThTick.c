@@ -13,7 +13,7 @@ static void RB_Burst_UpdateSlot(struct Instance **slot)
 	if (nextFrame < INSTANCE_GetNumAnimFrames(inst, 0))
 	{
 #ifdef CTR_NATIVE
-		{ static int s_60fpsBurstToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsBurstToggle ^= 1)) inst->animFrame++; }
+		{ if FRAME_GATE_TICK() inst->animFrame++; }
 #else
 		inst->animFrame++;
 #endif

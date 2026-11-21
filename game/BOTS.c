@@ -1383,7 +1383,7 @@ give_this_label_a_better_name2:
 				if (botDriver->botData.botAccel != 0)
 				{
 #ifdef CTR_NATIVE
-{ static int s_60fpsBotAccel = 0; if (!IS_NATIVE_60FPS || (s_60fpsBotAccel ^= 1)) botDriver->botData.botAccel--; }
+{ if FRAME_GATE_TICK() botDriver->botData.botAccel--; }
 #else
 botDriver->botData.botAccel--;
 #endif
@@ -1483,7 +1483,7 @@ botDriver->botData.botAccel--;
 		if (botDriver->botData.ai_progress_cooldown != 0)
 		{
 #ifdef CTR_NATIVE
-{ static int s_60fpsAiProgress = 0; if (!IS_NATIVE_60FPS || (s_60fpsAiProgress ^= 1)) botDriver->botData.ai_progress_cooldown--; }
+{ if FRAME_GATE_TICK() botDriver->botData.ai_progress_cooldown--; }
 #else
 botDriver->botData.ai_progress_cooldown--;
 #endif

@@ -64,7 +64,7 @@ void RB_GenericMine_ThTick(struct Thread *t)
 	{
 		// increment animation frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsMineAnimToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsMineAnimToggle ^= 1)) inst->animFrame++; }
+		{ if FRAME_GATE_TICK() inst->animFrame++; }
 #else
 		inst->animFrame++;
 #endif
@@ -346,7 +346,7 @@ LAB_800ad17c:
 
 	if (mw->frameCount_DontHurtParent != 0)
 #ifdef CTR_NATIVE
-{ static int s_60fpsMineDontHurt = 0; if (!IS_NATIVE_60FPS || (s_60fpsMineDontHurt ^= 1)) mw->frameCount_DontHurtParent--; }
+{ if FRAME_GATE_TICK() mw->frameCount_DontHurtParent--; }
 #else
 mw->frameCount_DontHurtParent--;
 #endif

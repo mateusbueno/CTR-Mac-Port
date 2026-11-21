@@ -77,7 +77,7 @@ void MM_Title_MenuUpdate(void)
 
 		// decrease amount of time remaining in animation
 #ifdef CTR_NATIVE
-		{ static int s_60fpsTitleToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsTitleToggle ^= 1)) D230.countMeta0xD -= 1; }
+		{ if FRAME_GATE_TICK() D230.countMeta0xD -= 1; }
 #else
 		D230.countMeta0xD -= 1;
 #endif

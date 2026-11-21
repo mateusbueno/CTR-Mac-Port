@@ -11,7 +11,7 @@ void Voiceline_Update(void)
 	if (sdata->voicelineCooldown != 0)
 	{
 #ifdef CTR_NATIVE
-{ static int s_60fpsVoiceline = 0; if (!IS_NATIVE_60FPS || (s_60fpsVoiceline ^= 1)) sdata->voicelineCooldown--; }
+{ if FRAME_GATE_TICK() sdata->voicelineCooldown--; }
 #else
 sdata->voicelineCooldown--;
 #endif

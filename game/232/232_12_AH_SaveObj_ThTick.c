@@ -188,7 +188,7 @@ LAB_800af72c:
 		{
 			// increment animation frame
 #ifdef CTR_NATIVE
-			{ static int s_60fpsSaveAnimToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsSaveAnimToggle ^= 1)) saveInst->animFrame += 1; }
+			{ if FRAME_GATE_TICK() saveInst->animFrame += 1; }
 #else
 			saveInst->animFrame += 1;
 #endif

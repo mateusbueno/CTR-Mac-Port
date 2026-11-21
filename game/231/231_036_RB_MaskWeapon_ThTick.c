@@ -132,7 +132,7 @@ void RB_MaskWeapon_ThTick(struct Thread *maskTh)
 	{
 		// increment animation frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsMaskWeaponToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsMaskWeaponToggle ^= 1)) maskBeamInst->animFrame += 1; }
+		{ if FRAME_GATE_TICK() maskBeamInst->animFrame += 1; }
 #else
 		maskBeamInst->animFrame += 1;
 #endif

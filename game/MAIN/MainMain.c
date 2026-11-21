@@ -329,7 +329,7 @@ u32 main(void)
                                 static int s_interpFrameToggle = 0;
                                 advanceFrame = (s_interpFrameToggle ^= 1);
                         }
-                        if (!IS_NATIVE_60FPS || (s_60fpsFcToggle ^= 1))
+                        if FRAME_GATE_TICK()
                         {
                                 if (advanceFrame)
                                         sdata->frameCounter++;
@@ -676,7 +676,7 @@ u32 main(void)
                                 // pressing (or holding) any button sets it to zero
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsDemoCountdown = 0; if (!IS_NATIVE_60FPS || (s_60fpsDemoCountdown ^= 1)) gGT->demoCountdownTimer--; }
+{ if FRAME_GATE_TICK() gGT->demoCountdownTimer--; }
 #else
 gGT->demoCountdownTimer--;
 #endif
@@ -733,6 +733,7 @@ gGT->demoCountdownTimer--;
 #if defined(CTR_NATIVE) && defined(CTR_INTERNAL)
                                         NativePerf_BeginScope(NATIVE_PERF_BUCKET_GAME_LOGIC);
 #endif
+                                        g_nativeLogicTick++;
                                         MainFrame_GameLogic(gGT, gGS);
 #if defined(CTR_NATIVE) && defined(CTR_INTERNAL)
                                         NativePerf_EndScope(NATIVE_PERF_BUCKET_GAME_LOGIC);

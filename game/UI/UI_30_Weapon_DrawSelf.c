@@ -188,7 +188,7 @@ void UI_Weapon_DrawSelf(s16 posX, s16 posY, s16 scale, struct Driver *d)
 
 			// subtract one from timer
 #ifdef CTR_NATIVE
-{ static int s_60fpsWeaponTimebox = 0; if (!IS_NATIVE_60FPS || (s_60fpsWeaponTimebox ^= 1)) d->PickupTimeboxHUD.cooldown--; }
+{ if FRAME_GATE_TICK() d->PickupTimeboxHUD.cooldown--; }
 #else
 d->PickupTimeboxHUD.cooldown--;
 #endif

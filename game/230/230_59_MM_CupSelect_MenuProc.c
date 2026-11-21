@@ -44,7 +44,7 @@ void MM_CupSelect_MenuProc(struct RectMenu *menu)
 			else
 			{
  #ifdef CTR_NATIVE
-				{ static int s_60fpsCupSelToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsCupSelToggle ^= 1)) elapsedFrames--; }
+				{ if FRAME_GATE_TICK() elapsedFrames--; }
  #else
 				elapsedFrames--;
  #endif

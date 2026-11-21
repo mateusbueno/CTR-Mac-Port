@@ -80,6 +80,7 @@ int g_dbg_texturelessMode = 0;
 
 int g_cfg_bilinearFiltering = 0;
 int g_cfg_60fpsMode = 0;
+unsigned int g_nativeLogicTick = 0;
 int g_cfg_aspectMode = 0;
 int g_cfg_fullscreen = 0;
 int g_cfg_resolutionScale = 1;

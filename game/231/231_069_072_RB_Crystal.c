@@ -73,7 +73,7 @@ void RB_Crystal_ThTick(struct Thread *t)
 	// 60fps: rotation runs 2x per frame, gate to maintain 30fps rotation speed
 #ifdef CTR_NATIVE
 	static int s_60fpsCrystalRotToggle = 0;
-	if (!IS_NATIVE_60FPS || (s_60fpsCrystalRotToggle ^= 1))
+	if FRAME_GATE_TICK()
 	{
 		RB_Crystal_RotateStep(crystalInst, crystalObj);
 		RB_Crystal_RotateStep(crystalInst, crystalObj);

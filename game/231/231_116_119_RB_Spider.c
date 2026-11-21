@@ -159,7 +159,7 @@ void RB_Spider_ThTick(struct Thread *t)
 	if (spider->delay != 0)
 	{
 #ifdef CTR_NATIVE
-{ static int s_60fpsSpiderDelay = 0; if (!IS_NATIVE_60FPS || (s_60fpsSpiderDelay ^= 1)) spider->delay--; }
+{ if FRAME_GATE_TICK() spider->delay--; }
 #else
 spider->delay--;
 #endif
@@ -226,7 +226,7 @@ spider->delay--;
 			if (sVar2 + 1 < iVar3)
 			{
 #ifdef CTR_NATIVE
-				{ static int s_60fpsSpiderAnimToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsSpiderAnimToggle ^= 1)) spiderInst->animFrame++; }
+				{ if FRAME_GATE_TICK() spiderInst->animFrame++; }
 #else
 				spiderInst->animFrame++;
 #endif
@@ -272,7 +272,7 @@ spider->delay--;
 	}
 
 #ifdef CTR_NATIVE
-	{ static int s_60fpsSpiderAnimToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsSpiderAnimToggle ^= 1)) spiderInst->animFrame++; }
+	{ if FRAME_GATE_TICK() spiderInst->animFrame++; }
 #else
 	spiderInst->animFrame++;
 #endif

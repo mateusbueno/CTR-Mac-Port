@@ -156,6 +156,22 @@ void CAM_SkyboxGlow(s16 *param_1, struct PushBuffer *pb, struct PrimMem *primMem
         int screenWidth = (s16)pb->rect.w;
         u32 screenWidthXY = (u16)screenWidth;
 
+#ifdef CTR_NATIVE
+        {
+                /* diagnostic: dump gradient data ~1x/sec on Papu's Pyramid to see if sky colour changes come from data or from rendering */
+                static unsigned s_glowDbg = 0;
+                if (sdata->gGT->levelID == PAPU_PYRAMID && (s_glowDbg++ % 60) == 0)
+                {
+                        struct CAMSkyboxGlowGradient *g = grad;
+                        fprintf(stderr, "[CTR Native] SkyGlow cfg=%x clr0=%d clr1=%d clr2=%d centerY=%d tilt=%d", (unsigned)sdata->gGT->level1->configFlags,
+                                (int)sdata->gGT->level1->clearColor[0].enable, (int)sdata->gGT->level1->clearColor[1].enable, (int)sdata->gGT->level1->clearColor[2].enable,
+                                centerY1, tilt);
+                        for (int k = 0; k < 3; k++)
+                                fprintf(stderr, " | g%d %d..%d %06x->%06x", k, g[k].pointFrom, g[k].pointTo, g[k].colorFrom & 0xffffff, g[k].colorTo & 0xffffff);
+                        fprintf(stderr, "\n");
+                }
+        }
+#endif
         for (int i = 0; i < 3; i++, grad++)
         {
                 int toLeft = centerY2 - grad->pointTo - tilt;
@@ -1451,7 +1467,7 @@ void CAM_FollowDriver_Normal(struct CameraDC *cDC, struct Driver *d, s16 *pushBu
 
                         // decrease frame countdown
 #ifdef CTR_NATIVE
-{ static int s_60fpsBlastedLerp = 0; if (!IS_NATIVE_60FPS || (s_60fpsBlastedLerp ^= 1)) cDC->BlastedLerp.framesRemaining--; }
+{ if FRAME_GATE_TICK() cDC->BlastedLerp.framesRemaining--; }
 #else
 cDC->BlastedLerp.framesRemaining--;
 #endif
@@ -1788,7 +1804,7 @@ LAB_8001ab04:
         Countdown8E:
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsCamUnk8E = 0; if (!IS_NATIVE_60FPS || (s_60fpsCamUnk8E ^= 1)) cDC->unk8E--; }
+{ if FRAME_GATE_TICK() cDC->unk8E--; }
 #else
 cDC->unk8E--;
 #endif

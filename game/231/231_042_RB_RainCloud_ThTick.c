@@ -31,7 +31,7 @@ void RB_RainCloud_ThTick(struct Thread *t)
 	{
 		// increment animation frame
 #ifdef CTR_NATIVE
-		{ static int s_60fpsRainCloudToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsRainCloudToggle ^= 1)) inst->animFrame++; }
+		{ if FRAME_GATE_TICK() inst->animFrame++; }
 #else
 		inst->animFrame++;
 #endif

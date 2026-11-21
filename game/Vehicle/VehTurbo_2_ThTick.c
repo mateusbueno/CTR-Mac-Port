@@ -167,7 +167,7 @@ void VehTurbo_ThTick(struct Thread *turboThread)
 	if (turbo->fireDisappearCountdown > 0)
 	{
 #ifdef CTR_NATIVE
-{ static int s_60fpsFireDisappear = 0; if (!IS_NATIVE_60FPS || (s_60fpsFireDisappear ^= 1)) turbo->fireDisappearCountdown--; }
+{ if FRAME_GATE_TICK() turbo->fireDisappearCountdown--; }
 #else
 turbo->fireDisappearCountdown--;
 #endif

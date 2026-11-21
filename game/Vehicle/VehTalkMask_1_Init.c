@@ -8,6 +8,14 @@ struct Instance *VehTalkMask_Init()
 
 	struct Instance *mhInst = INSTANCE_BirthWithThread(0x39, sdata->s_head, SMALL, AKUAKU, VehTalkMask_ThTick, 6, 0);
 
+#ifdef CTR_NATIVE
+	if (mhInst == NULL)
+	{
+		sdata->boolIsMaskThreadAlive = 0;
+		sdata->talkMask_boolDead = 1;
+		return NULL;
+	}
+#endif
 	struct Thread *mhTh = mhInst->thread;
 	mhTh->funcThDestroy = PROC_DestroyInstance;
 

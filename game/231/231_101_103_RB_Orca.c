@@ -115,7 +115,7 @@ void RB_Orca_ThTick(struct Thread *t)
 	if (orcaObj->cooldown != 0)
 	{
 #ifdef CTR_NATIVE
-{ static int s_60fpsOrcaCooldown = 0; if (!IS_NATIVE_60FPS || (s_60fpsOrcaCooldown ^= 1)) orcaObj->cooldown--; }
+{ if FRAME_GATE_TICK() orcaObj->cooldown--; }
 #else
 orcaObj->cooldown--;
 #endif
@@ -163,13 +163,13 @@ orcaObj->cooldown--;
 			RB_Orca_SpawnSplash(orcaInst);
 
 #ifdef CTR_NATIVE
-		{ static int s_60fpsOrcaToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsOrcaToggle ^= 1)) orcaInst->animFrame = nextFrame; }
+		{ if FRAME_GATE_TICK() orcaInst->animFrame = nextFrame; }
 #else
 		orcaInst->animFrame = nextFrame;
 #endif
 
 #ifdef CTR_NATIVE
-		{ static int s_60fpsOrcaMove = 0; if (!IS_NATIVE_60FPS || (s_60fpsOrcaMove ^= 1)) {
+		{ if FRAME_GATE_TICK() {
 #endif
 		if (direction == 0)
 			orcaObj->animIndex--;

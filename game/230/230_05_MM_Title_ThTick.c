@@ -150,7 +150,7 @@ void MM_Title_ThTick(struct Thread *title)
 
 	// increment frame counter (halved at 60fps to match original speed)
 #ifdef CTR_NATIVE
-	{ static int s_60fpsTitleTickToggle = 0; if (!IS_NATIVE_60FPS || (s_60fpsTitleTickToggle ^= 1)) timer = D230.timerInTitle + 1; else timer = D230.timerInTitle; }
+	{ if FRAME_GATE_TICK() timer = D230.timerInTitle + 1; else timer = D230.timerInTitle; }
 #else
 	timer = D230.timerInTitle + 1;
 #endif

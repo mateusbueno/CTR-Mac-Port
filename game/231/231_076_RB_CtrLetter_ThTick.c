@@ -16,7 +16,7 @@ void RB_CtrLetter_ThTick(struct Thread *t)
 	// rotate each frame (60fps: gate to maintain 30fps rotation speed)
 #ifdef CTR_NATIVE
 	static int s_60fpsLetterRotToggle = 0;
-	if (!IS_NATIVE_60FPS || (s_60fpsLetterRotToggle ^= 1))
+	if FRAME_GATE_TICK()
 	{
 		letterObj->rot[1] += 0x40;
 		ConvertRotToMatrix(&letterInst->matrix, &letterObj->rot[0]);

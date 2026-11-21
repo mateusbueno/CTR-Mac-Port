@@ -24,7 +24,7 @@ void RB_RainCloud_FadeAway(struct Thread *t)
 
 	struct RainLocal *rainLocal = rcloud->rainLocal;
 #ifdef CTR_NATIVE
-{ static int s_60fpsRainFrame = 0; if (!IS_NATIVE_60FPS || (s_60fpsRainFrame ^= 1)) rainLocal->frameCount -= 2; }
+{ if FRAME_GATE_TICK() rainLocal->frameCount -= 2; }
 #else
 rainLocal->frameCount -= 2;
 #endif

@@ -119,7 +119,7 @@ void DecalMP_02(struct GameTracker *gGT)
 			}
 
 #ifdef CTR_NATIVE
-{ static int s_60fpsDecalTimer = 0; if (!IS_NATIVE_60FPS || (s_60fpsDecalTimer ^= 1)) timer++; }
+{ if FRAME_GATE_TICK() timer++; }
 #else
 timer++;
 #endif
