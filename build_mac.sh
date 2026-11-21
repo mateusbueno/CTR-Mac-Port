@@ -82,6 +82,14 @@ if [ -d "assets" ]; then
     ln -sf ../assets "build/assets"
 fi
 
+# Link mods folder so the bundle sees the repo's mods/ (otherwise the app creates an empty one)
+if [ -d "mods" ]; then
+    rm -rf "$RESOURCES_DIR/mods"
+    ln -sf ../../../mods "$RESOURCES_DIR/mods"
+    rm -rf "build/mods"
+    ln -sf ../mods "build/mods"
+fi
+
 echo ""
 echo "Build succeeded!"
 echo "  CLI binary:  build/ctr_native"

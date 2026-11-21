@@ -200,6 +200,7 @@ internal void NativeArg_DefaultNetplayArgs(struct NativeNetplayArgs *args)
 #if !defined(_WIN32)
 #include <signal.h>
 #include <execinfo.h>
+#include <time.h>
 
 static void ctr_crash_handler(int sig)
 {
@@ -211,11 +212,11 @@ static void ctr_crash_handler(int sig)
         if (home && home[0]) {
                 char path[512];
                 snprintf(path, sizeof(path), "%s/Library/Logs/CTR Native/ctr_crash.log", home);
-                f = fopen(path, "w");
+                f = fopen(path, "a");
         }
-        if (!f) f = fopen("/tmp/ctr_crash.log", "w");
+        if (!f) f = fopen("/tmp/ctr_crash.log", "a");
         if (!f) f = stderr;
-        fprintf(f, "CRASH SIGNAL %d (%s)\n", sig, strsignal(sig));
+        fprintf(f, "\n==== CRASH at unix time %ld ====\nCRASH SIGNAL %d (%s)\n", (long)time(NULL), sig, strsignal(sig));
         fprintf(stderr, "\n[CTR NATIVE CRASH] SIGNAL %d (%s)\n", sig, strsignal(sig));
         for (int i = 0; i < frames; i++) {
                 fprintf(f, "%s\n", strs[i]);

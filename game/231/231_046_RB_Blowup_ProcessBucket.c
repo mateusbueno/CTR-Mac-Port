@@ -23,12 +23,12 @@ void RB_Blowup_ProcessBucket(struct Thread *thread)
 
 	for (; thread != NULL; thread = thread->siblingThread)
 	{
-		u32 *blowup = thread->object;
+		struct Instance **blowup = (struct Instance **)thread->object;
 
 		for (int i = 0; i < gGT->numPlyrCurrGame; i++)
 		{
-			struct Instance *shockwaveInst = (struct Instance *)(uintptr_t)blowup[0];
-			struct Instance *explosionInst = (struct Instance *)(uintptr_t)blowup[1];
+			struct Instance *shockwaveInst = blowup[0];
+			struct Instance *explosionInst = blowup[1];
 
 			if (shockwaveInst == NULL || explosionInst == NULL)
 				continue;

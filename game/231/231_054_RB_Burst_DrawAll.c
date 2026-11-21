@@ -11,10 +11,10 @@ static void RB_Burst_DrawAll_SetPushBuffer(struct Instance *inst, int playerInde
 		RB_Burst_DrawAll_GetIDPP(inst, playerIndex)->pushBuffer = pb;
 }
 
-static struct Instance *RB_Burst_DrawAll_GetSlot(u32 *burst, int index)
+static struct Instance *RB_Burst_DrawAll_GetSlot(struct Instance **burst, int index)
 {
-	// NOTE(aalhendi): burst thread object is retail-width instance slots.
-	return (struct Instance *)(uintptr_t)burst[index];
+	// Burst thread object holds native-width instance pointers (see RB_Burst_Init).
+	return burst[index];
 }
 
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x800b25b8-0x800b28c0.
@@ -37,7 +37,7 @@ void RB_Burst_DrawAll(struct GameTracker *gGT)
 
 		for (thread = gGT->threadBuckets[BURST].thread; thread != NULL; thread = thread->siblingThread)
 		{
-			u32 *burst = thread->object;
+			struct Instance **burst = (struct Instance **)thread->object;
 			struct Instance *burstInst = RB_Burst_DrawAll_GetSlot(burst, 1);
 			SVECTOR pos;
 			VECTOR transformed;
@@ -95,7 +95,7 @@ void RB_Burst_DrawAll(struct GameTracker *gGT)
 
 		for (thread = gGT->threadBuckets[BURST].thread; thread != NULL; thread = thread->siblingThread)
 		{
-			u32 *burst = thread->object;
+			struct Instance **burst = (struct Instance **)thread->object;
 			struct PushBuffer *targetPB = pb;
 
 			if ((selectedThread[playerIndex] != NULL) && (selectedThread[playerIndex] != thread))

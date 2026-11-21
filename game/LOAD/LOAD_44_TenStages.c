@@ -49,9 +49,11 @@ static int s_nativeHeaderCount = 0;
 static int s_nativeAnimCount = 0;
 static int s_nativeAnimObjCount = 0;
 
+#define NATIVE_MODEL_SIG_WORDS 32
 struct NativeModelCacheEntry {
         const void *raw;
         struct Model *model;
+        uint32_t sig[NATIVE_MODEL_SIG_WORDS];
 };
 static struct NativeModelCacheEntry s_nativeModelCache[MAX_NATIVE_MODELS];
 static int s_nativeModelCacheCount = 0;
@@ -69,10 +71,19 @@ static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
 {
         if (rawModelPtr == NULL) return NULL;
 
+        // The cache is keyed by raw address, but mempack memory is reused (e.g. the
+        // podium models and the Aku Aku mask file share addresses), so a hit is only
+        // valid if the raw bytes still match what was converted.
+        int staleIndex = -1;
         for (int i = 0; i < s_nativeModelCacheCount; i++)
         {
                 if (s_nativeModelCache[i].raw == rawModelPtr)
-                        return s_nativeModelCache[i].model;
+                {
+                        if (memcmp(s_nativeModelCache[i].sig, rawModelPtr, sizeof(s_nativeModelCache[i].sig)) == 0)
+                                return s_nativeModelCache[i].model;
+                        staleIndex = i;
+                        break;
+                }
         }
 
         if (s_nativeModelCount >= MAX_NATIVE_MODELS) return NULL;
@@ -83,11 +94,16 @@ static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
         struct Model *nm = &s_nativeModelPool[s_nativeModelCount++];
         memset(nm, 0, sizeof(*nm));
 
-        if (s_nativeModelCacheCount < MAX_NATIVE_MODELS)
         {
-                s_nativeModelCache[s_nativeModelCacheCount].raw = rawModelPtr;
-                s_nativeModelCache[s_nativeModelCacheCount].model = nm;
-                s_nativeModelCacheCount++;
+                int slot = staleIndex;
+                if (slot < 0 && s_nativeModelCacheCount < MAX_NATIVE_MODELS)
+                        slot = s_nativeModelCacheCount++;
+                if (slot >= 0)
+                {
+                        s_nativeModelCache[slot].raw = rawModelPtr;
+                        s_nativeModelCache[slot].model = nm;
+                        memcpy(s_nativeModelCache[slot].sig, rawModelPtr, sizeof(s_nativeModelCache[slot].sig));
+                }
         }
 
         // Name (16 bytes)
@@ -169,6 +185,12 @@ static struct Model *LOAD_NativeModel_Convert(void *rawModelPtr)
         }
 
         return nm;
+}
+
+// Public wrapper so other loaders (e.g. MaskHints3D) can hand out native models.
+struct Model *LOAD_NativeModel_ConvertPublic(void *rawModelPtr)
+{
+        return LOAD_NativeModel_Convert(rawModelPtr);
 }
 
 static struct Level s_nativeLevel[2];
@@ -1178,6 +1200,14 @@ int LOAD_TenStages(struct GameTracker *gGT, int loadingStage, struct BigHeader *
 #endif
                                         modelPtrArr[i] = m;
                                 }
+#if defined(__LP64__)
+                                else
+                                {
+                                        // podium stand model: no +4 header skip, but still raw 32-bit layout
+                                        m = LOAD_NativeModel_Convert((void *)m);
+                                        modelPtrArr[i] = m;
+                                }
+#endif
 
                                 if (m == NULL || m->id == -1)
                                         continue;

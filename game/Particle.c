@@ -1278,7 +1278,7 @@ struct Particle *Particle_Init(u32 param_1, struct IconGroup *ig, struct Particl
 			{
 				if ((flags & 0xc0) == 0)
 				{
-					p->funcPtr = emSet->InitTypes.FuncInit.particle_funcPtr;
+					p->funcPtr = NULL; /* retail slot is a 32-bit code address; unusable on LP64 */
 					p->flagsSetColor = emSet->InitTypes.FuncInit.particle_colorFlags;
 					p->framesLeftInLife = emSet->InitTypes.FuncInit.particle_lifespan;
 					flagsAxis |= 0x1000;

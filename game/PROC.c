@@ -512,11 +512,22 @@ void ThTick_RunBucket(struct Thread *thread)
 	struct Thread *pending[THTICK_MAX_PENDING];
 	int count = 0;
 
+	struct Thread *dbgPrev = NULL;
 	ThTick_PushPending(pending, &count, thread);
 
 	while (count > 0)
 	{
 		struct Thread *t = pending[--count];
+#ifdef CTR_NATIVE
+		if ((uintptr_t)t < 0x100000000ULL || ((uintptr_t)t >> 48) != 0)
+		{
+			Platform_LogWarn("[PROC] bad thread %p after prev=%p name=%s flags=%x tick=%p obj=%p",
+				(void *)t, (void *)dbgPrev, dbgPrev ? dbgPrev->name : "?", dbgPrev ? (unsigned)dbgPrev->flags : 0,
+				dbgPrev ? (void *)dbgPrev->funcThTick : NULL, dbgPrev ? dbgPrev->object : NULL);
+			continue;
+		}
+		dbgPrev = t;
+#endif
 
 		ThTick_PushPending(pending, &count, t->siblingThread);
 

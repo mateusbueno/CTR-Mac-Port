@@ -303,6 +303,8 @@ int Platform_BeginScene(void)
         return 1;
 }
 
+static int s_directVramPresent = 0;
+
 void Platform_EndScene(void)
 {
         if (!s_platformBeginScene)
@@ -331,6 +333,18 @@ void Platform_EndScene(void)
                 return;
         }
 
+        if (s_directVramPresent)
+        {
+                // NOTE: the boot splash is shown straight from VRAM. Storing the
+                // scaled framebuffer back into VRAM each frame degrades the image
+                // (text smears vertically), so skip the readback for these presents.
+                s_directVramPresent = 0;
+                NativeRenderer_DiscardFramebufferReadback();
+                NativeRenderer_SwapWindow();
+                NativePerf_EndScope(NATIVE_PERF_BUCKET_PLATFORM_END_SCENE);
+                return;
+        }
+
         NativeRenderer_StoreFrameBuffer(activeDispEnv.disp.x, activeDispEnv.disp.y, activeDispEnv.disp.w, activeDispEnv.disp.h);
 
         NativeRenderer_SwapWindow();
@@ -351,6 +365,7 @@ void Platform_PresentVRAMDisplay(void)
 {
         Platform_BeginScene();
         NativeRenderer_PresentVRAMDisplay();
+        s_directVramPresent = 1;
         Platform_EndFrame();
 }
 

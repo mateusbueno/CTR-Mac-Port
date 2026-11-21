@@ -1724,6 +1724,18 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 
 	if (inst->model->headers == 0 || (uintptr_t)inst->model->headers <= 0x100010000ULL)
 		return rbi;
+
+	if ((uintptr_t)inst->model->headers >= 0x300000000ULL)
+	{
+		static int s_warnedHdr = 0;
+		if (s_warnedHdr < 8)
+		{
+			s_warnedHdr++;
+			Platform_LogWarn("[RenderBucket] bad model headers %p inst=%p name='%.15s' model=%p id=%d numHeaders=%d flags=0x%x\n", (void *)inst->model->headers,
+			                 (void *)inst, inst->name, (void *)inst->model, (int)inst->model->id, (int)inst->model->numHeaders, (unsigned)inst->flags);
+		}
+		return rbi;
+	}
 #endif
 
 	queuedFlags = inst->flags;
@@ -2493,7 +2505,28 @@ static struct TextureLayout *RenderBucket_GetCommandTexture(struct RenderBucketD
 		return 0;
 	uintptr_t base_hi = (uintptr_t)rawTexArr & 0xFFFFFFFF00000000ULL;
 	if (base_hi == 0) base_hi = (uintptr_t)g_gpuArenaBase & 0xFFFFFFFF00000000ULL;
-	return (struct TextureLayout *)(base_hi | (uintptr_t)texRel);
+	{
+		uintptr_t texAddr = base_hi | (uintptr_t)texRel;
+		uintptr_t tableAddr = (uintptr_t)rawTexArr;
+		uintptr_t delta = (texAddr > tableAddr) ? (texAddr - tableAddr) : (tableAddr - texAddr);
+		if (delta > 0x10000000ULL)
+		{
+			static int s_warnedTex = 0;
+			if (s_warnedTex < 8)
+			{
+				s_warnedTex++;
+				Platform_LogWarn("[RenderBucket] bad tex ptr %p (table=%p idx=%u rel=0x%x) inst=%p name='%.15s' model=%p\n", (void *)texAddr, (void *)rawTexArr,
+				                 (unsigned)texIndex, (unsigned)texRel, (void *)ctx->inst, ctx->inst ? ctx->inst->name : "?",
+				                 ctx->inst ? (void *)ctx->inst->model : NULL);
+				Platform_LogWarn("[RenderBucket]   tbl[0..5]=%08x %08x %08x %08x %08x %08x cmdlist=%p cmd=%08x mh=%p hdrName='%.15s' numHdr=%d\n", rawTexArr[0],
+				                 rawTexArr[1], rawTexArr[2], rawTexArr[3], rawTexArr[4], rawTexArr[5], (void *)ctx->idpp->ptrCommandList, (unsigned)command,
+				                 (void *)ctx->mh, ctx->mh ? ctx->mh->name : "?", ctx->inst && ctx->inst->model ? (int)ctx->inst->model->numHeaders : -1);
+			}
+			*isValid = 0;
+			return 0;
+		}
+		return (struct TextureLayout *)texAddr;
+	}
 #else
 	return ctx->idpp->ptrTexLayout[texIndex - 1];
 #endif
@@ -3876,6 +3909,19 @@ void RenderBucket_DrawFunc_Normal(struct RenderBucketDrawContext *ctx)
 	// NOTE(aalhendi): ASM-verified NTSC-U 926 0x8006a52c-0x8006a8e0;
 	// native uses the accepted explicit RenderBucketDrawContext command/FIFO ABI.
 	pCmd = (u32 *)ctx->idpp->ptrCommandList;
+#ifdef CTR_NATIVE
+	if (((uintptr_t)pCmd < 0x100000000ULL) || ((uintptr_t)pCmd >= 0x300000000ULL) || (((uintptr_t)pCmd & 3) != 0))
+	{
+		static int s_warnedCmd = 0;
+		if (s_warnedCmd < 8)
+		{
+			s_warnedCmd++;
+			Platform_LogWarn("[RenderBucket] bad ptrCommandList %p inst=%p name='%.15s' model=%p mh=%p\n", (void *)pCmd, (void *)ctx->inst,
+			                 ctx->inst ? ctx->inst->name : "?", ctx->inst ? (void *)ctx->inst->model : NULL, (void *)ctx->mh);
+		}
+		return;
+	}
+#endif
 	pCmd++;
 
 	while (*pCmd != 0xffffffff)

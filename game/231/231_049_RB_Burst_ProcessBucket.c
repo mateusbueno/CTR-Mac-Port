@@ -23,13 +23,13 @@ void RB_Burst_ProcessBucket(struct Thread *thread)
 
 	for (; thread != NULL; thread = thread->siblingThread)
 	{
-		u32 *burst = thread->object;
+		struct Instance **burst = (struct Instance **)thread->object;
 
 		for (int i = 0; i < gGT->numPlyrCurrGame; i++)
 		{
-			struct Instance *shockwaveInst = (struct Instance *)(uintptr_t)burst[0];
-			struct Instance *burstInst = (struct Instance *)(uintptr_t)burst[1];
-			struct Instance *warpedBurstInst = (struct Instance *)(uintptr_t)burst[2];
+			struct Instance *shockwaveInst = burst[0];
+			struct Instance *burstInst = burst[1];
+			struct Instance *warpedBurstInst = burst[2];
 
 			if (burstInst == NULL)
 				continue;

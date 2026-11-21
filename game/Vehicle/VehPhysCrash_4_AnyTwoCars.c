@@ -84,9 +84,18 @@ static void VehPhysCrash_PlayHumanFeedback(struct Thread *selfThread, struct Thr
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8005d404-0x8005e104
 void VehPhysCrash_AnyTwoCars(struct Thread *thread, u16 *searchWords, Vec3 *selfVel)
 {
-	int distance = VehCalc_FastSqrt(*(u32 *)((u8 *)searchWords + 0xc), 0);
-	s16 *dist = (s16 *)((u8 *)searchWords + 0x10);
-	s16 *hitDir = (s16 *)((u8 *)searchWords + 0x18);
+	// Callers pass a struct { BucketSearchParams bucket; s16 hitDir[4]; }. Use the
+	// typed layout: on LP64 BucketSearchParams grows (8-byte th), so the retail
+	// raw offsets 0xc/0x10/0x18/8 would read the wrong fields.
+	struct VehPhysCrash_SearchView
+	{
+		struct BucketSearchParams bucket;
+		s16 hitDir[4];
+	} *search = (struct VehPhysCrash_SearchView *)searchWords;
+
+	int distance = VehCalc_FastSqrt((u32)search->bucket.radius, 0);
+	s16 *dist = &search->bucket.distX;
+	s16 *hitDir = search->hitDir;
 
 	if (distance == 0)
 	{
@@ -101,7 +110,7 @@ void VehPhysCrash_AnyTwoCars(struct Thread *thread, u16 *searchWords, Vec3 *self
 		hitDir[2] = (s16)((dist[2] << 0xc) / distance);
 	}
 
-	struct Thread *otherThread = *(struct Thread **)((u8 *)searchWords + 8);
+	struct Thread *otherThread = search->bucket.th;
 	struct Driver *otherDriver = otherThread->object;
 	struct Driver *selfDriver = thread->object;
 

@@ -7,7 +7,7 @@ struct OverlayRDATA_231 R231 = {
                 {
                     .flags = 1,
                     .initOffset = 0xc,
-                    .InitTypes.FuncInit.particle_funcPtr = NULL,
+                    .InitTypes.FuncInit.particle_funcPtr = 0,
                     .InitTypes.FuncInit.particle_colorFlags = 0,
                     .InitTypes.FuncInit.particle_lifespan = 5,
                     .InitTypes.FuncInit.particle_Type = 1,

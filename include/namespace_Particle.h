@@ -110,7 +110,8 @@ struct ParticleEmitter
 		struct
 		{
 			// 0x4
-			void *particle_funcPtr;
+			// 32-bit retail slot (data tables are retail-layout; always 0 in practice)
+			u32 particle_funcPtr;
 
 			// 0x8
 			// flags, passed to SetColors
