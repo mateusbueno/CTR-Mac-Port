@@ -66,11 +66,12 @@ void SongPool_Start(struct Song *song, u16 songID, s16 deltaBPM, int boolLoopAtE
 	// and the full array of seqOffsets within the header
 	cnhFirst = (char *)&seqOffsetArr[numSeqs];
 
-	// align up by 4
-	if (((uintptr_t)cnhFirst & 1) != 0)
-		cnhFirst += 1;
-	if (((uintptr_t)cnhFirst & 2) != 0)
-		cnhFirst += 2;
+	// align up by 4, relative to the start of the song data (retail RAM base was 4-aligned)
+	{
+		uintptr_t rel = (uintptr_t)cnhFirst - (uintptr_t)sdata->ptrCseqHeader;
+		rel = (rel + 3) & ~(uintptr_t)3;
+		cnhFirst = (char *)((uintptr_t)sdata->ptrCseqHeader + rel);
+	}
 
 	for (i = 0; i < numSeqs; i++)
 	{

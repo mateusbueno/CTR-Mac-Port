@@ -17,7 +17,8 @@ void howl_ParseCseqHeader(struct CseqHeader *ch)
 	sdata->ptrCseqSongStartOffset = (s16 *)addr;
 	addr += sizeof(s16) * ch->numSongs;
 
-	addr = (addr + 3) & ~3;
+	// Align relative to the file start (retail RAM address was 4-aligned), not to the host address.
+	addr = (uintptr_t)ch + ((addr - (uintptr_t)ch + 3) & ~(uintptr_t)3);
 
 	sdata->ptrCseqSongData = (char *)addr;
 }
