@@ -20,7 +20,7 @@ void LIST_AddFront(struct LinkedList *L, struct Item *I)
 
 	oldFirst = L->first;
 #if defined(__LP64__)
-	if ((uintptr_t)oldFirst <= 0x100010000ULL)
+	if (CTR_BAD_PTR(oldFirst))
 	{
 		oldFirst = 0;
 	}
@@ -52,7 +52,7 @@ void LIST_AddBack(struct LinkedList *L, struct Item *I)
 
 	oldLast = L->last;
 #if defined(__LP64__)
-	if ((uintptr_t)oldLast <= 0x100010000ULL)
+	if (CTR_BAD_PTR(oldLast))
 	{
 		oldLast = 0;
 	}
@@ -95,7 +95,7 @@ struct Item *LIST_RemoveMember(struct LinkedList *L, struct Item *I)
 		if (I->prev != 0)
 		{
 #if defined(__LP64__)
-			if ((uintptr_t)I->prev > 0x100010000ULL)
+			if (!CTR_BAD_PTR(I->prev))
 				I->prev->next = I->next;
 #else
 			I->prev->next = I->next;
@@ -109,7 +109,7 @@ struct Item *LIST_RemoveMember(struct LinkedList *L, struct Item *I)
 		if (I->next != 0)
 		{
 #if defined(__LP64__)
-			if ((uintptr_t)I->next <= 0x100010000ULL)
+			if (CTR_BAD_PTR(I->next))
 			{
 				I->next = 0;
 				L->last = I->prev;
@@ -127,9 +127,9 @@ struct Item *LIST_RemoveMember(struct LinkedList *L, struct Item *I)
 
 		L->count = L->count - 1;
 #if defined(__LP64__)
-		if ((uintptr_t)L->first <= 0x100010000ULL)
+		if (CTR_BAD_PTR(L->first))
 			L->first = 0;
-		if ((uintptr_t)L->last <= 0x100010000ULL)
+		if (CTR_BAD_PTR(L->last))
 			L->last = 0;
 #endif
 	}
@@ -151,7 +151,7 @@ struct Item *LIST_RemoveFront(struct LinkedList *L)
 	if (I->prev != 0)
 	{
 #if defined(__LP64__)
-		if ((uintptr_t)I->prev > 0x100010000ULL)
+		if (!CTR_BAD_PTR(I->prev))
 			I->prev->next = I->next;
 #else
 		I->prev->next = I->next;
@@ -165,7 +165,7 @@ struct Item *LIST_RemoveFront(struct LinkedList *L)
 	if (I->next != 0)
 	{
 #if defined(__LP64__)
-		if ((uintptr_t)I->next <= 0x100010000ULL)
+		if (CTR_BAD_PTR(I->next))
 		{
 			I->next = 0;
 			L->last = I->prev;
@@ -183,9 +183,9 @@ struct Item *LIST_RemoveFront(struct LinkedList *L)
 
 	L->count = L->count - 1;
 #if defined(__LP64__)
-	if ((uintptr_t)L->first <= 0x100010000ULL)
+	if (CTR_BAD_PTR(L->first))
 		L->first = 0;
-	if ((uintptr_t)L->last <= 0x100010000ULL)
+	if (CTR_BAD_PTR(L->last))
 		L->last = 0;
 #endif
 	I->next = 0;

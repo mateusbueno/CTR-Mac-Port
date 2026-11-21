@@ -100,4 +100,14 @@ typedef double f64;
 
 #define aspectratiodownsample(int) (int * 4) / 7
 
+
+/* Host-pointer sanity check. On 64-bit hosts (LP64 macOS/Linux) the native port keeps
+ * game pointers in the 0x1_0000_0000+ range, so anything below is garbage. On 32-bit
+ * targets (Windows i686) every valid pointer is below that, so only NULL is invalid. */
+#if defined(__LP64__)
+#define CTR_BAD_PTR(p) ((uintptr_t)(p) <= 0x100010000ULL)
+#else
+#define CTR_BAD_PTR(p) ((uintptr_t)(p) == 0)
+#endif
+
 #endif

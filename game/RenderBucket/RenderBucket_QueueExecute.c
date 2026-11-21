@@ -1716,15 +1716,16 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 #ifdef CTR_NATIVE
 	// NOTE(aalhendi): Retail callers provide a valid visible-list instance and
 	// model; native keeps malformed host-side lists from trapping.
-	if (inst == 0 || (uintptr_t)inst <= 0x100010000ULL)
+	if (inst == 0 || CTR_BAD_PTR(inst))
 		return rbi;
 
-	if (inst->model == 0 || (uintptr_t)inst->model <= 0x100010000ULL)
+	if (inst->model == 0 || CTR_BAD_PTR(inst->model))
 		return rbi;
 
-	if (inst->model->headers == 0 || (uintptr_t)inst->model->headers <= 0x100010000ULL)
+	if (inst->model->headers == 0 || CTR_BAD_PTR(inst->model->headers))
 		return rbi;
 
+#if defined(__LP64__)
 	if ((uintptr_t)inst->model->headers >= 0x300000000ULL)
 	{
 		static int s_warnedHdr = 0;
@@ -1736,6 +1737,7 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 		}
 		return rbi;
 	}
+#endif
 #endif
 
 	queuedFlags = inst->flags;
@@ -1761,7 +1763,7 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 #ifdef CTR_NATIVE
 	// NOTE: On LP64 an uninitialised/32-bit-packed IDPP slot can hold a garbage
 	// pushBuffer (e.g. 0x0140cabc0140ca9c) that crashes on the deref below.
-	if ((uintptr_t)pb <= 0x100010000ULL)
+	if (CTR_BAD_PTR(pb))
 	{
 		static int s_warned = 0;
 		if (!s_warned)
@@ -1928,7 +1930,7 @@ void *RenderBucket_QueueNonLevInstances(struct Item *item, u_long *otMem, void *
 
 	for (int player = count - 1; player >= 0; player--)
 	{
-		for (struct Item *curr = item; curr != 0 && (uintptr_t)curr > 0x100010000ULL; curr = curr->next)
+		for (struct Item *curr = item; curr != 0 && !CTR_BAD_PTR(curr); curr = curr->next)
 		{
 			entry = RenderBucket_QueueDraw((struct Instance *)curr, entry, player, lodMask, gameMode1, &queueState);
 		}
@@ -3910,7 +3912,11 @@ void RenderBucket_DrawFunc_Normal(struct RenderBucketDrawContext *ctx)
 	// native uses the accepted explicit RenderBucketDrawContext command/FIFO ABI.
 	pCmd = (u32 *)ctx->idpp->ptrCommandList;
 #ifdef CTR_NATIVE
-	if (((uintptr_t)pCmd < 0x100000000ULL) || ((uintptr_t)pCmd >= 0x300000000ULL) || (((uintptr_t)pCmd & 3) != 0))
+	if (CTR_BAD_PTR(pCmd) || (((uintptr_t)pCmd & 3) != 0)
+#if defined(__LP64__)
+	    || ((uintptr_t)pCmd < 0x100000000ULL) || ((uintptr_t)pCmd >= 0x300000000ULL)
+#endif
+	)
 	{
 		static int s_warnedCmd = 0;
 		if (s_warnedCmd < 8)
@@ -4694,13 +4700,13 @@ static int RenderBucket_PrepareDrawContext(struct RenderBucketDrawContext *ctx, 
 	struct ModelFrame *nextFrame;
 	struct ModelAnim *anim;
 
-	if (inst == 0 || (uintptr_t)inst <= 0x100010000ULL)
+	if (inst == 0 || CTR_BAD_PTR(inst))
 		return 0;
 
-	if (inst->model == 0 || (uintptr_t)inst->model <= 0x100010000ULL)
+	if (inst->model == 0 || CTR_BAD_PTR(inst->model))
 		return 0;
 
-	if (instPlayerBase == 0 || (uintptr_t)instPlayerBase <= 0x100010000ULL)
+	if (instPlayerBase == 0 || CTR_BAD_PTR(instPlayerBase))
 		return 0;
 
 	idpp = INST_GETIDPP(instPlayerBase);
@@ -4795,7 +4801,7 @@ void RenderBucket_Execute(void *param_1, struct PrimMem *param_2)
 	// native uses the accepted explicit RenderBucketDrawContext scratch/register ABI.
 	*CTR_SCRATCHPAD_PTR(u32, 0xc) = (u32)(uintptr_t)param_2;
 	*CTR_SCRATCHPAD_PTR(u32, 0x8) = 0;
-	for (; entry != 0 && entry->inst != 0 && (uintptr_t)entry->inst > 0x100010000ULL; entry++)
+	for (; entry != 0 && entry->inst != 0 && !CTR_BAD_PTR(entry->inst); entry++)
 	{
 		struct RenderBucketDrawContext ctx = {0};
 

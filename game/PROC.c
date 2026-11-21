@@ -519,7 +519,11 @@ void ThTick_RunBucket(struct Thread *thread)
 	{
 		struct Thread *t = pending[--count];
 #ifdef CTR_NATIVE
-		if ((uintptr_t)t < 0x100000000ULL || ((uintptr_t)t >> 48) != 0)
+		if (CTR_BAD_PTR(t)
+#if defined(__LP64__)
+		    || ((uintptr_t)t >> 48) != 0
+#endif
+		)
 		{
 			Platform_LogWarn("[PROC] bad thread %p after prev=%p name=%s flags=%x tick=%p obj=%p",
 				(void *)t, (void *)dbgPrev, dbgPrev ? dbgPrev->name : "?", dbgPrev ? (unsigned)dbgPrev->flags : 0,

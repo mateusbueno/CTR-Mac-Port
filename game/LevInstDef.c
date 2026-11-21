@@ -96,7 +96,7 @@ void LevInstDef_RePack(struct mesh_info *ptr_mesh_info, int boolAdvHub)
 			{
 				// kill thread if it exists
 				th = inst->thread;
-				if (th != 0 && (uintptr_t)th > 0x10000 && (((uintptr_t)th & 7) == 0))
+				if (!CTR_BAD_PTR(th) && (((uintptr_t)th & 3) == 0))
 					th->flags |= 0x800;
 
 				// erase instance in pool
