@@ -276,7 +276,12 @@ static int RenderLists_Walk3P4P(struct BSP *bspRoot, const int *visLeafList, str
 	if ((bspRoot->flag & 1) != 0)
 	{
 		int slotIndex = RenderLists_Select3P4PSlot(bspRoot);
+#if defined(__LP64__)
+		struct DrawLevelOvr1PRenderList *rlRoot = (struct DrawLevelOvr1PRenderList *)LevRenderList;
+		struct VisMemBspListNode **head = (rlRoot && slotIndex >= 0 && slotIndex < 5) ? &rlRoot->list[slotIndex].bspListStart : NULL;
+#else
 		struct VisMemBspListNode **head = (struct VisMemBspListNode **)((char *)LevRenderList + slotIndex * 8 + 4);
+#endif
 
 		RenderLists_LinkBsp(bspRoot, bspRoot, head, bspList);
 		return 1;

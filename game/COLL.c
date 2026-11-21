@@ -1592,12 +1592,12 @@ void COLL_FIXED_PlayerSearch(struct Thread *t, struct Driver *d)
 				if ((quadFlags & 1) != 0)
 				{
 					inst->flags |= REFLECTIVE;
-					inst->vertSplit = *(s16 *)((u8 *)level + 0x186);
+					inst->vertSplit = level->splitLines[1];
 				}
 				else if ((quadFlags & 4) != 0)
 				{
 					inst->flags |= REFLECTIVE;
-					inst->vertSplit = *(s16 *)((u8 *)level + 0x184);
+					inst->vertSplit = level->splitLines[0];
 				}
 				else
 				{
