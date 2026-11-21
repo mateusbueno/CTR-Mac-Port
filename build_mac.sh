@@ -70,7 +70,9 @@ EOF
 echo "APPL????" > "$CONTENTS/PkgInfo"
 
 # Copy App Icon if available
-if [ -f "externals/SDL/src/hidapi/testgui/TestGUI.app.in/Contents/Resources/Signal11.icns" ]; then
+if [ -f "platform/macos/AppIcon.icns" ]; then
+    cp "platform/macos/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+elif [ -f "externals/SDL/src/hidapi/testgui/TestGUI.app.in/Contents/Resources/Signal11.icns" ]; then
     cp "externals/SDL/src/hidapi/testgui/TestGUI.app.in/Contents/Resources/Signal11.icns" "$RESOURCES_DIR/AppIcon.icns"
 fi
 
