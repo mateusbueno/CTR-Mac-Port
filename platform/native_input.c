@@ -252,11 +252,20 @@ internal void NativeInput_DefaultMappings(void)
 		s_keyboardMappings[p].kc_cross = SDL_SCANCODE_C;
 
 		s_keyboardMappings[p].kc_l1 = SDL_SCANCODE_LSHIFT;
+#if defined(__APPLE__)
+		// Mac keyboards have no right Ctrl and Ctrl+arrows are taken by Mission Control.
+		s_keyboardMappings[p].kc_l2 = SDL_SCANCODE_Q;
+#else
 		s_keyboardMappings[p].kc_l2 = SDL_SCANCODE_LCTRL;
+#endif
 		s_keyboardMappings[p].kc_l3 = SDL_SCANCODE_LEFTBRACKET;
 
 		s_keyboardMappings[p].kc_r1 = SDL_SCANCODE_RSHIFT;
+#if defined(__APPLE__)
+		s_keyboardMappings[p].kc_r2 = SDL_SCANCODE_E;
+#else
 		s_keyboardMappings[p].kc_r2 = SDL_SCANCODE_RCTRL;
+#endif
 		s_keyboardMappings[p].kc_r3 = SDL_SCANCODE_RIGHTBRACKET;
 
 		s_keyboardMappings[p].kc_dpad_up = SDL_SCANCODE_UP;
@@ -414,13 +423,22 @@ internal u16 NativeInput_ReadKeyboardMapping(const struct NativeInputKeyboardMap
 		buttons &= ~0x4000;
 	if (s_keyboardState[mapping->kc_l1])
 		buttons &= ~0x400;
-	if (s_keyboardState[mapping->kc_l2])
+	if (s_keyboardState[mapping->kc_l2]
+#if defined(__APPLE__)
+	    // Saved configs from before the Mac defaults still bind L2/R2 to Ctrl; keep Q/E working for them.
+	    || (mapping->kc_l2 == SDL_SCANCODE_LCTRL && s_keyboardState[SDL_SCANCODE_Q])
+#endif
+	)
 		buttons &= ~0x100;
 	if (s_keyboardState[mapping->kc_l3])
 		buttons &= ~0x2;
 	if (s_keyboardState[mapping->kc_r1])
 		buttons &= ~0x800;
-	if (s_keyboardState[mapping->kc_r2])
+	if (s_keyboardState[mapping->kc_r2]
+#if defined(__APPLE__)
+	    || (mapping->kc_r2 == SDL_SCANCODE_RCTRL && s_keyboardState[SDL_SCANCODE_E])
+#endif
+	)
 		buttons &= ~0x200;
 	if (s_keyboardState[mapping->kc_r3])
 		buttons &= ~0x4;
@@ -862,8 +880,13 @@ static const char *s_keyBindingNames[PLATFORM_INPUT_BINDING_COUNT] = {
 
 static const int s_keyBindingDefaults[PLATFORM_INPUT_BINDING_COUNT] = {
 	SDL_SCANCODE_X, SDL_SCANCODE_V, SDL_SCANCODE_Z, SDL_SCANCODE_C,
+#if defined(__APPLE__)
+	SDL_SCANCODE_LSHIFT, SDL_SCANCODE_Q, SDL_SCANCODE_LEFTBRACKET,
+	SDL_SCANCODE_RSHIFT, SDL_SCANCODE_E, SDL_SCANCODE_RIGHTBRACKET,
+#else
 	SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL, SDL_SCANCODE_LEFTBRACKET,
 	SDL_SCANCODE_RSHIFT, SDL_SCANCODE_RCTRL, SDL_SCANCODE_RIGHTBRACKET,
+#endif
 	SDL_SCANCODE_RETURN, SDL_SCANCODE_SPACE,
 	SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT
 };

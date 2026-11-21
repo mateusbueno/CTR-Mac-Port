@@ -1,5 +1,9 @@
 #include <common.h>
 
+#if defined(__LP64__)
+struct Model *LOAD_NativeModel_ConvertPublic(void *rawModelPtr);
+#endif
+
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x800ae9a8-0x800aed48
 void CS_Camera_ThTick_Boss(struct Thread *t)
 {
@@ -85,6 +89,11 @@ void CS_Camera_ThTick_Boss(struct Thread *t)
 			{
 				if (i != 0)
 					mArr[i] = (struct Model *)((char *)mArr[i] + 4);
+
+#if defined(__LP64__)
+				// The boss head/body files hold raw 32-bit model data; convert to the native layout once.
+				mArr[i] = LOAD_NativeModel_ConvertPublic(mArr[i]);
+#endif
 
 				gGT->modelPtr[mArr[i]->id] = mArr[i];
 			}
