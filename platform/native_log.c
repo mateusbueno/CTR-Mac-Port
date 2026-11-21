@@ -8,6 +8,10 @@
 
 #ifdef _WIN32
 #include "platform/native_win32.h"
+#else
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 global_variable FILE *s_logStream = NULL;
@@ -75,7 +79,24 @@ void Platform_LogInit(const char *appName)
 {
 	if (s_logPath[0] == '\0')
 	{
-		int written = snprintf(s_logPath, sizeof(s_logPath), "%s.log", appName);
+		int written = -1;
+
+#ifdef __APPLE__
+		// When launched from the .app bundle the cwd is "/" (read-only), so a
+		// relative log name can't be created. Use ~/Library/Logs/CTR Native/.
+		const char *home = getenv("HOME");
+
+		if ((home != NULL) && (home[0] != '\0'))
+		{
+			char dir[512];
+
+			snprintf(dir, sizeof(dir), "%s/Library/Logs/CTR Native", home);
+			mkdir(dir, 0755);
+			written = snprintf(s_logPath, sizeof(s_logPath), "%s/%s.log", dir, appName);
+		}
+#endif
+		if (written < 0)
+			written = snprintf(s_logPath, sizeof(s_logPath), "%s.log", appName);
 
 		if ((written < 0) || ((size_t)written >= sizeof(s_logPath)))
 		{
@@ -88,7 +109,16 @@ void Platform_LogInit(const char *appName)
 	s_logStream = fopen(s_logPath, "wb");
 
 	if (s_logStream == NULL)
+	{
 		fprintf(stderr, "[CTR Native] Error: cannot create log file '%s'\n", s_logPath);
+
+		// Last resort so the user always has a log to send.
+		snprintf(s_logPath, sizeof(s_logPath), "/tmp/%s.log", appName);
+		s_logStream = fopen(s_logPath, "wb");
+	}
+
+	if (s_logStream != NULL)
+		fprintf(stderr, "[CTR Native] Logging to '%s'\n", s_logPath);
 }
 
 void Platform_LogShutdown(void)

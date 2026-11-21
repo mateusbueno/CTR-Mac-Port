@@ -524,6 +524,19 @@ static int DrawLevelOvr1P_IsNativeLevelTexturePointer(u32 value)
 #endif
 }
 
+// Scratchpad slots hold only the low 32 bits of host pointers. Rebuild the full
+// 64-bit address with the same upper half the level file lives in (the same
+// rule IsNativeLevelTexturePointer uses to classify the word).
+static const u8 *DrawLevelOvr1P_RebaseLevelWord(u32 value)
+{
+	uintptr_t ptr = (uintptr_t)value;
+#if defined(__LP64__)
+	if ((ptr & 0xFFFFFFFF00000000ULL) == 0 && ptr != 0 && sdata != NULL && sdata->ptrLevelFile != NULL)
+		ptr |= ((uintptr_t)sdata->ptrLevelFile & 0xFFFFFFFF00000000ULL);
+#endif
+	return (const u8 *)ptr;
+}
+
 static int DrawLevelOvr1P_TreatAsRetailNegativeTextureWord(u32 value)
 {
 	return (s32)value < 0 || DrawLevelOvr1P_IsNativeLevelTexturePointer(value);
@@ -966,7 +979,7 @@ static void DrawLevelOvr1P_PrepareDeepestMosaicUv(const struct DrawLevelOvr1PScr
 		sourceOffset += reloadSpan;
 	sourceOffset += *CTR_SCRATCHPAD_PTR(u32, 0x3d8);
 
-	source = (const u8 *)(uintptr_t)(mosaicBase + sourceOffset);
+	source = DrawLevelOvr1P_RebaseLevelWord(mosaicBase + sourceOffset);
 	uv0 = *(const u32 *)(const void *)(source + 0);
 	uv1 = *(const u32 *)(const void *)(source + 4);
 
@@ -5181,7 +5194,7 @@ static void Ovr226_800a3f74_PrepareGround4x1DeepestUv(const struct DrawLevelOvr1
 		sourceOffset += 0x30;
 	sourceOffset += *CTR_SCRATCHPAD_PTR(u32, 0x3d8);
 
-	source = (const u8 *)(uintptr_t)(mosaicBase + sourceOffset);
+	source = DrawLevelOvr1P_RebaseLevelWord(mosaicBase + sourceOffset);
 	uv0 = *(const u32 *)(const void *)(source + 0);
 	uv1 = *(const u32 *)(const void *)(source + 4);
 
@@ -5523,7 +5536,7 @@ static void Ovr226_800a4b54_PrepareGround4x1RenderedDeepestUv(const struct DrawL
 		sourceOffset += 0x30;
 	sourceOffset += *CTR_SCRATCHPAD_PTR(u32, 0x3d8);
 
-	source = (const u8 *)(uintptr_t)(mosaicBase + sourceOffset);
+	source = DrawLevelOvr1P_RebaseLevelWord(mosaicBase + sourceOffset);
 	uv0 = *(const u32 *)(const void *)(source + 0);
 	uv1 = *(const u32 *)(const void *)(source + 4);
 
@@ -7605,8 +7618,17 @@ static int DrawLevelOvr1P_Emit4x1ListSelectedFace(struct PushBuffer *pb, struct 
 	return Ovr226_800a3c70_Ground4x1SelectorNearGate(pb, primMem, projected, block, faceIndex);
 }
 
+#if defined(__LP64__)
+// NOTE: scratchpad 0x64 is a 32-bit slot; a 64-bit heap pointer must not
+// round-trip through it (it loses the upper 32 bits and faults on write).
+static struct QuadBlock **sDrawLevelOvr1P_RenderedListCursor;
+#endif
+
 static void DrawLevelOvr1P_SetRenderedListCursor(struct QuadBlock **renderedList)
 {
+#if defined(__LP64__)
+	sDrawLevelOvr1P_RenderedListCursor = renderedList;
+#endif
 	*CTR_SCRATCHPAD_PTR(u32, 0x64) = (u32)(uintptr_t)renderedList;
 }
 
@@ -7625,7 +7647,11 @@ static struct QuadBlock **DrawLevelOvr1P_GetRenderedOverflowBase(void)
 
 static struct QuadBlock **DrawLevelOvr1P_GetRenderedListCursor(void)
 {
+#if defined(__LP64__)
+	return sDrawLevelOvr1P_RenderedListCursor;
+#else
 	return (struct QuadBlock **)(uintptr_t)*CTR_SCRATCHPAD_PTR(u32, 0x64);
+#endif
 }
 
 static void DrawLevelOvr1P_AppendRenderedQuadBlock(struct QuadBlock *block)

@@ -206,7 +206,14 @@ static void ctr_crash_handler(int sig)
         void *callstack[128];
         int frames = backtrace(callstack, 128);
         char **strs = backtrace_symbols(callstack, frames);
-        FILE *f = fopen("/tmp/ctr_crash.log", "w");
+        FILE *f = NULL;
+        const char *home = getenv("HOME");
+        if (home && home[0]) {
+                char path[512];
+                snprintf(path, sizeof(path), "%s/Library/Logs/CTR Native/ctr_crash.log", home);
+                f = fopen(path, "w");
+        }
+        if (!f) f = fopen("/tmp/ctr_crash.log", "w");
         if (!f) f = stderr;
         fprintf(f, "CRASH SIGNAL %d (%s)\n", sig, strsignal(sig));
         fprintf(stderr, "\n[CTR NATIVE CRASH] SIGNAL %d (%s)\n", sig, strsignal(sig));

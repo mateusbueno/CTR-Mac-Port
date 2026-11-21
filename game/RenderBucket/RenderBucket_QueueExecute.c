@@ -1746,6 +1746,22 @@ static struct RenderBucketEntry *RenderBucket_QueueDraw(struct Instance *inst, s
 		return rbi;
 	}
 
+#ifdef CTR_NATIVE
+	// NOTE: On LP64 an uninitialised/32-bit-packed IDPP slot can hold a garbage
+	// pushBuffer (e.g. 0x0140cabc0140ca9c) that crashes on the deref below.
+	if ((uintptr_t)pb <= 0x100010000ULL)
+	{
+		static int s_warned = 0;
+		if (!s_warned)
+		{
+			s_warned = 1;
+			Platform_LogWarn("[RenderBucket] bad pushBuffer %p inst=%p name='%.15s' player=%d flags=0x%x\n", (void *)pb, (void *)inst, inst->name, playerIndex,
+			                 queuedFlags);
+		}
+		return rbi;
+	}
+#endif
+
 	if (queueState->lastPushBuffer != pb)
 	{
 		// NOTE(aalhendi): Retail 0x80070968-0x800709d0 refreshes scratch

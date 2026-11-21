@@ -6,7 +6,7 @@ struct DrawTiresReflectionScratch
 	u32 savedRegs[12];
 	int numPlyr;
 	int playerCounter;
-	struct Icon **wheelSprites;
+	u32 wheelSpritesRetailSlot; // keeps the retail 0x38..0x3b slot so every later offset matches
 	u32 tireColor;
 	int otRangeNormal;
 	int otRangeSecondary;
@@ -35,11 +35,14 @@ struct DrawTiresReflectionScratch
 	s16 depthOffsetEndBytes;
 	int otRangeStart;
 	int otRangeEnd;
+
+	// Host pointer lives past the retail-layout area (8 bytes on LP64).
+	struct Icon **wheelSprites;
 };
 
 _Static_assert(offsetof(struct DrawTiresReflectionScratch, numPlyr) == 0x30);
 _Static_assert(offsetof(struct DrawTiresReflectionScratch, playerCounter) == 0x34);
-_Static_assert(offsetof(struct DrawTiresReflectionScratch, wheelSprites) == 0x38);
+_Static_assert(offsetof(struct DrawTiresReflectionScratch, wheelSpritesRetailSlot) == 0x38);
 _Static_assert(offsetof(struct DrawTiresReflectionScratch, tireColor) == 0x3c);
 _Static_assert(offsetof(struct DrawTiresReflectionScratch, otRangeNormal) == 0x40);
 _Static_assert(offsetof(struct DrawTiresReflectionScratch, otRangeSecondary) == 0x44);
