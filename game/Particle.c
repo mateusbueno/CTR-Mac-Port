@@ -418,7 +418,7 @@ p->framesLeftInLife = (s16)(p->framesLeftInLife - 1);
 }
 
 
-#ifdef CTR_NATIVE
+#if defined(CTR_NATIVE) && defined(__LP64__)
 /* Drop every live particle (used on adventure hub swap: they reference the old hub's icons). */
 void Particle_NativeClearAll(void)
 {

@@ -35,7 +35,7 @@ void MainInit_JitPoolsNew(struct GameTracker *gGT)
          * allocate for 1 player in netplay, VehBirth_Player(1) for the
          * remote driver would write InstDrawPerPlayer[1] out of bounds.
          * Rendering loops still only iterate NUM_LOCAL_PLAYERS(gGT) times. */
-        #ifdef CTR_NATIVE
+        #if defined(CTR_NATIVE) && defined(__LP64__)
         /* Hub swaps spawn many warp-pad/number instances; the retail 32-slot pool
          * can run dry and make INSTANCE_Birth3D return NULL. Keep a safe floor. */
         int numInstances = renderBucketSize >> 5;

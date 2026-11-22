@@ -19,7 +19,7 @@ void LOAD_Hub_SwapNow()
 	// ptrintf("gGT->level2 = 0x%08x\n",gGT->level2);
 	// ptrintf("SWAPPING 1...\n");
 
-#ifdef CTR_NATIVE
+#if defined(CTR_NATIVE) && defined(__LP64__)
 	{
 		extern void Particle_NativeClearAll(void);
 		Particle_NativeClearAll();
@@ -67,6 +67,8 @@ void LOAD_Hub_SwapNow()
 		}
 		fprintf(stderr, "[CTR Native] HubSwap: killed %d threaded + %d bare old-hub instances\n", killedThreads, killedBare);
 	}
+#endif
+#ifdef CTR_NATIVE
 	fprintf(stderr, "[CTR Native] HubSwap: before RePack instance pool free=%d taken=%d max=%d\n",
 	        (int)gGT->JitPools.instance.free.count, (int)gGT->JitPools.instance.taken.count, gGT->JitPools.instance.maxItems);
 #endif
