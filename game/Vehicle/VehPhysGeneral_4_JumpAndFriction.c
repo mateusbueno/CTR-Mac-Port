@@ -7,7 +7,7 @@ static int VehPhysGeneral_Jump_Abs(int value)
 
 static int VehPhysGeneral_Jump_Div2TowardZero(int value)
 {
-	return (value + ((u32)value >> 31)) >> 1;
+	return (s32)((u32)value + ((u32)value >> 31)) >> 1;
 }
 
 static int VehPhysGeneral_Jump_Div4TowardZero(int value)

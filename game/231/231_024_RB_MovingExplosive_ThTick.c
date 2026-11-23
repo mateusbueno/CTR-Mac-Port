@@ -227,12 +227,9 @@ tw->framesSeekMine--;
 // Make Instane in Particle Pool
         struct Particle *p;
         // NOTE(aalhendi): Native uses retail emitter bytes from 0x800b2ae4.
-#ifdef CTR_NATIVE
-        static int s_60fpsMissileToggle = 0;
-        if (IS_NATIVE_60FPS && !(s_60fpsMissileToggle ^= 1))
-                return;
-#endif
-        p = Particle_Init(0, gGT->iconGroup[0], &R231.emSet_Missile[0]);
+        // Only the smoke trail is throttled in 60fps; the missile itself
+        // (steering, movement, collision) must run on every tick.
+        p = FRAME_GATE_TICK() ? Particle_Init(0, gGT->iconGroup[0], &R231.emSet_Missile[0]) : 0;
 
                 if (p != 0)
                 {

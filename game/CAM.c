@@ -42,7 +42,8 @@ static int CAM_SkyboxGlow_ScreenX(int screenWidth, int ratio)
 
 static int CAM_SkyboxGlow_Div2TowardZero(int value)
 {
-        return (value + ((u32)value >> 31)) >> 1;
+        /* arithmetic shift: the u32 sum must be cast back to s32 or negative values become huge positives */
+        return (s32)((u32)value + ((u32)value >> 31)) >> 1;
 }
 
 static int CAM_SkyboxGlow_CalcCenterY(struct PushBuffer *pb)
@@ -156,22 +157,6 @@ void CAM_SkyboxGlow(s16 *param_1, struct PushBuffer *pb, struct PrimMem *primMem
         int screenWidth = (s16)pb->rect.w;
         u32 screenWidthXY = (u16)screenWidth;
 
-#ifdef CTR_NATIVE
-        {
-                /* diagnostic: dump gradient data ~1x/sec on Papu's Pyramid to see if sky colour changes come from data or from rendering */
-                static unsigned s_glowDbg = 0;
-                if (sdata->gGT->levelID == PAPU_PYRAMID && (s_glowDbg++ % 60) == 0)
-                {
-                        struct CAMSkyboxGlowGradient *g = grad;
-                        fprintf(stderr, "[CTR Native] SkyGlow cfg=%x clr0=%d clr1=%d clr2=%d centerY=%d tilt=%d", (unsigned)sdata->gGT->level1->configFlags,
-                                (int)sdata->gGT->level1->clearColor[0].enable, (int)sdata->gGT->level1->clearColor[1].enable, (int)sdata->gGT->level1->clearColor[2].enable,
-                                centerY1, tilt);
-                        for (int k = 0; k < 3; k++)
-                                fprintf(stderr, " | g%d %d..%d %06x->%06x", k, g[k].pointFrom, g[k].pointTo, g[k].colorFrom & 0xffffff, g[k].colorTo & 0xffffff);
-                        fprintf(stderr, "\n");
-                }
-        }
-#endif
         for (int i = 0; i < 3; i++, grad++)
         {
                 int toLeft = centerY2 - grad->pointTo - tilt;
