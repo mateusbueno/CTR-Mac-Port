@@ -86,10 +86,12 @@ void MM_Scrapbook_PlayMovie(struct RectMenu *menu)
 			{
 				// NOTE(aalhendi): Native video decoding skips interleaved XA records;
 				// play the Scrapbook CD-XA channel from the same raw STR file.
-				if (NativeAudio_PlayXAFile(SCRAPBOOK_NATIVE_XA_PATH, SCRAPBOOK_NATIVE_XA_CHANNEL, sdata->vol_Music << 7, sdata->vol_Music << 7) == 0)
+				// The extracted TEST.STR is video-only (no XA audio): play it silently.
+				// Only the raw CD dump carries the scrapbook soundtrack.
+				if (NativeSTR_ScrapbookHasAudio() &&
+				    (NativeAudio_PlayXAFile(SCRAPBOOK_NATIVE_XA_PATH, SCRAPBOOK_NATIVE_XA_CHANNEL, sdata->vol_Music << 7, sdata->vol_Music << 7) == 0))
 				{
-					NativeSTR_Stop();
-					goto GO_BACK;
+					fprintf(stderr, "[Scrapbook] NativeAudio_PlayXAFile(%s) failed, playing without audio\n", SCRAPBOOK_NATIVE_XA_PATH);
 				}
 				s_scrapbookNativeNextVBlank = Platform_GetVBlankCount() + SCRAPBOOK_NATIVE_FRAME_VBLANKS;
 				D230.scrapbookState = 2;
@@ -124,6 +126,18 @@ void MM_Scrapbook_PlayMovie(struct RectMenu *menu)
 		}
 #endif
 
+#ifdef CTR_NATIVE
+		fprintf(stderr, "[Scrapbook] NativeSTR_StartScrapbook failed (cannot open %s)\n", SCRAPBOOK_NATIVE_XA_PATH);
+	GO_BACK_FAILED:
+		// The movie never started: bring the checkered flag back on screen,
+		// otherwise state 4 waits forever for a flag that is off screen (soft lock).
+		NativeAudio_StopXA();
+		NativeSTR_Stop();
+		if (RaceFlag_IsFullyOffScreen() == 1)
+		{
+			RaceFlag_BeginTransition(1);
+		}
+#endif
 		goto GO_BACK;
 
 	// Actually play the movie
@@ -161,6 +175,7 @@ void MM_Scrapbook_PlayMovie(struct RectMenu *menu)
 		if ((getButtonPress != 0) || (nativeUploaded == 0))
 #endif
 		{
+
 			if (getButtonPress != 0)
 			{
 				RaceFlag_SetFullyOnScreen();

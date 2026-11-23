@@ -429,11 +429,17 @@ internal s32 NativeSTR_ReadNextFrameFromFile(void)
 	s32 copied = 0;
 	s32 chunk;
 
-	if (fread(sector, 1, sizeof(sector), s_str.file) != sizeof(sector))
-		return 0;
+	// NOTE: the extracted scrapbook TEST.STR keeps the XA audio sectors as
+	// 0x800-byte slots interleaved with the video chunks. They have no STR
+	// header, so skip anything that is not a video chunk instead of aborting.
+	for (;;)
+	{
+		if (fread(sector, 1, sizeof(sector), s_str.file) != sizeof(sector))
+			return 0;
 
-	if ((NativeSTR_ParseSectorHeader(sector, 0, &firstHeader) == 0) || (firstHeader.chunkIndex != 0))
-		return 0;
+		if ((NativeSTR_ParseSectorHeader(sector, 0, &firstHeader) != 0) && (firstHeader.chunkIndex == 0))
+			break;
+	}
 
 	s_str.width = firstHeader.width;
 	s_str.height = firstHeader.height;
@@ -444,12 +450,21 @@ internal s32 NativeSTR_ReadNextFrameFromFile(void)
 		struct NativeSTRSectorHeader header;
 		if (chunk != 0)
 		{
-			if (fread(sector, 1, sizeof(sector), s_str.file) != sizeof(sector))
-				return 0;
+			for (;;)
+			{
+				if (fread(sector, 1, sizeof(sector), s_str.file) != sizeof(sector))
+					return 0;
+
+				if (NativeSTR_ParseSectorHeader(sector, 0, &header) != 0)
+					break;
+			}
+		}
+		else
+		{
+			header = firstHeader;
 		}
 
-		if ((NativeSTR_ParseSectorHeader(sector, 0, &header) == 0) || (header.chunkIndex != chunk) || (header.frameIndex != firstHeader.frameIndex) ||
-		    (header.frameSize != firstHeader.frameSize))
+		if ((header.chunkIndex != chunk) || (header.frameIndex != firstHeader.frameIndex) || (header.frameSize != firstHeader.frameSize))
 		{
 			return 0;
 		}
@@ -677,13 +692,33 @@ s32 NativeSTR_StartScrapbook(void)
 	if (s_str.file == NULL)
 		return 0;
 
+	// NOTE: TEST.STR comes in two flavours. The raw CD dump is made of 0x920-byte
+	// records (video + XA audio). The extracted one (what the asset tools produce)
+	// is made of 0x800-byte video-only sectors, like the track previews.
+	{
+		long size = 0;
+
+		if (fseek(s_str.file, 0, SEEK_END) == 0)
+			size = ftell(s_str.file);
+		rewind(s_str.file);
+
+		if ((size > 0) && ((size % NATIVE_STR_CD_SECTOR_SIZE) == 0))
+			s_str.format = NATIVE_STR_FORMAT_CD_STREAM;
+		else
+			s_str.format = NATIVE_STR_FORMAT_EXTRACTED;
+	}
+
 	s_str.active = 1;
-	s_str.format = NATIVE_STR_FORMAT_CD_STREAM;
 	s_str.loop = 0;
 	s_str.bigfileIndex = -1;
 	s_str.frameIndex = 0;
 	s_str.frameLimit = NATIVE_STR_SCRAPBOOK_FRAME_COUNT;
 	return 1;
+}
+
+s32 NativeSTR_ScrapbookHasAudio(void)
+{
+	return (s_str.active != 0) && (s_str.format == NATIVE_STR_FORMAT_CD_STREAM);
 }
 
 void NativeSTR_Stop(void)
