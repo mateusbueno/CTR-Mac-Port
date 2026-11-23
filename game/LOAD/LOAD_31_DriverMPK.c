@@ -34,6 +34,19 @@ static void LOAD_Callback_DriverModels_Netplay(struct LoadQueueSlot *lqs)
 }
 #endif
 
+#ifdef CTR_NATIVE
+/* Retail's main-menu LEV only contains the 15 character preview models, N. Oxide has none
+ * (the "oxide mod" adds it). Load his racer model (HI lod) while the menu is loading, so the
+ * character-select preview can fall back to it. Raw file pointer (model struct), 0 if absent. */
+uintptr_t g_menuOxideModelRaw = 0;
+
+static void LOAD_Callback_MenuOxideModel(struct LoadQueueSlot *lqs)
+{
+        // DramFileCallback already moved ptrDestination past the 4-byte ptr-map offset
+        g_menuOxideModelRaw = (uintptr_t)lqs->ptrDestination;
+}
+#endif
+
 // NOTE(aalhendi): ASM-verified NTSC-U 926 0x8003282c-0x80032b50.
 void *LOAD_DriverMPK(struct BigHeader *bigfile, int levelLOD, void (*callback)(struct LoadQueueSlot *))
 {
@@ -46,6 +59,12 @@ void *LOAD_DriverMPK(struct BigHeader *bigfile, int levelLOD, void (*callback)(s
         int lastFileIndexMPK;
 
 #ifdef CTR_NATIVE
+        g_menuOxideModelRaw = 0;
+        if ((gameMode1 & MAIN_MENU) != 0)
+        {
+                LOAD_AppendQueue(bigfile, LT_GETADDR, BI_RACERMODELHI + NITROS_OXIDE, NULL, LOAD_Callback_MenuOxideModel);
+        }
+
         /* Netplay: load the 1P arcade pack for EVERY connected peer's
          * character, not just player 0. Each 1P pack contains 8 kart
          * models (the picked character + 7 AIs), but the AIs differ per

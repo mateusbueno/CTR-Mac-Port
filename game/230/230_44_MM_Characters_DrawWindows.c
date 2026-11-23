@@ -134,6 +134,36 @@ void MM_Characters_DrawWindows(int boolShowDrivers)
 		// set modelPtr in Instance
 		iVar10->model = uVar4;
 
+#ifdef CTR_NATIVE
+		// N. Oxide previews with his racer model (no menu model exists), which is
+		// much bigger than the menu models: shrink only his instance, relative to the
+		// instance's original scale, and put the original back for everyone else.
+		{
+			static s16 s_origScale[8][3];
+			static u8 s_oxideApplied[8];
+			int slot = iVar14 & 7;
+
+			if (*ptrCurr == NITROS_OXIDE)
+			{
+				if (s_oxideApplied[slot] == 0)
+				{
+					for (int k = 0; k < 3; k++)
+						s_origScale[slot][k] = iVar10->scale[k];
+					s_oxideApplied[slot] = 1;
+				}
+
+				for (int k = 0; k < 3; k++)
+					iVar10->scale[k] = (s16)((s_origScale[slot][k] * 0x700) >> 12);
+			}
+			else if (s_oxideApplied[slot] != 0)
+			{
+				for (int k = 0; k < 3; k++)
+					iVar10->scale[k] = s_origScale[slot][k];
+				s_oxideApplied[slot] = 0;
+			}
+		}
+#endif
+
 		// CameraDC, freecam mode
 		gGT->cameraDC[iVar6].cameraMode = 3;
 
@@ -192,6 +222,16 @@ void MM_Characters_DrawWindows(int boolShowDrivers)
 		rot[0] = D230.csm_instRot[0];
 		rot[1] = D230.csm_instRot[1] + D230.characterSelect_angle[iVar14];
 		rot[2] = D230.csm_instRot[2];
+
+#ifdef CTR_NATIVE
+		if (*ptrCurr == NITROS_OXIDE)
+		{
+			// The racer model is authored with a different pitch than the menu models,
+			// and its origin sits lower: compensate so he stands level inside the window.
+			rot[0] += 0x80;
+			iVar10->matrix.t[1] -= 0x10;
+		}
+#endif
 
 		ConvertRotToMatrix(&iVar10->matrix, &rot[0]);
 	}
