@@ -734,6 +734,9 @@ gGT->demoCountdownTimer--;
                                         NativePerf_BeginScope(NATIVE_PERF_BUCKET_GAME_LOGIC);
 #endif
                                         g_nativeLogicTick++;
+                                        // All cheat-unlockable characters (Tropy, Penta, Roo, Papu, Joe, Pinstripe, Fake Crash)
+                                        // are always available, no matter which save/profile is loaded.
+                                        sdata->gameProgress.unlocks[0] |= UNLOCK_CHARACTERS;
                                         MainFrame_GameLogic(gGT, gGS);
 #if defined(CTR_NATIVE) && defined(CTR_INTERNAL)
                                         NativePerf_EndScope(NATIVE_PERF_BUCKET_GAME_LOGIC);
