@@ -734,9 +734,11 @@ gGT->demoCountdownTimer--;
                                         NativePerf_BeginScope(NATIVE_PERF_BUCKET_GAME_LOGIC);
 #endif
                                         g_nativeLogicTick++;
-                                        // All cheat-unlockable characters (Tropy, Penta, Roo, Papu, Joe, Pinstripe, Fake Crash)
-                                        // are always available, no matter which save/profile is loaded.
-                                        sdata->gameProgress.unlocks[0] |= UNLOCK_CHARACTERS;
+                                        // Everything the unlock cheats grant is always available, no matter which save/profile is loaded:
+                                        // characters (Tropy, Penta, Roo, Papu, Joe, Pinstripe, Fake Crash, Oxide), bonus tracks,
+                                        // Oxide Cup and the scrapbook.
+                                        sdata->gameProgress.unlocks[0] |= UNLOCK_CHARACTERS | 0x1 | 0x1e;
+                                        sdata->gameProgress.unlocks[1] |= (1 << 5) | 0x10;
                                         MainFrame_GameLogic(gGT, gGS);
 #if defined(CTR_NATIVE) && defined(CTR_INTERNAL)
                                         NativePerf_EndScope(NATIVE_PERF_BUCKET_GAME_LOGIC);
